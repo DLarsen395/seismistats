@@ -103,8 +103,8 @@ export const MapContainer: React.FC<MapContainerProps> = ({ events }) => {
             'interpolate',
             ['linear'],
             ['coalesce', ['get', 'magnitude'], 0.5],
-            0.4, 4,
-            1.9, 14
+            0.4, 3,
+            1.9, 10.5
           ],
           'circle-color': [
             'interpolate',
