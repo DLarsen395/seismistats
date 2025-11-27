@@ -148,11 +148,11 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
       backgroundColor: 'rgba(17, 24, 39, 0.95)',
       backdropFilter: 'blur(12px)',
       borderRadius: '16px',
-      padding: '16px 24px',
+      padding: '12px 20px',
       boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
       border: '1px solid rgba(75, 85, 99, 0.3)',
-      minWidth: '500px',
-      maxWidth: '700px',
+      minWidth: '600px',
+      maxWidth: '800px',
       zIndex: 1000,
     }}>
       {/* Top row: Date display and event info */}
@@ -160,46 +160,97 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
         display: 'flex', 
         justifyContent: 'space-between', 
         alignItems: 'center',
-        marginBottom: '12px'
+        marginBottom: '8px'
       }}>
         {/* Current time display */}
         <div>
-          <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#fff' }}>
+          <div style={{ fontSize: '1rem', fontWeight: 'bold', color: '#fff' }}>
             {formatDate(currentTime)}
-          </div>
-          <div style={{ fontSize: '0.75rem', color: '#9ca3af' }}>
-            {formatTime(currentTime)}
+            <span style={{ fontSize: '0.75rem', color: '#9ca3af', marginLeft: '8px' }}>
+              {formatTime(currentTime)}
+            </span>
           </div>
         </div>
 
         {/* Event count and duration info */}
         <div style={{ textAlign: 'right', fontSize: '0.75rem', color: '#9ca3af' }}>
-          <div>
-            <span style={{ color: '#3b82f6', fontWeight: 'bold' }}>{eventCount.toLocaleString()}</span>
-            {' / '}
-            {totalEvents.toLocaleString()} events
-          </div>
+          <span style={{ color: '#3b82f6', fontWeight: 'bold' }}>{eventCount.toLocaleString()}</span>
+          {' / '}
+          {totalEvents.toLocaleString()} events
           {estimatedDuration && (
-            <div style={{ fontSize: '0.65rem', marginTop: '2px' }}>
-              ~{estimatedDuration} playback
-            </div>
+            <span style={{ marginLeft: '8px' }}>• ~{estimatedDuration}</span>
           )}
         </div>
       </div>
 
-      {/* Progress bar with bracket sliders */}
-      <div 
-        ref={progressBarRef}
-        onClick={handleProgressClick}
-        style={{
-          position: 'relative',
-          height: '24px',
-          backgroundColor: 'rgba(75, 85, 99, 0.3)',
-          borderRadius: '4px',
-          cursor: 'pointer',
-          marginBottom: '8px',
-        }}
-      >
+      {/* Main row: Buttons on left, scrub bar on right */}
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center',
+        gap: '12px'
+      }}>
+        {/* Playback controls */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+          {/* Reset button */}
+          <button
+            onClick={reset}
+            disabled={showAllEvents}
+            style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              border: 'none',
+              backgroundColor: showAllEvents ? 'rgba(75, 85, 99, 0.3)' : 'rgba(75, 85, 99, 0.5)',
+              color: showAllEvents ? '#4b5563' : '#fff',
+              cursor: showAllEvents ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '0.875rem',
+              transition: 'all 0.2s',
+            }}
+            title="Reset to start"
+          >
+            ⏮
+          </button>
+
+          {/* Play/Pause button */}
+          <button
+            onClick={togglePlay}
+            disabled={showAllEvents}
+            style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              border: 'none',
+              backgroundColor: showAllEvents ? 'rgba(59, 130, 246, 0.3)' : '#3b82f6',
+              color: showAllEvents ? '#6b7280' : '#fff',
+              cursor: showAllEvents ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1rem',
+              transition: 'all 0.2s',
+            }}
+          >
+            {isPlaying ? '⏸' : '▶'}
+          </button>
+        </div>
+
+        {/* Scrub bar section */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {/* Progress bar with bracket sliders */}
+          <div 
+            ref={progressBarRef}
+            onClick={handleProgressClick}
+            style={{
+              position: 'relative',
+              height: '20px',
+              backgroundColor: 'rgba(75, 85, 99, 0.3)',
+              borderRadius: '4px',
+              cursor: 'pointer',
+            }}
+          >
         {/* Inactive area (left of range) */}
         <div style={{
           position: 'absolute',
@@ -262,27 +313,26 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
         >
           <div style={{
             width: '3px',
-            height: '28px',
+            height: '24px',
             backgroundColor: '#10b981',
             borderRadius: '2px 0 0 2px',
             boxShadow: '0 0 4px rgba(16, 185, 129, 0.5)',
           }} />
           <div style={{
-            width: '8px',
+            width: '6px',
             height: '3px',
             backgroundColor: '#10b981',
-            marginTop: '-12.5px',
             position: 'absolute',
             left: '4px',
+            top: '0px',
           }} />
           <div style={{
-            width: '8px',
+            width: '6px',
             height: '3px',
             backgroundColor: '#10b981',
-            marginBottom: '-12.5px',
             position: 'absolute',
             left: '4px',
-            top: '25px',
+            bottom: '0px',
           }} />
         </div>
 
@@ -304,27 +354,26 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
         >
           <div style={{
             width: '3px',
-            height: '28px',
+            height: '24px',
             backgroundColor: '#10b981',
             borderRadius: '0 2px 2px 0',
             boxShadow: '0 0 4px rgba(16, 185, 129, 0.5)',
           }} />
           <div style={{
-            width: '8px',
+            width: '6px',
             height: '3px',
             backgroundColor: '#10b981',
-            marginTop: '-12.5px',
             position: 'absolute',
             right: '4px',
+            top: '0px',
           }} />
           <div style={{
-            width: '8px',
+            width: '6px',
             height: '3px',
             backgroundColor: '#10b981',
-            marginBottom: '-12.5px',
             position: 'absolute',
             right: '4px',
-            top: '25px',
+            bottom: '0px',
           }} />
         </div>
 
@@ -336,84 +385,33 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
             left: `${progress}%`,
             top: '50%',
             transform: 'translate(-50%, -50%)',
-            width: '14px',
-            height: '14px',
+            width: '12px',
+            height: '12px',
             backgroundColor: '#fff',
             borderRadius: '50%',
-            border: '3px solid #3b82f6',
+            border: '2px solid #3b82f6',
             cursor: 'grab',
             zIndex: 10,
             boxShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
           }}
         />
-      </div>
+          </div>
 
-      {/* Date range labels */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between',
-        fontSize: '0.7rem',
-        color: '#6b7280',
-        marginBottom: '12px',
-      }}>
-        <span>{formatDate(rangeStart || startTime)}</span>
-        <span style={{ color: '#9ca3af' }}>
-          {formatDate(startTime)} → {formatDate(endTime)}
-        </span>
-        <span>{formatDate(rangeEnd || endTime)}</span>
-      </div>
-
-      {/* Playback controls row */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center',
-        gap: '8px'
-      }}>
-        {/* Reset button */}
-        <button
-          onClick={reset}
-          disabled={showAllEvents}
-          style={{
-            width: '36px',
-            height: '36px',
-            borderRadius: '50%',
-            border: 'none',
-            backgroundColor: showAllEvents ? 'rgba(75, 85, 99, 0.3)' : 'rgba(75, 85, 99, 0.5)',
-            color: showAllEvents ? '#4b5563' : '#fff',
-            cursor: showAllEvents ? 'not-allowed' : 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '1rem',
-            transition: 'all 0.2s',
-          }}
-          title="Reset to start"
-        >
-          ⏮
-        </button>
-
-        {/* Play/Pause button */}
-        <button
-          onClick={togglePlay}
-          disabled={showAllEvents}
-          style={{
-            width: '48px',
-            height: '48px',
-            borderRadius: '50%',
-            border: 'none',
-            backgroundColor: showAllEvents ? 'rgba(59, 130, 246, 0.3)' : '#3b82f6',
-            color: showAllEvents ? '#6b7280' : '#fff',
-            cursor: showAllEvents ? 'not-allowed' : 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '1.25rem',
-            transition: 'all 0.2s',
-          }}
-        >
-          {isPlaying ? '⏸' : '▶'}
-        </button>
+          {/* Date range labels */}
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between',
+            fontSize: '0.65rem',
+            color: '#6b7280',
+            marginTop: '4px',
+          }}>
+            <span>{formatDate(rangeStart || startTime)}</span>
+            <span style={{ color: '#9ca3af' }}>
+              {formatDate(startTime)} → {formatDate(endTime)}
+            </span>
+            <span>{formatDate(rangeEnd || endTime)}</span>
+          </div>
+        </div>
       </div>
     </div>
   );

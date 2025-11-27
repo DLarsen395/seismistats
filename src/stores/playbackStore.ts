@@ -42,7 +42,7 @@ export const usePlaybackStore = create<PlaybackState>((set) => ({
   endTime: null,
   rangeStart: null,
   rangeEnd: null,
-  fadeOutDuration: 3, // 3 seconds real-time fade
+  fadeOutDuration: 2, // 2 seconds real-time fade
   showAllEvents: true, // Start showing all events
   
   // Actions

@@ -33,7 +33,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({ events }) => {
       try {
         const mapInstance = new mapboxgl.Map({
           container: mapContainer.current,
-          style: 'mapbox://styles/mapbox/dark-v11',
+          style: 'mapbox://styles/dlarsen395/cmihxx3wa005o01stf9mm69b6',
           center: [-123.0, 47.0],
           zoom: 6.5,
         });
