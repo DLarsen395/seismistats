@@ -4,7 +4,6 @@ import type { ETSEvent } from '../../types/event';
 
 // Set Mapbox access token
 const token = import.meta.env.VITE_MAPBOX_TOKEN;
-console.log('Mapbox token loaded:', token ? 'Yes (length: ' + token.length + ')' : 'NO TOKEN!');
 mapboxgl.accessToken = token;
 
 interface MapContainerProps {
@@ -29,9 +28,6 @@ export const MapContainer: React.FC<MapContainerProps> = ({ events }) => {
     // Small delay to ensure DOM is ready
     const timer = setTimeout(() => {
       if (!mapContainer.current) return;
-      
-      console.log('Initializing map with container:', mapContainer.current);
-      console.log('Container dimensions:', mapContainer.current.offsetWidth, 'x', mapContainer.current.offsetHeight);
 
       try {
         const mapInstance = new mapboxgl.Map({
@@ -42,15 +38,9 @@ export const MapContainer: React.FC<MapContainerProps> = ({ events }) => {
         });
 
         map.current = mapInstance;
-        console.log('Map instance created, waiting for load...');
 
         mapInstance.on('load', () => {
-          console.log('Map load event fired!');
           setMapLoaded(true);
-        });
-
-        mapInstance.on('style.load', () => {
-          console.log('Style loaded!');
         });
 
         mapInstance.on('error', (e) => {
@@ -60,11 +50,10 @@ export const MapContainer: React.FC<MapContainerProps> = ({ events }) => {
 
         // Fallback: check if map is already loaded
         if (mapInstance.loaded()) {
-          console.log('Map was already loaded!');
           setMapLoaded(true);
         }
 
-        // Add controls after map is ready
+        // Add controls
         mapInstance.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
       } catch (err) {
