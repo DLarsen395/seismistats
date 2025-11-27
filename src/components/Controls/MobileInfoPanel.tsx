@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useIsMobile } from '../../hooks/useIsMobile';
+import { usePlaybackStore } from '../../stores/playbackStore';
 import type { ETSEvent } from '../../types/event';
 
 interface MobileInfoPanelProps {
@@ -7,15 +8,38 @@ interface MobileInfoPanelProps {
   visibleCount: number;
 }
 
+const speedOptions = [
+  { value: 0.1, label: '0.1x' },
+  { value: 0.5, label: '0.5x' },
+  { value: 1, label: '1x' },
+  { value: 2, label: '2x' },
+  { value: 5, label: '5x' },
+  { value: 10, label: '10x' },
+];
+
 export const MobileInfoPanel: React.FC<MobileInfoPanelProps> = ({
   events,
   visibleCount,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const isMobile = useIsMobile();
+  
+  const showAllEvents = usePlaybackStore((state) => state.showAllEvents);
+  const setShowAllEvents = usePlaybackStore((state) => state.setShowAllEvents);
+  const speed = usePlaybackStore((state) => state.speed);
+  const setSpeed = usePlaybackStore((state) => state.setSpeed);
+  const isPlaying = usePlaybackStore((state) => state.isPlaying);
+  const pause = usePlaybackStore((state) => state.pause);
 
   // Only render on mobile
   if (!isMobile) return null;
+
+  const handleModeChange = (showAll: boolean) => {
+    if (isPlaying) {
+      pause();
+    }
+    setShowAllEvents(showAll);
+  };
 
   return (
     <>
@@ -65,6 +89,97 @@ export const MobileInfoPanel: React.FC<MobileInfoPanelProps> = ({
             overflowY: 'auto',
           }}
         >
+          {/* Mode Toggle Section */}
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{
+              fontSize: '11px',
+              fontWeight: 600,
+              color: '#888',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              marginBottom: '8px',
+            }}>
+              Display Mode
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={() => handleModeChange(true)}
+                style={{
+                  flex: 1,
+                  padding: '8px',
+                  fontSize: '11px',
+                  fontWeight: 500,
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  background: showAllEvents ? 'rgba(59, 130, 246, 0.8)' : 'rgba(255, 255, 255, 0.1)',
+                  color: showAllEvents ? '#fff' : '#ccc',
+                }}
+              >
+                Show All
+              </button>
+              <button
+                onClick={() => handleModeChange(false)}
+                style={{
+                  flex: 1,
+                  padding: '8px',
+                  fontSize: '11px',
+                  fontWeight: 500,
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  background: !showAllEvents ? 'rgba(59, 130, 246, 0.8)' : 'rgba(255, 255, 255, 0.1)',
+                  color: !showAllEvents ? '#fff' : '#ccc',
+                }}
+              >
+                Playback
+              </button>
+            </div>
+          </div>
+
+          {/* Speed Control Section */}
+          {!showAllEvents && (
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{
+                fontSize: '11px',
+                fontWeight: 600,
+                color: '#888',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+                marginBottom: '8px',
+              }}>
+                Playback Speed
+              </div>
+              <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                {speedOptions.map(({ value, label }) => (
+                  <button
+                    key={value}
+                    onClick={() => setSpeed(value)}
+                    style={{
+                      padding: '6px 10px',
+                      fontSize: '10px',
+                      fontWeight: 500,
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      background: speed === value ? 'rgba(59, 130, 246, 0.8)' : 'rgba(255, 255, 255, 0.1)',
+                      color: speed === value ? '#fff' : '#ccc',
+                    }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Divider */}
+          <div style={{ 
+            height: '1px', 
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            margin: '12px 0',
+          }} />
+
           {/* Stats Section */}
           <div style={{ marginBottom: '16px' }}>
             <div style={{

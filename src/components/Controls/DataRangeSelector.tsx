@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePlaybackStore } from '../../stores/playbackStore';
 import type { DataRangePreset } from '../../services/tremor-api';
 import { getPresetDateRange, setCustomDateRange } from '../../services/tremor-api';
@@ -10,14 +10,15 @@ interface DataRangeSelectorProps {
 interface PresetOption {
   value: DataRangePreset;
   label: string;
+  mobileLabel: string;
 }
 
 const presetOptions: PresetOption[] = [
-  { value: 'lastDay', label: 'Last 48 Hours' },
-  { value: 'lastWeek', label: 'Last Week' },
-  { value: 'lastMonth', label: 'Last Month' },
-  { value: 'lastYear', label: 'Last Year' },
-  { value: 'custom', label: 'Custom Range' },
+  { value: 'lastDay', label: 'Last 48 Hours', mobileLabel: '48h' },
+  { value: 'lastWeek', label: 'Last Week', mobileLabel: 'Week' },
+  { value: 'lastMonth', label: 'Last Month', mobileLabel: 'Month' },
+  { value: 'lastYear', label: 'Last Year', mobileLabel: 'Year' },
+  { value: 'custom', label: 'Custom Range', mobileLabel: 'Custom' },
 ];
 
 export const DataRangeSelector: React.FC<DataRangeSelectorProps> = ({ isLoading = false }) => {
@@ -29,6 +30,15 @@ export const DataRangeSelector: React.FC<DataRangeSelectorProps> = ({ isLoading 
   const [showCustomModal, setShowCustomModal] = useState(false);
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
+  
+  // Mobile detection
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const handlePresetChange = (preset: DataRangePreset) => {
     // Pause playback when changing data range
@@ -77,16 +87,16 @@ export const DataRangeSelector: React.FC<DataRangeSelectorProps> = ({ isLoading 
   return (
     <div style={{
       position: 'absolute',
-      top: '16px',
-      left: '16px',
+      top: isMobile ? '8px' : '16px',
+      left: isMobile ? '8px' : '16px',
       zIndex: 100,
     }}>
       {/* Dropdown button */}
       <div style={{
         background: 'rgba(30, 30, 40, 0.9)',
         backdropFilter: 'blur(12px)',
-        borderRadius: '8px',
-        padding: '8px',
+        borderRadius: isMobile ? '6px' : '8px',
+        padding: isMobile ? '6px' : '8px',
         border: '1px solid rgba(255, 255, 255, 0.1)',
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
       }}>
@@ -97,7 +107,7 @@ export const DataRangeSelector: React.FC<DataRangeSelectorProps> = ({ isLoading 
           marginBottom: '4px',
         }}>
           <label style={{
-            fontSize: '10px',
+            fontSize: isMobile ? '9px' : '10px',
             fontWeight: 500,
             color: '#888',
             textTransform: 'uppercase',
@@ -117,15 +127,15 @@ export const DataRangeSelector: React.FC<DataRangeSelectorProps> = ({ isLoading 
           )}
         </div>
         
-        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', maxWidth: '300px' }}>
-          {presetOptions.map(({ value, label }) => (
+        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', maxWidth: isMobile ? '200px' : '300px' }}>
+          {presetOptions.map(({ value, label, mobileLabel }) => (
             <button
               key={value}
               onClick={() => handlePresetChange(value)}
               disabled={isPlaying || isLoading}
               style={{
-                padding: '6px 10px',
-                fontSize: '11px',
+                padding: isMobile ? '4px 6px' : '6px 10px',
+                fontSize: isMobile ? '10px' : '11px',
                 fontWeight: 500,
                 border: 'none',
                 borderRadius: '4px',
@@ -138,7 +148,7 @@ export const DataRangeSelector: React.FC<DataRangeSelectorProps> = ({ isLoading 
                 opacity: isPlaying ? 0.5 : 1,
               }}
             >
-              {label}
+              {isMobile ? mobileLabel : label}
             </button>
           ))}
         </div>

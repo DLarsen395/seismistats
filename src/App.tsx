@@ -5,14 +5,17 @@ import { SideControls } from './components/Controls/SideControls';
 import { DataRangeSelector } from './components/Controls/DataRangeSelector';
 import { Legend } from './components/Controls/Legend';
 import { EventStats } from './components/Controls/EventStats';
+import { MobileInfoPanel } from './components/Controls/MobileInfoPanel';
 import { useEventData } from './hooks/useEventData';
 import { usePlayback, type ETSEventWithOpacity } from './hooks/usePlayback';
+import { useIsMobile } from './hooks/useIsMobile';
 
 function App() {
   const { events, isLoading, error } = useEventData();
   const [filteredEvents, setFilteredEvents] = useState<ETSEventWithOpacity[]>([]);
   const [displayTime, setDisplayTime] = useState<Date | null>(null);
   const hasLoadedOnce = useRef(false);
+  const isMobile = useIsMobile();
   
   // Track if we've loaded data at least once
   if (events.length > 0 && !hasLoadedOnce.current) {
@@ -94,16 +97,21 @@ function App() {
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       <header style={{ 
         backgroundColor: '#1f2937', 
-        padding: '1rem 1.5rem',
+        padding: isMobile ? '0.5rem 0.75rem' : '1rem 1.5rem',
         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
         zIndex: 10
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'white', margin: 0 }}>
-            ETS Events Visualization
+          <h1 style={{ 
+            fontSize: isMobile ? '1rem' : '1.5rem', 
+            fontWeight: 'bold', 
+            color: 'white', 
+            margin: 0 
+          }}>
+            {isMobile ? 'ETS Events' : 'ETS Events Visualization'}
           </h1>
-          <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>
-            {events.length.toLocaleString()} events loaded
+          <div style={{ fontSize: isMobile ? '0.75rem' : '0.875rem', color: '#9ca3af' }}>
+            {events.length.toLocaleString()} events
           </div>
         </div>
       </header>
@@ -146,6 +154,12 @@ function App() {
           visibleCount={displayEvents.length}
           isPlaying={!showAllEvents}
         />
+        {isMobile && (
+          <MobileInfoPanel 
+            events={events}
+            visibleCount={displayEvents.length}
+          />
+        )}
         <PlaybackControls 
           currentTime={currentTime}
           startTime={startTime}

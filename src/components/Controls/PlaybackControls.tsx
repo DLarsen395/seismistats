@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useState } from 'react';
+import React, { useRef, useCallback, useState, useEffect } from 'react';
 import { usePlaybackStore } from '../../stores/playbackStore';
 
 interface PlaybackControlsProps {
@@ -219,6 +219,15 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
     return `${(seconds / 3600).toFixed(1)}h`;
   }, [rangeStart, rangeEnd, startTime, endTime, speed]);
 
+  // Mobile detection
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   // Handle mouse events for dragging
   const handleMouseDown = useCallback((type: 'left' | 'right' | 'progress') => (e: React.MouseEvent) => {
     e.preventDefault();
@@ -277,42 +286,47 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
   return (
     <div style={{
       position: 'absolute',
-      bottom: '20px',
+      bottom: isMobile ? '10px' : '20px',
       left: '50%',
       transform: 'translateX(-50%)',
       backgroundColor: 'rgba(17, 24, 39, 0.95)',
       backdropFilter: 'blur(12px)',
-      borderRadius: '16px',
-      padding: '12px 20px',
+      borderRadius: isMobile ? '12px' : '16px',
+      padding: isMobile ? '8px 12px' : '12px 20px',
       boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
       border: '1px solid rgba(75, 85, 99, 0.3)',
-      minWidth: '600px',
-      maxWidth: '800px',
+      minWidth: isMobile ? 'calc(100% - 20px)' : '600px',
+      maxWidth: isMobile ? 'calc(100% - 20px)' : '800px',
+      width: isMobile ? 'calc(100% - 20px)' : 'auto',
       zIndex: 1000,
+      boxSizing: 'border-box',
     }}>
       {/* Top row: Date display and event info */}
       <div style={{ 
         display: 'flex', 
         justifyContent: 'space-between', 
         alignItems: 'center',
-        marginBottom: '8px'
+        marginBottom: isMobile ? '6px' : '8px'
       }}>
         {/* Current time display */}
         <div>
-          <div style={{ fontSize: '1rem', fontWeight: 'bold', color: '#fff' }}>
+          <div style={{ fontSize: isMobile ? '0.875rem' : '1rem', fontWeight: 'bold', color: '#fff' }}>
             {formatDate(currentTime)}
-            <span style={{ fontSize: '0.75rem', color: '#9ca3af', marginLeft: '8px' }}>
-              {formatTime(currentTime)}
-            </span>
+            {!isMobile && (
+              <span style={{ fontSize: '0.75rem', color: '#9ca3af', marginLeft: '8px' }}>
+                {formatTime(currentTime)}
+              </span>
+            )}
           </div>
         </div>
 
         {/* Event count and duration info */}
-        <div style={{ textAlign: 'right', fontSize: '0.75rem', color: '#9ca3af' }}>
+        <div style={{ textAlign: 'right', fontSize: isMobile ? '0.65rem' : '0.75rem', color: '#9ca3af' }}>
           <span style={{ color: '#3b82f6', fontWeight: 'bold' }}>{eventCount.toLocaleString()}</span>
           {' / '}
-          {totalEvents.toLocaleString()} events
-          {estimatedDuration && (
+          {totalEvents.toLocaleString()}
+          {!isMobile && ' events'}
+          {estimatedDuration && !isMobile && (
             <span style={{ marginLeft: '8px' }}>• ~{estimatedDuration}</span>
           )}
         </div>
@@ -322,17 +336,17 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
       <div style={{ 
         display: 'flex', 
         alignItems: 'center',
-        gap: '12px'
+        gap: isMobile ? '8px' : '12px'
       }}>
         {/* Playback controls */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '6px', flexShrink: 0 }}>
           {/* Reset button */}
           <button
             onClick={reset}
             disabled={showAllEvents}
             style={{
-              width: '32px',
-              height: '32px',
+              width: isMobile ? '28px' : '32px',
+              height: isMobile ? '28px' : '32px',
               borderRadius: '50%',
               border: 'none',
               backgroundColor: showAllEvents ? 'rgba(75, 85, 99, 0.3)' : 'rgba(75, 85, 99, 0.5)',
@@ -341,7 +355,7 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '0.875rem',
+              fontSize: isMobile ? '0.75rem' : '0.875rem',
               transition: 'all 0.2s',
             }}
             title="Reset to start"
@@ -354,8 +368,8 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
             onClick={togglePlay}
             disabled={showAllEvents}
             style={{
-              width: '40px',
-              height: '40px',
+              width: isMobile ? '36px' : '40px',
+              height: isMobile ? '36px' : '40px',
               borderRadius: '50%',
               border: 'none',
               backgroundColor: showAllEvents ? 'rgba(59, 130, 246, 0.3)' : '#3b82f6',
@@ -364,7 +378,7 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '1rem',
+              fontSize: isMobile ? '0.875rem' : '1rem',
               transition: 'all 0.2s',
             }}
           >
