@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Mapbox GL CSS */
+@import 'mapbox-gl/dist/mapbox-gl.css';
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100;
+    @apply font-sans antialiased;
+    margin: 0;
+    padding: 0;
+  }
+
+  #root {
+    @apply w-full h-screen;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply backdrop-blur-md bg-white/85 dark:bg-gray-800/85;
+    @apply border border-white/30 dark:border-gray-700/30;
+    @apply shadow-lg rounded-xl;
+  }
+
+  .map-container {
+    @apply w-full h-full relative;
+  }
+}
+
+@layer utilities {
+  .transition-smooth {
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  @keyframes pulse-event {
+    0%, 100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.2);
+      opacity: 0.8;
+    }
+  }
+
+  .animate-pulse-event {
+    animation: pulse-event 0.6s ease-in-out;
+  }
+}
