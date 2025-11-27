@@ -104,14 +104,14 @@ export const MapContainer: React.FC<MapContainerProps> = ({ events }) => {
           'circle-radius': [
             'interpolate',
             ['linear'],
-            ['get', 'magnitude'],
+            ['coalesce', ['get', 'magnitude'], 0.5],
             0.4, 4,
             1.9, 14
           ],
           'circle-color': [
             'interpolate',
             ['linear'],
-            ['get', 'magnitude'],
+            ['coalesce', ['get', 'magnitude'], 0.5],
             0.4, '#10B981',  // Green
             0.7, '#F59E0B',  // Yellow
             1.2, '#F97316',  // Orange
