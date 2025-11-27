@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import type { ETSEvent } from '../../types/event';
+import type { ETSEventWithOpacity } from '../../hooks/usePlayback';
 
 // Set Mapbox access token
 const token = import.meta.env.VITE_MAPBOX_TOKEN;
 mapboxgl.accessToken = token;
 
 interface MapContainerProps {
-  events: ETSEvent[];
+  events: ETSEventWithOpacity[];
 }
 
 export const MapContainer: React.FC<MapContainerProps> = ({ events }) => {
@@ -72,9 +73,17 @@ export const MapContainer: React.FC<MapContainerProps> = ({ events }) => {
   useEffect(() => {
     if (!map.current || !mapLoaded || events.length === 0) return;
 
+    // Convert events to GeoJSON, including opacity in properties
     const geojsonData: GeoJSON.FeatureCollection = {
       type: 'FeatureCollection',
-      features: events as GeoJSON.Feature[],
+      features: events.map(event => ({
+        type: 'Feature' as const,
+        geometry: event.geometry,
+        properties: {
+          ...event.properties,
+          opacity: event.opacity,
+        },
+      })),
     };
 
     // Add source if it doesn't exist
@@ -106,9 +115,10 @@ export const MapContainer: React.FC<MapContainerProps> = ({ events }) => {
             1.2, '#F97316',  // Orange
             1.5, '#EF4444'   // Red
           ],
-          'circle-opacity': 0.7,
+          'circle-opacity': ['coalesce', ['get', 'opacity'], 0.8],
           'circle-stroke-width': 1,
           'circle-stroke-color': '#ffffff',
+          'circle-stroke-opacity': ['coalesce', ['get', 'opacity'], 0.8],
         },
       });
 

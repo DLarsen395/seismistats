@@ -5,19 +5,26 @@ import type { ETSEvent } from '../types/event';
 // Milliseconds per day
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
+// Event with opacity for fading
+export interface ETSEventWithOpacity extends ETSEvent {
+  opacity: number;
+}
+
 interface UsePlaybackProps {
   events: ETSEvent[];
-  onFilteredEventsChange: (events: ETSEvent[], currentTime: Date | null) => void;
+  onFilteredEventsChange: (events: ETSEventWithOpacity[], currentTime: Date | null) => void;
 }
 
 export const usePlayback = ({ events, onFilteredEventsChange }: UsePlaybackProps) => {
   const { 
     isPlaying, 
-    speed,  // Now represents days per second
+    speed,  // days per second
     currentTime, 
     startTime, 
     endTime,
-    fadeOutDuration,
+    rangeStart,
+    rangeEnd,
+    fadeOutDuration, // seconds of real-time fade
     showAllEvents,
     setCurrentTime, 
     setTimeRange 
@@ -28,12 +35,12 @@ export const usePlayback = ({ events, onFilteredEventsChange }: UsePlaybackProps
   
   // Use refs for values that change during animation to avoid effect restarts
   const currentTimeRef = useRef(currentTime);
-  const endTimeRef = useRef(endTime);
+  const rangeEndRef = useRef(rangeEnd);
   const speedRef = useRef(speed);
   
   // Keep refs in sync
   useEffect(() => { currentTimeRef.current = currentTime; }, [currentTime]);
-  useEffect(() => { endTimeRef.current = endTime; }, [endTime]);
+  useEffect(() => { rangeEndRef.current = rangeEnd; }, [rangeEnd]);
   useEffect(() => { speedRef.current = speed; }, [speed]);
 
   // Initialize time range from events
@@ -52,22 +59,40 @@ export const usePlayback = ({ events, onFilteredEventsChange }: UsePlaybackProps
     }
   }, [events, setTimeRange]);
 
-  // Filter events based on current playback time
-  const getFilteredEvents = useCallback(() => {
+  // Filter events based on current playback time with opacity for fading
+  const getFilteredEvents = useCallback((): ETSEventWithOpacity[] => {
     if (showAllEvents || !currentTime) {
-      return events;
+      return events.map(e => ({ ...e, opacity: 0.8 }));
     }
 
     const currentMs = currentTime.getTime();
-    // Fade window: events visible from (currentTime - fadeOutDuration days) to currentTime
-    const fadeWindowMs = fadeOutDuration * MS_PER_DAY;
+    // Calculate fade window based on speed and fadeOutDuration (seconds)
+    // fadeOutDuration seconds at current speed = X days
+    const fadeWindowDays = fadeOutDuration * speed;
+    const fadeWindowMs = fadeWindowDays * MS_PER_DAY;
     const windowStart = currentMs - fadeWindowMs;
 
-    return events.filter(event => {
-      const eventTime = new Date(event.properties.time).getTime();
-      return eventTime <= currentMs && eventTime >= windowStart;
-    });
-  }, [events, currentTime, fadeOutDuration, showAllEvents]);
+    // Only include events within range
+    const effectiveStart = rangeStart?.getTime() || startTime?.getTime() || 0;
+    const effectiveEnd = rangeEnd?.getTime() || endTime?.getTime() || Infinity;
+
+    return events
+      .filter(event => {
+        const eventTime = new Date(event.properties.time).getTime();
+        // Must be within user-selected range and within current playback window
+        return eventTime >= effectiveStart && 
+               eventTime <= effectiveEnd &&
+               eventTime <= currentMs && 
+               eventTime >= windowStart;
+      })
+      .map(event => {
+        const eventTime = new Date(event.properties.time).getTime();
+        // Calculate opacity: 1.0 for new events, fading to 0 at windowStart
+        const age = currentMs - eventTime;
+        const opacity = Math.max(0.1, Math.min(0.9, 1 - (age / fadeWindowMs)));
+        return { ...event, opacity };
+      });
+  }, [events, currentTime, fadeOutDuration, speed, showAllEvents, rangeStart, rangeEnd, startTime, endTime]);
 
   // Animation loop - only restart when isPlaying changes
   useEffect(() => {
@@ -87,7 +112,7 @@ export const usePlayback = ({ events, onFilteredEventsChange }: UsePlaybackProps
       }
 
       const currentT = currentTimeRef.current;
-      const endT = endTimeRef.current;
+      const endT = rangeEndRef.current;
       const spd = speedRef.current;
 
       if (!currentT || !endT) {
@@ -99,7 +124,6 @@ export const usePlayback = ({ events, onFilteredEventsChange }: UsePlaybackProps
       lastTickRef.current = timestamp;
 
       // Calculate time advancement
-      // speed = days per second
       const secondsElapsed = deltaMs / 1000;
       const daysAdvanced = secondsElapsed * spd;
       const msAdvanced = daysAdvanced * MS_PER_DAY;
@@ -136,6 +160,8 @@ export const usePlayback = ({ events, onFilteredEventsChange }: UsePlaybackProps
     currentTime,
     startTime,
     endTime,
+    rangeStart,
+    rangeEnd,
     isPlaying,
     speed,
     showAllEvents,

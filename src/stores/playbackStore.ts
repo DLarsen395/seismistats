@@ -10,11 +10,13 @@ interface PlaybackState {
   
   // Time management
   currentTime: Date | null;
-  startTime: Date | null;
-  endTime: Date | null;
+  startTime: Date | null;  // Earliest event in data
+  endTime: Date | null;    // Latest event in data
+  rangeStart: Date | null; // User-selected playback start (bracket slider)
+  rangeEnd: Date | null;   // User-selected playback end (bracket slider)
   
   // Display settings
-  fadeOutDuration: number; // days before event fades out
+  fadeOutDuration: number; // seconds of real-time fade
   showAllEvents: boolean;  // toggle between playback mode and show-all mode
   
   // Actions
@@ -24,6 +26,8 @@ interface PlaybackState {
   setSpeed: (speed: PlaybackSpeed) => void;
   setCurrentTime: (time: Date) => void;
   setTimeRange: (start: Date, end: Date) => void;
+  setRangeStart: (time: Date) => void;
+  setRangeEnd: (time: Date) => void;
   setFadeOutDuration: (duration: number) => void;
   setShowAllEvents: (show: boolean) => void;
   reset: () => void;
@@ -32,11 +36,13 @@ interface PlaybackState {
 export const usePlaybackStore = create<PlaybackState>((set) => ({
   // Initial state
   isPlaying: false,
-  speed: 30, // Default: 30 days per second (good for multi-year datasets)
+  speed: 30, // Default: 30 days per second (1 mo/s)
   currentTime: null,
   startTime: null,
   endTime: null,
-  fadeOutDuration: 30, // 30 days fade window
+  rangeStart: null,
+  rangeEnd: null,
+  fadeOutDuration: 3, // 3 seconds real-time fade
   showAllEvents: true, // Start showing all events
   
   // Actions
@@ -48,12 +54,26 @@ export const usePlaybackStore = create<PlaybackState>((set) => ({
   })),
   setSpeed: (speed) => set({ speed }),
   setCurrentTime: (currentTime) => set({ currentTime }),
-  setTimeRange: (startTime, endTime) => set({ startTime, endTime, currentTime: startTime }),
+  setTimeRange: (startTime, endTime) => set({ 
+    startTime, 
+    endTime, 
+    rangeStart: startTime,
+    rangeEnd: endTime,
+    currentTime: startTime 
+  }),
+  setRangeStart: (rangeStart) => set((state) => ({ 
+    rangeStart,
+    currentTime: state.currentTime && state.currentTime < rangeStart ? rangeStart : state.currentTime
+  })),
+  setRangeEnd: (rangeEnd) => set((state) => ({
+    rangeEnd,
+    currentTime: state.currentTime && state.currentTime > rangeEnd ? rangeEnd : state.currentTime
+  })),
   setFadeOutDuration: (fadeOutDuration) => set({ fadeOutDuration }),
   setShowAllEvents: (showAllEvents) => set({ showAllEvents, isPlaying: false }),
   reset: () => set((state) => ({ 
     isPlaying: false, 
-    currentTime: state.startTime,
+    currentTime: state.rangeStart || state.startTime,
     showAllEvents: true
   })),
 }));

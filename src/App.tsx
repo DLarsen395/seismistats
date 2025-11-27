@@ -1,27 +1,27 @@
 import { useState, useCallback } from 'react';
 import { MapContainer } from './components/Map/MapContainer';
 import { PlaybackControls } from './components/Controls/PlaybackControls';
+import { SideControls } from './components/Controls/SideControls';
 import { useEventData } from './hooks/useEventData';
-import { usePlayback } from './hooks/usePlayback';
-import type { ETSEvent } from './types/event';
+import { usePlayback, type ETSEventWithOpacity } from './hooks/usePlayback';
 
 function App() {
   const { events, isLoading, error } = useEventData();
-  const [filteredEvents, setFilteredEvents] = useState<ETSEvent[]>([]);
+  const [filteredEvents, setFilteredEvents] = useState<ETSEventWithOpacity[]>([]);
   const [displayTime, setDisplayTime] = useState<Date | null>(null);
 
-  const handleFilteredEventsChange = useCallback((events: ETSEvent[], currentTime: Date | null) => {
+  const handleFilteredEventsChange = useCallback((events: ETSEventWithOpacity[], currentTime: Date | null) => {
     setFilteredEvents(events);
     setDisplayTime(currentTime);
   }, []);
 
-  const { currentTime, startTime, endTime, showAllEvents } = usePlayback({ 
+  const { currentTime, startTime, endTime, rangeStart, rangeEnd, showAllEvents } = usePlayback({ 
     events, 
     onFilteredEventsChange: handleFilteredEventsChange 
   });
 
   // Use all events or filtered events based on mode
-  const displayEvents = showAllEvents ? events : filteredEvents;
+  const displayEvents = showAllEvents ? events.map(e => ({ ...e, opacity: 0.8 })) : filteredEvents;
 
   if (error) {
     return (
@@ -104,9 +104,12 @@ function App() {
           currentTime={currentTime}
           startTime={startTime}
           endTime={endTime}
+          rangeStart={rangeStart}
+          rangeEnd={rangeEnd}
           eventCount={displayEvents.length}
           totalEvents={events.length}
         />
+        <SideControls />
       </main>
     </div>
   );
