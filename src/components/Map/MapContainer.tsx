@@ -151,25 +151,46 @@ export const MapContainer: React.FC<MapContainerProps> = ({ events }) => {
   }, [events, mapLoaded]);
 
   return (
-    <div className="map-container">
-      <div ref={mapContainer} className="absolute inset-0" />
+    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
+      <div ref={mapContainer} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
       
       {/* Error state */}
       {mapError && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
-          <div className="text-center p-6 bg-red-900/50 rounded-lg max-w-md">
-            <p className="text-red-400 font-bold mb-2">Map Error</p>
-            <p className="text-gray-300">{mapError}</p>
+        <div style={{ 
+          position: 'absolute', 
+          inset: 0, 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          backgroundColor: '#111827'
+        }}>
+          <div style={{ textAlign: 'center', padding: '1.5rem', backgroundColor: 'rgba(127, 29, 29, 0.5)', borderRadius: '0.5rem' }}>
+            <p style={{ color: '#f87171', fontWeight: 'bold', marginBottom: '0.5rem' }}>Map Error</p>
+            <p style={{ color: '#d1d5db' }}>{mapError}</p>
           </div>
         </div>
       )}
       
       {/* Loading indicator */}
       {!mapLoaded && !mapError && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-900">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-400">Loading map...</p>
+        <div style={{ 
+          position: 'absolute', 
+          inset: 0, 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          backgroundColor: '#111827'
+        }}>
+          <div style={{ textAlign: 'center' }}>
+            <div className="animate-spin" style={{ 
+              width: '3rem', 
+              height: '3rem', 
+              border: '2px solid transparent',
+              borderBottomColor: '#3b82f6',
+              borderRadius: '50%',
+              margin: '0 auto 1rem'
+            }}></div>
+            <p style={{ color: '#9ca3af' }}>Loading map...</p>
           </div>
         </div>
       )}
