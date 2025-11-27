@@ -53,6 +53,9 @@ export const EventStats: React.FC<EventStatsProps> = ({
     });
   };
 
+  // Hide on mobile - use MobileInfoPanel instead
+  if (isMobile) return null;
+
   return (
     <div style={{
       position: 'absolute',
