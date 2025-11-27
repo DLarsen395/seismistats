@@ -1,7 +1,15 @@
 import React from 'react';
 import { usePlaybackStore, type PlaybackSpeed } from '../../stores/playbackStore';
 
-const SPEED_OPTIONS: PlaybackSpeed[] = [0.5, 1, 2, 5, 10, 20];
+// Days per second options
+const SPEED_OPTIONS: { value: PlaybackSpeed; label: string }[] = [
+  { value: 1, label: '1 day/s' },
+  { value: 7, label: '1 wk/s' },
+  { value: 30, label: '1 mo/s' },
+  { value: 90, label: '3 mo/s' },
+  { value: 180, label: '6 mo/s' },
+  { value: 365, label: '1 yr/s' },
+];
 
 interface PlaybackControlsProps {
   currentTime: Date | null;
@@ -55,6 +63,24 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
     const current = currentTime.getTime() - startTime.getTime();
     return Math.min(100, Math.max(0, (current / total) * 100));
   }, [currentTime, startTime, endTime]);
+
+  // Calculate estimated playback duration
+  const estimatedDuration = React.useMemo(() => {
+    if (!startTime || !endTime) return null;
+    const totalDays = (endTime.getTime() - startTime.getTime()) / (24 * 60 * 60 * 1000);
+    const seconds = totalDays / speed;
+    if (seconds < 60) return `${Math.round(seconds)}s`;
+    if (seconds < 3600) return `${Math.round(seconds / 60)}m`;
+    return `${(seconds / 3600).toFixed(1)}h`;
+  }, [startTime, endTime, speed]);
+
+  // Calculate data time span
+  const timeSpan = React.useMemo(() => {
+    if (!startTime || !endTime) return null;
+    const days = (endTime.getTime() - startTime.getTime()) / (24 * 60 * 60 * 1000);
+    if (days < 365) return `${Math.round(days)} days`;
+    return `${(days / 365).toFixed(1)} years`;
+  }, [startTime, endTime]);
 
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!startTime || !endTime) return;
@@ -130,11 +156,18 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
           </div>
         </div>
 
-        {/* Event count */}
+        {/* Event count and duration info */}
         <div style={{ textAlign: 'right', fontSize: '0.75rem', color: '#9ca3af' }}>
-          <span style={{ color: '#3b82f6', fontWeight: 'bold' }}>{eventCount.toLocaleString()}</span>
-          {' / '}
-          {totalEvents.toLocaleString()} events
+          <div>
+            <span style={{ color: '#3b82f6', fontWeight: 'bold' }}>{eventCount.toLocaleString()}</span>
+            {' / '}
+            {totalEvents.toLocaleString()} events
+          </div>
+          {timeSpan && (
+            <div style={{ fontSize: '0.65rem', marginTop: '2px' }}>
+              {timeSpan} • ~{estimatedDuration} playback
+            </div>
+          )}
         </div>
       </div>
 
@@ -229,23 +262,24 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>Speed:</span>
           <div style={{ display: 'flex', gap: '4px' }}>
-            {SPEED_OPTIONS.map((s) => (
+            {SPEED_OPTIONS.map((option) => (
               <button
-                key={s}
-                onClick={() => setSpeed(s)}
+                key={option.value}
+                onClick={() => setSpeed(option.value)}
                 disabled={showAllEvents}
                 style={{
                   padding: '4px 8px',
                   borderRadius: '4px',
                   border: 'none',
-                  backgroundColor: speed === s && !showAllEvents ? '#3b82f6' : 'rgba(75, 85, 99, 0.5)',
+                  backgroundColor: speed === option.value && !showAllEvents ? '#3b82f6' : 'rgba(75, 85, 99, 0.5)',
                   color: showAllEvents ? '#6b7280' : '#fff',
-                  fontSize: '0.7rem',
+                  fontSize: '0.65rem',
                   cursor: showAllEvents ? 'not-allowed' : 'pointer',
                   transition: 'all 0.2s',
+                  whiteSpace: 'nowrap',
                 }}
               >
-                {s}x
+                {option.label}
               </button>
             ))}
           </div>

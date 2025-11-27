@@ -2,8 +2,8 @@ import { useEffect, useRef, useCallback } from 'react';
 import { usePlaybackStore } from '../stores/playbackStore';
 import type { ETSEvent } from '../types/event';
 
-// How many real-world milliseconds represent one day in playback
-const MS_PER_DAY_AT_1X = 1000; // 1 second = 1 day at 1x speed
+// Milliseconds per day
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 interface UsePlaybackProps {
   events: ETSEvent[];
@@ -13,7 +13,7 @@ interface UsePlaybackProps {
 export const usePlayback = ({ events, onFilteredEventsChange }: UsePlaybackProps) => {
   const { 
     isPlaying, 
-    speed, 
+    speed,  // Now represents days per second
     currentTime, 
     startTime, 
     endTime,
@@ -78,9 +78,12 @@ export const usePlayback = ({ events, onFilteredEventsChange }: UsePlaybackProps
       lastTickRef.current = timestamp;
 
       // Calculate time advancement
-      // At 1x speed: 1 real second = 1 day of event time
-      const daysAdvanced = (deltaMs / MS_PER_DAY_AT_1X) * speed;
-      const msAdvanced = daysAdvanced * 24 * 60 * 60 * 1000;
+      // speed = days per second, so:
+      // days advanced = (deltaMs / 1000) * speed
+      // ms advanced = days * MS_PER_DAY
+      const secondsElapsed = deltaMs / 1000;
+      const daysAdvanced = secondsElapsed * speed;
+      const msAdvanced = daysAdvanced * MS_PER_DAY;
 
       const newTime = new Date(currentTime.getTime() + msAdvanced);
 
