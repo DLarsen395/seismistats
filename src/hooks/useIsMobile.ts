@@ -1,5 +1,17 @@
 import { useState, useEffect, useSyncExternalStore } from 'react';
 
+// Check if device is mobile/tablet (based on screen size or touch capability)
+const getIsMobileDevice = () => {
+  if (typeof window === 'undefined') return false;
+  // Consider it a mobile device if:
+  // 1. Screen width is less than 1024px (tablets and phones), OR
+  // 2. It's a touch device with width less than 1200px
+  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  const isSmallScreen = window.innerWidth < 1024;
+  const isMediumTouchScreen = isTouchDevice && window.innerWidth < 1200;
+  return isSmallScreen || isMediumTouchScreen;
+};
+
 // Get initial value safely (works in SSR too)
 const getSnapshot = (breakpoint: number) => () => {
   if (typeof window === 'undefined') return false;
@@ -24,6 +36,29 @@ export const useIsMobile = (breakpoint: number = 768) => {
     getSnapshot(breakpoint),
     getServerSnapshot
   );
+};
+
+// Hook to detect if we're on a mobile/tablet device (regardless of orientation)
+export const useIsMobileDevice = () => {
+  const [isMobileDevice, setIsMobileDevice] = useState(() => getIsMobileDevice());
+
+  useEffect(() => {
+    const checkDevice = () => {
+      setIsMobileDevice(getIsMobileDevice());
+    };
+
+    window.addEventListener('resize', checkDevice);
+    window.addEventListener('orientationchange', () => {
+      setTimeout(checkDevice, 100);
+    });
+    
+    return () => {
+      window.removeEventListener('resize', checkDevice);
+      window.removeEventListener('orientationchange', checkDevice);
+    };
+  }, []);
+
+  return isMobileDevice;
 };
 
 // Simple hook for components that use inline state (for backwards compatibility)

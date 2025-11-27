@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useIsMobile } from '../../hooks/useIsMobile';
+import { useIsMobileDevice } from '../../hooks/useIsMobile';
 import { usePlaybackStore } from '../../stores/playbackStore';
 import type { ETSEvent } from '../../types/event';
 
@@ -22,7 +22,7 @@ export const MobileInfoPanel: React.FC<MobileInfoPanelProps> = ({
   visibleCount,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const isMobile = useIsMobile();
+  const isMobileDevice = useIsMobileDevice();
   
   const showAllEvents = usePlaybackStore((state) => state.showAllEvents);
   const setShowAllEvents = usePlaybackStore((state) => state.setShowAllEvents);
@@ -31,8 +31,8 @@ export const MobileInfoPanel: React.FC<MobileInfoPanelProps> = ({
   const isPlaying = usePlaybackStore((state) => state.isPlaying);
   const pause = usePlaybackStore((state) => state.pause);
 
-  // Only render on mobile
-  if (!isMobile) return null;
+  // Only render on mobile/tablet devices
+  if (!isMobileDevice) return null;
 
   const handleModeChange = (showAll: boolean) => {
     if (isPlaying) {
@@ -48,7 +48,7 @@ export const MobileInfoPanel: React.FC<MobileInfoPanelProps> = ({
         onClick={() => setIsExpanded(!isExpanded)}
         style={{
           position: 'absolute',
-          bottom: '90px',
+          bottom: '115px',  // Raised to account for higher playback controls
           right: '16px',
           zIndex: 150,
           background: 'rgba(30, 30, 40, 0.9)',
@@ -75,7 +75,7 @@ export const MobileInfoPanel: React.FC<MobileInfoPanelProps> = ({
         <div
           style={{
             position: 'absolute',
-            bottom: '140px',
+            bottom: '165px',  // Raised to account for higher playback controls
             left: '50px',
             right: '16px',
             zIndex: 140,

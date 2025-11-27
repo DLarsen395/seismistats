@@ -294,7 +294,7 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
   return (
     <div style={{
       position: 'absolute',
-      bottom: isMobile ? '10px' : '20px',
+      bottom: isMobile ? '35px' : '20px',  // Higher on mobile to avoid Mapbox logo
       left: '50%',
       transform: 'translateX(-50%)',
       backgroundColor: 'rgba(17, 24, 39, 0.95)',

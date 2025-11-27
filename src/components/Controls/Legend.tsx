@@ -1,5 +1,5 @@
 import React from 'react';
-import { useIsMobile } from '../../hooks/useIsMobile';
+import { useIsMobileDevice } from '../../hooks/useIsMobile';
 
 // Size stops (visual representation) - colors now represent mid-range depth
 const sizeStops = [
@@ -9,10 +9,10 @@ const sizeStops = [
 ];
 
 export const Legend: React.FC = () => {
-  const isMobile = useIsMobile();
+  const isMobileDevice = useIsMobileDevice();
   
-  // Hide on mobile - use MobileInfoPanel instead
-  if (isMobile) return null;
+  // Hide on mobile/tablet devices - use MobileInfoPanel instead
+  if (isMobileDevice) return null;
   
   return (
     <div style={{

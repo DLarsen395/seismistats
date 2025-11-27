@@ -8,14 +8,14 @@ import { EventStats } from './components/Controls/EventStats';
 import { MobileInfoPanel } from './components/Controls/MobileInfoPanel';
 import { useEventData } from './hooks/useEventData';
 import { usePlayback, type ETSEventWithOpacity } from './hooks/usePlayback';
-import { useIsMobile } from './hooks/useIsMobile';
+import { useIsMobileDevice } from './hooks/useIsMobile';
 
 function App() {
   const { events, isLoading, error } = useEventData();
   const [filteredEvents, setFilteredEvents] = useState<ETSEventWithOpacity[]>([]);
   const [displayTime, setDisplayTime] = useState<Date | null>(null);
   const hasLoadedOnce = useRef(false);
-  const isMobile = useIsMobile();
+  const isMobileDevice = useIsMobileDevice();
   
   // Track if we've loaded data at least once
   if (events.length > 0 && !hasLoadedOnce.current) {
@@ -97,20 +97,20 @@ function App() {
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       <header style={{ 
         backgroundColor: '#1f2937', 
-        padding: isMobile ? '0.5rem 0.75rem' : '1rem 1.5rem',
+        padding: isMobileDevice ? '0.5rem 0.75rem' : '1rem 1.5rem',
         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
         zIndex: 10
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <h1 style={{ 
-            fontSize: isMobile ? '1rem' : '1.5rem', 
+            fontSize: isMobileDevice ? '1rem' : '1.5rem', 
             fontWeight: 'bold', 
             color: 'white', 
             margin: 0 
           }}>
-            {isMobile ? 'ETS Events' : 'ETS Events Visualization'}
+            {isMobileDevice ? 'ETS Events' : 'ETS Events Visualization'}
           </h1>
-          <div style={{ fontSize: isMobile ? '0.75rem' : '0.875rem', color: '#9ca3af' }}>
+          <div style={{ fontSize: isMobileDevice ? '0.75rem' : '0.875rem', color: '#9ca3af' }}>
             {events.length.toLocaleString()} events
           </div>
         </div>
@@ -154,7 +154,7 @@ function App() {
           visibleCount={displayEvents.length}
           isPlaying={!showAllEvents}
         />
-        {isMobile && (
+        {isMobileDevice && (
           <MobileInfoPanel 
             events={events}
             visibleCount={displayEvents.length}

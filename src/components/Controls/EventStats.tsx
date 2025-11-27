@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import type { ETSEvent } from '../../types/event';
-import { useIsMobile } from '../../hooks/useIsMobile';
+import { useIsMobileDevice } from '../../hooks/useIsMobile';
 
 interface EventStatsProps {
   events: ETSEvent[];
@@ -13,7 +13,7 @@ export const EventStats: React.FC<EventStatsProps> = ({
   visibleCount, 
   isPlaying,
 }) => {
-  const isMobile = useIsMobile();
+  const isMobileDevice = useIsMobileDevice();
   
   const stats = useMemo(() => {
     if (events.length === 0) {
@@ -53,8 +53,8 @@ export const EventStats: React.FC<EventStatsProps> = ({
     });
   };
 
-  // Hide on mobile - use MobileInfoPanel instead
-  if (isMobile) return null;
+  // Hide on mobile/tablet - use MobileInfoPanel instead
+  if (isMobileDevice) return null;
 
   return (
     <div style={{
