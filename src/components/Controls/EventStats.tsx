@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import type { ETSEvent } from '../../types/event';
+import { useIsMobile } from '../../hooks/useIsMobile';
 
 interface EventStatsProps {
   events: ETSEvent[];
@@ -12,6 +13,8 @@ export const EventStats: React.FC<EventStatsProps> = ({
   visibleCount, 
   isPlaying,
 }) => {
+  const isMobile = useIsMobile();
+  
   const stats = useMemo(() => {
     if (events.length === 0) {
       return {

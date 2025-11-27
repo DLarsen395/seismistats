@@ -1,11 +1,16 @@
 import { usePlaybackStore } from '../../stores/playbackStore';
 import { getSpeedOptionsForRange } from '../../services/tremor-api';
+import { useIsMobile } from '../../hooks/useIsMobile';
 
 export const SideControls: React.FC = () => {
   const { showAllEvents, speed, dataRangePreset, setShowAllEvents, setSpeed } = usePlaybackStore();
+  const isMobile = useIsMobile();
   
   // Get speed options based on current data range preset
   const speedOptions = getSpeedOptionsForRange(dataRangePreset);
+  
+  // Hide on mobile
+  if (isMobile) return null;
 
   return (
     <div
