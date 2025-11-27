@@ -3,7 +3,9 @@ import mapboxgl from 'mapbox-gl';
 import type { ETSEvent } from '../../types/event';
 
 // Set Mapbox access token
-mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
+const token = import.meta.env.VITE_MAPBOX_TOKEN;
+console.log('Mapbox token loaded:', token ? 'Yes (length: ' + token.length + ')' : 'NO TOKEN!');
+mapboxgl.accessToken = token;
 
 interface MapContainerProps {
   events: ETSEvent[];
@@ -13,27 +15,46 @@ export const MapContainer: React.FC<MapContainerProps> = ({ events }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [mapError, setMapError] = useState<string | null>(null);
 
   // Initialize map
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
 
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/dark-v11',
-      center: [-123.0, 47.0], // Pacific Northwest
-      zoom: 6.5,
-      pitch: 0,
-      bearing: 0,
-    });
+    if (!token) {
+      setMapError('Mapbox token is missing. Please add VITE_MAPBOX_TOKEN to .env file.');
+      return;
+    }
 
-    // Add navigation controls
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+    try {
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/dark-v11',
+        center: [-123.0, 47.0], // Pacific Northwest
+        zoom: 6.5,
+        pitch: 0,
+        bearing: 0,
+      });
 
-    // Set map loaded state
-    map.current.on('load', () => {
-      setMapLoaded(true);
-    });
+      // Add navigation controls
+      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+      // Set map loaded state
+      map.current.on('load', () => {
+        console.log('Map loaded successfully!');
+        setMapLoaded(true);
+      });
+
+      // Handle errors
+      map.current.on('error', (e) => {
+        console.error('Mapbox error:', e);
+        setMapError(`Map error: ${e.error?.message || 'Unknown error'}`);
+      });
+
+    } catch (err) {
+      console.error('Failed to initialize map:', err);
+      setMapError(`Failed to initialize map: ${err}`);
+    }
 
     // Cleanup on unmount
     return () => {
@@ -133,8 +154,18 @@ export const MapContainer: React.FC<MapContainerProps> = ({ events }) => {
     <div className="map-container">
       <div ref={mapContainer} className="absolute inset-0" />
       
+      {/* Error state */}
+      {mapError && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
+          <div className="text-center p-6 bg-red-900/50 rounded-lg max-w-md">
+            <p className="text-red-400 font-bold mb-2">Map Error</p>
+            <p className="text-gray-300">{mapError}</p>
+          </div>
+        </div>
+      )}
+      
       {/* Loading indicator */}
-      {!mapLoaded && (
+      {!mapLoaded && !mapError && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-900">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
