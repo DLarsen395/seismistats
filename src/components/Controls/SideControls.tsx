@@ -2,12 +2,13 @@ import { usePlaybackStore, type PlaybackSpeed } from '../../stores/playbackStore
 
 const SPEED_OPTIONS: { value: PlaybackSpeed; label: string }[] = [
   { value: 1, label: '1 day/s' },
-  { value: 7, label: '1 week/s' },
+  { value: 7, label: '1 wk/s' },
+  { value: 14, label: '2 wk/s' },
   { value: 30, label: '1 mo/s' },
   { value: 60, label: '2 mo/s' },
-  { value: 90, label: '3 mo/s' },
-  { value: 180, label: '6 mo/s' },
-  { value: 365, label: '1 yr/s' },
+  { value: 120, label: '4 mo/s' },
+  { value: 240, label: '8 mo/s' },
+  { value: 365, label: '12 mo/s' },
 ];
 
 export const SideControls: React.FC = () => {

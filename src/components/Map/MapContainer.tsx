@@ -34,8 +34,8 @@ export const MapContainer: React.FC<MapContainerProps> = ({ events }) => {
         const mapInstance = new mapboxgl.Map({
           container: mapContainer.current,
           style: 'mapbox://styles/dlarsen395/cmihxx3wa005o01stf9mm69b6',
-          center: [-123.0, 47.0],
-          zoom: 6.5,
+          center: [-124.0, 44.5], // Centered on Oregon coast for full CSZ view
+          zoom: 5.2, // Zoom to show Vancouver Island to Northern California
         });
 
         map.current = mapInstance;

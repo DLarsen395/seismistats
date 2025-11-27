@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 // Days per second options - how many days of event time pass per real second
-export type PlaybackSpeed = 1 | 7 | 30 | 60 | 90 | 180 | 365;
+export type PlaybackSpeed = 1 | 7 | 14 | 30 | 60 | 120 | 240 | 365;
 
 // Compute fade duration based on speed: 2s at 1 day/s, scaling to 0.5s at 365 days/s
 // Using logarithmic scale for smooth transition
