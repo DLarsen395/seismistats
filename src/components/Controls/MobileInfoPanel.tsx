@@ -43,13 +43,13 @@ export const MobileInfoPanel: React.FC<MobileInfoPanelProps> = ({
 
   return (
     <>
-      {/* Toggle Button */}
+      {/* Toggle Button - positioned on right to avoid Mapbox logo */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         style={{
           position: 'absolute',
           bottom: '90px',
-          left: '16px',
+          right: '16px',
           zIndex: 150,
           background: 'rgba(30, 30, 40, 0.9)',
           backdropFilter: 'blur(12px)',
@@ -76,7 +76,7 @@ export const MobileInfoPanel: React.FC<MobileInfoPanelProps> = ({
           style={{
             position: 'absolute',
             bottom: '140px',
-            left: '16px',
+            left: '50px',
             right: '16px',
             zIndex: 140,
             background: 'rgba(30, 30, 40, 0.95)',

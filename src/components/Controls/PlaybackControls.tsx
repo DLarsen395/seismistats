@@ -219,13 +219,21 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
     return `${(seconds / 3600).toFixed(1)}h`;
   }, [rangeStart, rangeEnd, startTime, endTime, speed]);
 
-  // Mobile detection
-  const [isMobile, setIsMobile] = useState(false);
+  // Mobile detection with orientation change support
+  const [isMobile, setIsMobile] = useState(() => 
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  );
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
     window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    window.addEventListener('orientationchange', () => {
+      // Delay check for orientation change to get accurate dimensions
+      setTimeout(checkMobile, 100);
+    });
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+      window.removeEventListener('orientationchange', checkMobile);
+    };
   }, []);
 
   // Handle mouse events for dragging

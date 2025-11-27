@@ -31,13 +31,21 @@ export const DataRangeSelector: React.FC<DataRangeSelectorProps> = ({ isLoading 
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
   
-  // Mobile detection
-  const [isMobile, setIsMobile] = useState(false);
+  // Mobile detection with orientation change support
+  const [isMobile, setIsMobile] = useState(() => 
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  );
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
     window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    window.addEventListener('orientationchange', () => {
+      // Delay check for orientation change to get accurate dimensions
+      setTimeout(checkMobile, 100);
+    });
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+      window.removeEventListener('orientationchange', checkMobile);
+    };
   }, []);
 
   const handlePresetChange = (preset: DataRangePreset) => {
