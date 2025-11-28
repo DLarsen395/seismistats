@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { ETSEvent } from '../types/event';
 import { fetchTremorEvents, getPresetDateRange, getRecommendedSpeed } from '../services/tremor-api';
-import type { DataRangePreset } from '../services/tremor-api';
 import { usePlaybackStore } from '../stores/playbackStore';
 
 export const useEventData = () => {

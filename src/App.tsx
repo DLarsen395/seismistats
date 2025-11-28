@@ -13,7 +13,6 @@ import { useIsMobileDevice } from './hooks/useIsMobile';
 function App() {
   const { events, isLoading, error } = useEventData();
   const [filteredEvents, setFilteredEvents] = useState<ETSEventWithOpacity[]>([]);
-  const [displayTime, setDisplayTime] = useState<Date | null>(null);
   const hasLoadedOnce = useRef(false);
   const isMobileDevice = useIsMobileDevice();
   
@@ -22,9 +21,8 @@ function App() {
     hasLoadedOnce.current = true;
   }
 
-  const handleFilteredEventsChange = useCallback((events: ETSEventWithOpacity[], currentTime: Date | null) => {
+  const handleFilteredEventsChange = useCallback((events: ETSEventWithOpacity[], _currentTime: Date | null) => {
     setFilteredEvents(events);
-    setDisplayTime(currentTime);
   }, []);
 
   const { currentTime, startTime, endTime, rangeStart, rangeEnd, showAllEvents } = usePlayback({ 
