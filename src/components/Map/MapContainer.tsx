@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import mapboxgl from 'mapbox-gl';
 import type { ETSEvent } from '../../types/event';
 import type { ETSEventWithOpacity } from '../../hooks/usePlayback';
@@ -15,16 +15,20 @@ export const MapContainer: React.FC<MapContainerProps> = ({ events }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
-  const [mapError, setMapError] = useState<string | null>(null);
+  
+  // Check for token error before render (not in effect)
+  const tokenError = useMemo(() => {
+    if (!token) {
+      return 'Mapbox token is missing. Please add VITE_MAPBOX_TOKEN to .env file.';
+    }
+    return null;
+  }, []);
+  
+  const [mapError, setMapError] = useState<string | null>(tokenError);
 
   // Initialize map
   useEffect(() => {
-    if (!mapContainer.current || map.current) return;
-
-    if (!token) {
-      setMapError('Mapbox token is missing. Please add VITE_MAPBOX_TOKEN to .env file.');
-      return;
-    }
+    if (!mapContainer.current || map.current || tokenError) return;
 
     // Small delay to ensure DOM is ready
     const timer = setTimeout(() => {
@@ -67,7 +71,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({ events }) => {
       clearTimeout(timer);
       map.current?.remove();
     };
-  }, []);
+  }, [tokenError]);
 
   // Add events to map when loaded
   useEffect(() => {

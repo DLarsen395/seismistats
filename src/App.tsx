@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { MapContainer } from './components/Map/MapContainer';
 import { PlaybackControls } from './components/Controls/PlaybackControls';
 import { SideControls } from './components/Controls/SideControls';
@@ -13,16 +13,13 @@ import { useIsMobileDevice } from './hooks/useIsMobile';
 function App() {
   const { events, isLoading, error } = useEventData();
   const [filteredEvents, setFilteredEvents] = useState<ETSEventWithOpacity[]>([]);
-  const hasLoadedOnce = useRef(false);
   const isMobileDevice = useIsMobileDevice();
   
-  // Track if we've loaded data at least once
-  if (events.length > 0 && !hasLoadedOnce.current) {
-    hasLoadedOnce.current = true;
-  }
+  // Track if we've ever had events loaded (derived state, not effect-based)
+  const hasLoadedOnce = events.length > 0 || filteredEvents.length > 0;
 
-  const handleFilteredEventsChange = useCallback((events: ETSEventWithOpacity[], _currentTime: Date | null) => {
-    setFilteredEvents(events);
+  const handleFilteredEventsChange = useCallback((newEvents: ETSEventWithOpacity[]) => {
+    setFilteredEvents(newEvents);
   }, []);
 
   const { currentTime, startTime, endTime, rangeStart, rangeEnd, showAllEvents } = usePlayback({ 
@@ -67,7 +64,7 @@ function App() {
   }
 
   // Show full-page loading only on initial load
-  if (isLoading && !hasLoadedOnce.current) {
+  if (isLoading && !hasLoadedOnce) {
     return (
       <div style={{ 
         display: 'flex', 
@@ -118,7 +115,7 @@ function App() {
         <MapContainer events={displayEvents} />
         
         {/* Loading overlay for data refresh */}
-        {isLoading && hasLoadedOnce.current && (
+        {isLoading && hasLoadedOnce && (
           <div style={{
             position: 'absolute',
             top: 0,

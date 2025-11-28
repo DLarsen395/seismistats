@@ -12,7 +12,7 @@ export interface ETSEventWithOpacity extends ETSEvent {
 
 interface UsePlaybackProps {
   events: ETSEvent[];
-  onFilteredEventsChange: (events: ETSEventWithOpacity[], currentTime: Date | null) => void;
+  onFilteredEventsChange: (events: ETSEventWithOpacity[]) => void;
 }
 
 export const usePlayback = ({ events, onFilteredEventsChange }: UsePlaybackProps) => {
@@ -155,7 +155,7 @@ export const usePlayback = ({ events, onFilteredEventsChange }: UsePlaybackProps
   // Update filtered events when playback state changes
   useEffect(() => {
     const filtered = getFilteredEvents();
-    onFilteredEventsChange(filtered, showAllEvents ? null : currentTime);
+    onFilteredEventsChange(filtered);
   }, [currentTime, showAllEvents, getFilteredEvents, onFilteredEventsChange]);
 
   return {
