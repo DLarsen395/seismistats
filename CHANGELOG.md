@@ -5,6 +5,16 @@ All notable changes to the ETS Events Visualization project will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.2] - 2025-11-30
+
+### 🐛 Bug Fix
+
+### Fixed
+- **Tile Error Handling** - USGS plate boundaries tile fetch errors no longer display as blocking error banner
+- Non-critical map resource errors (tile fetches) are now logged as warnings instead of shown to users
+
+---
+
 ## [1.2.1] - 2025-11-30
 
 ### 🔧 Time Range Improvements

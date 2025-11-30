@@ -216,6 +216,17 @@ export const MapContainer: React.FC<MapContainerProps> = ({
         });
 
         mapInstance.on('error', (e) => {
+          // Ignore tile/source fetch errors (e.g., USGS plate boundaries service down)
+          // These are non-critical and shouldn't block the map
+          const errorMessage = e.error?.message || '';
+          const sourceId = (e as { sourceId?: string }).sourceId;
+          if (errorMessage.includes('Failed to fetch') || 
+              errorMessage.includes('AJAXError') ||
+              errorMessage.includes('tile') ||
+              sourceId === 'plate-boundaries') {
+            console.warn('Non-critical map resource error (ignored):', errorMessage);
+            return;
+          }
           console.error('MapLibre error:', e);
           setMapError(`Map error: ${e.error?.message || JSON.stringify(e)}`);
         });
