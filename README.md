@@ -9,6 +9,9 @@ An interactive web application for visualizing Pacific Northwest ETS (Episodic T
 ![Vite](https://img.shields.io/badge/Vite-7.2-purple)
 ![Docker](https://img.shields.io/badge/Docker-Ready-2496ED)
 
+**GitHub Repository**: https://github.com/DLarsen395/ets-events  
+**Container Registry**: https://ghcr.io/dlarsen395/ets-events
+
 ## 🌟 Features
 
 ### Core Functionality
@@ -196,8 +199,12 @@ docker run -d -p 8080:80 --name ets-events-test ets-events:latest
 # Login to GHCR (use a PAT with write:packages scope)
 echo $PAT | docker login ghcr.io -u YOUR_USERNAME --password-stdin
 
-# Tag and push
+# Tag with version AND latest
+docker tag ets-events:latest ghcr.io/dlarsen395/ets-events:1.1.0
 docker tag ets-events:latest ghcr.io/dlarsen395/ets-events:latest
+
+# Push both tags
+docker push ghcr.io/dlarsen395/ets-events:1.1.0
 docker push ghcr.io/dlarsen395/ets-events:latest
 ```
 
@@ -215,7 +222,7 @@ version: "3.8"
 
 services:
   ets-events:
-    image: ghcr.io/dlarsen395/ets-events:latest
+    image: ghcr.io/dlarsen395/ets-events:1.1.0  # Pin to specific version
     networks:
       - npm-proxy
     deploy:

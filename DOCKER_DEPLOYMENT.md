@@ -5,7 +5,15 @@
 This application is deployed using Docker Swarm with Nginx Proxy Manager for SSL termination and authentication. The container image is hosted on GitHub Container Registry (GHCR).
 
 **Production URL**: https://ets.home.hushrush.com  
-**Container Image**: `ghcr.io/dlarsen395/ets-events:latest`
+**GitHub Repository**: https://github.com/DLarsen395/ets-events  
+**Container Registry**: `ghcr.io/dlarsen395/ets-events`
+
+### Available Image Tags
+| Tag | Description |
+|-----|-------------|
+| `latest` | Most recent build |
+| `1.1.0` | MapLibre migration (current) |
+| `1.0.x` | Legacy Mapbox versions |
 
 ## ✨ No API Keys Required!
 
@@ -44,10 +52,12 @@ docker stop ets-events-test && docker rm ets-events-test
 # Login to GHCR (use lowercase username)
 echo YOUR_PAT | docker login ghcr.io -u yourusername --password-stdin
 
-# Tag for GHCR (must be lowercase)
+# Tag with version number AND latest
+docker tag ets-events:latest ghcr.io/dlarsen395/ets-events:1.1.0
 docker tag ets-events:latest ghcr.io/dlarsen395/ets-events:latest
 
-# Push
+# Push both tags
+docker push ghcr.io/dlarsen395/ets-events:1.1.0
 docker push ghcr.io/dlarsen395/ets-events:latest
 ```
 
@@ -69,7 +79,8 @@ version: "3.8"
 
 services:
   ets-events:
-    image: ghcr.io/dlarsen395/ets-events:latest
+    image: ghcr.io/dlarsen395/ets-events:1.1.0  # Pin to specific version
+    # image: ghcr.io/dlarsen395/ets-events:latest  # Or use latest
     networks:
       - npm-proxy
     deploy:
@@ -113,16 +124,26 @@ networks:
 ### Full Update Process
 
 ```powershell
-# 1. Build new image
-docker build -t ets-events:latest --build-arg "VITE_MAPBOX_TOKEN=your_token" .
+# 1. Update version in package.json and CHANGELOG.md
 
-# 2. Tag for GHCR
+# 2. Build new image
+docker build -t ets-events:latest .
+
+# 3. Tag with version AND latest (replace X.Y.Z with actual version)
+docker tag ets-events:latest ghcr.io/dlarsen395/ets-events:X.Y.Z
 docker tag ets-events:latest ghcr.io/dlarsen395/ets-events:latest
 
-# 3. Push to GHCR
+# 4. Push both tags to GHCR
+docker push ghcr.io/dlarsen395/ets-events:X.Y.Z
 docker push ghcr.io/dlarsen395/ets-events:latest
 
-# 4. In Portainer: Update service with "Pull latest image" checked
+# 5. Commit and tag in git
+git add -A
+git commit -m "vX.Y.Z: Description"
+git tag -a vX.Y.Z -m "Release description"
+git push origin main --tags
+
+# 6. In Portainer: Update stack with new version or pull latest
 ```
 
 ### Quick Update via Portainer
@@ -182,9 +203,9 @@ Internet
    ↓
 NPM (ports 80/443) - Handles SSL + Auth
    ↓
-ets_ets-events service (internal port 80)
+ets-events_ets-events service (internal port 80)
    ↓
-React SPA with Mapbox
+React SPA with MapLibre
 ```
 
 **Key Points:**
@@ -218,7 +239,7 @@ docker exec $(docker ps -q -f name=ets_ets-events) wget -qO- http://localhost/he
 
 ### Need to rebuild without cache
 ```bash
-docker build --no-cache --build-arg VITE_MAPBOX_TOKEN=your_token -t ets-events:latest .
+docker build --no-cache -t ets-events:latest .
 ```
 
 ### Auth not working
@@ -226,16 +247,6 @@ docker build --no-cache --build-arg VITE_MAPBOX_TOKEN=your_token -t ets-events:l
 2. Check NPM logs for auth errors
 3. Try different browser (clear cache)
 4. Verify username/password in NPM Access List
-
-## Updating Mapbox Token
-
-If you need to change the Mapbox token:
-
-1. Update `.env` file with new token
-2. Rebuild and redeploy:
-   ```bash
-   .\deploy.ps1
-   ```
 
 ## Performance
 
@@ -256,11 +267,10 @@ If you need to change the Mapbox token:
 ## Backup
 
 **What to backup:**
-- `.env` file (Mapbox token)
 - NPM Access Lists (automatic via `Trinity-NPM-Data` volume)
 - NPM SSL certificates (automatic via `Trinity-NPM-SSL` volume)
 
-**No app data to backup** - it's a stateless visualization tool.
+**No app data to backup** - it's a stateless visualization tool with no API keys required.
 
 ## Support
 
