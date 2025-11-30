@@ -5,6 +5,30 @@ All notable changes to the ETS Events Visualization project will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.5] - 2025-11-30
+
+### 🔧 Major Refactor - MapContainer Simplification
+
+### Fixed
+- **Plate Boundaries Disappearing** - Fixed critical bug where toggling plate boundaries multiple times caused them to disappear permanently
+- **Basemap Switching** - Simplified style change handling to use `style.load` event instead of complex retry logic
+
+### Changed
+- **MapContainer Rewrite** - Completely simplified from 398 lines to 270 lines:
+  - Removed complex `rebuildLayers` function with retry logic
+  - Removed `useCallback` wrapper that was causing stale closures
+  - Removed `isChangingStyle` ref that was blocking updates
+  - Simplified layer addition to only add if source doesn't exist
+- **Plate Boundaries Opacity** - Changed from 1.0 back to 0.8 for better visual balance
+- **Bundle Size** - Reduced by ~1.5KB due to code simplification
+
+### Removed
+- Redundant retry logic for layer rebuilding
+- Complex idle event handling with timeouts
+- Duplicate event handlers being added on each rebuild
+
+---
+
 ## [1.2.4] - 2025-11-30
 
 ### 🎯 Improvements
