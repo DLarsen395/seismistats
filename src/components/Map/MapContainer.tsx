@@ -4,44 +4,21 @@ import type { ETSEvent } from '../../types/event';
 import type { ETSEventWithOpacity } from '../../hooks/usePlayback';
 import { MAP_STYLES, type MapStyleKey } from '../../config/mapStyles';
 
-// USGS Plate Boundaries GeoJSON endpoint (vector data - always crisp at any zoom)
-// Using resultOffset for pagination since maxRecordCount is 1000 but there are 1175+ features
-const PLATE_BOUNDARIES_BASE_URL = 'https://earthquake.usgs.gov/arcgis/rest/services/eq/map_plateboundaries/MapServer/1/query';
+// Plate boundaries are bundled as a static file (no CORS issues in production)
+const PLATE_BOUNDARIES_URL = '/plate-boundaries.json';
 
 // Cache for plate boundaries data (fetched once, reused across style changes)
 let plateBoundariesCache: GeoJSON.FeatureCollection | null = null;
 
-// Fetch all plate boundaries with pagination
-async function fetchAllPlateBoundaries(): Promise<GeoJSON.FeatureCollection> {
-  const allFeatures: GeoJSON.Feature[] = [];
-  let offset = 0;
-  const batchSize = 1000;
-  let hasMore = true;
-
-  while (hasMore) {
-    const url = `${PLATE_BOUNDARIES_BASE_URL}?where=1%3D1&outFields=LABEL&f=geojson&outSR=4326&resultOffset=${offset}&resultRecordCount=${batchSize}`;
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch plate boundaries: ${response.status}`);
-    }
-    const data: GeoJSON.FeatureCollection = await response.json();
-    
-    if (data.features && data.features.length > 0) {
-      allFeatures.push(...data.features);
-      offset += data.features.length;
-      // If we got fewer than requested, we've reached the end
-      hasMore = data.features.length === batchSize;
-    } else {
-      hasMore = false;
-    }
+// Fetch plate boundaries from static file
+async function fetchPlateBoundaries(): Promise<GeoJSON.FeatureCollection> {
+  const response = await fetch(PLATE_BOUNDARIES_URL);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch plate boundaries: ${response.status}`);
   }
-
-  console.log(`Plate boundaries loaded: ${allFeatures.length} features (paginated)`);
-  
-  return {
-    type: 'FeatureCollection',
-    features: allFeatures,
-  };
+  const data: GeoJSON.FeatureCollection = await response.json();
+  console.log(`Plate boundaries loaded: ${data.features?.length ?? 0} features`);
+  return data;
 }
 
 interface MapContainerProps {
@@ -96,10 +73,10 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     if (mapInstance.getSource('plate-boundaries')) return;
     
     try {
-      // Fetch GeoJSON data if not cached (uses pagination to get ALL features)
+      // Fetch GeoJSON data if not cached (bundled static file, no CORS issues)
       if (!plateBoundariesCache) {
-        console.log('Fetching plate boundaries GeoJSON (paginated)...');
-        plateBoundariesCache = await fetchAllPlateBoundaries();
+        console.log('Loading plate boundaries from static file...');
+        plateBoundariesCache = await fetchPlateBoundaries();
       }
 
       // Guard against null (should never happen after successful fetch)
