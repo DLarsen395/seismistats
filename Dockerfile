@@ -1,4 +1,5 @@
 # Multi-stage build for ETS Events Visualization
+
 # Stage 1: Build the React application
 FROM node:20-alpine AS builder
 
@@ -18,6 +19,11 @@ RUN npm run build
 
 # Stage 2: Serve with Nginx
 FROM nginx:alpine
+
+# OCI Labels for GitHub Container Registry linking
+LABEL org.opencontainers.image.source="https://github.com/DLarsen395/ets-events"
+LABEL org.opencontainers.image.description="ETS Seismic Events Visualization - Interactive map for Pacific Northwest tremor events"
+LABEL org.opencontainers.image.licenses="MIT"
 
 # Install curl for health checks
 RUN apk add --no-cache curl
