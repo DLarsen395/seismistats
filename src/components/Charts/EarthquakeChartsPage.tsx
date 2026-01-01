@@ -4,7 +4,6 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useEarthquakeStore } from '../../stores/earthquakeStore';
-import { useCacheStore } from '../../stores/cacheStore';
 import { ChartFilters } from './ChartFilters';
 import { EarthquakeSummary } from './EarthquakeSummary';
 import { RechartsBarChart } from './RechartsBarChart';
@@ -44,8 +43,6 @@ export function EarthquakeChartsPage() {
     customEndDate,
   } = useEarthquakeStore();
   
-  const { refreshStats, progress } = useCacheStore();
-  
   // Time grouping for top chart
   const [topChartGrouping, setTopChartGrouping] = useState<TimeGrouping>('day');
   
@@ -62,17 +59,6 @@ export function EarthquakeChartsPage() {
   useEffect(() => {
     setTopChartGrouping(getSmartGrouping(daysInRange));
   }, [daysInRange]);
-  
-  // Refresh cache stats when loading state changes (for real-time cache updates)
-  useEffect(() => {
-    if (progress.operation !== 'idle') {
-      // Refresh stats periodically during fetching
-      const interval = setInterval(() => {
-        refreshStats();
-      }, 2000);
-      return () => clearInterval(interval);
-    }
-  }, [progress.operation, refreshStats]);
 
   // Fetch data on mount if not already loaded
   useEffect(() => {
@@ -192,7 +178,7 @@ export function EarthquakeChartsPage() {
                         transition: 'all 0.15s ease',
                       }}
                     >
-                      By {option.label}
+                      {option.label}
                     </button>
                   ))}
                 </div>

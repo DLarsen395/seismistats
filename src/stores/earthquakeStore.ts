@@ -229,12 +229,11 @@ async function fetchInChunks(
         }
       }
       
-      // Call intermediate data callback every few chunks to update UI
-      // This allows charts to update progressively during long fetches
-      if (onIntermediateData && chunkNumber % 3 === 0) {
-        // Sort and send current data for progressive display
-        const sortedSoFar = [...allFeatures].sort((a, b) => b.properties.time - a.properties.time);
-        onIntermediateData(sortedSoFar);
+      // Call intermediate data callback less frequently to avoid memory pressure
+      // Only update every 10 chunks and don't sort (saves memory with large datasets)
+      if (onIntermediateData && chunkNumber % 10 === 0) {
+        // Pass current data without copying - aggregation functions will handle it
+        onIntermediateData(allFeatures);
       }
       
       // Increased delay between requests to avoid rate limiting
@@ -431,15 +430,18 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
           });
           
           // Handler to progressively update UI during long fetches
+          // Only update aggregates to save memory - don't store full array until complete
           const handleIntermediateData = (intermediateFeatures: EarthquakeFeature[]) => {
             const dailyAggregates = aggregateEarthquakesByDay(intermediateFeatures);
             const summary = getEarthquakeSummary(intermediateFeatures);
             set({
-              earthquakes: intermediateFeatures,
               dailyAggregates,
               summary,
               // Keep isLoading: true so UI knows we're still fetching
+              // Don't update earthquakes array - wait until complete to save memory
             });
+            // Refresh cache stats during fetch
+            useCacheStore.getState().refreshStats();
           };
           
           // Fetch missing data with progress and intermediate updates
@@ -474,13 +476,14 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
       } else {
         // Cache disabled, fetch directly with progress
         // Handler to progressively update UI during long fetches
+        // Only update aggregates to save memory
         const handleIntermediateData = (intermediateFeatures: EarthquakeFeature[]) => {
           const dailyAggregates = aggregateEarthquakesByDay(intermediateFeatures);
           const summary = getEarthquakeSummary(intermediateFeatures);
           set({
-            earthquakes: intermediateFeatures,
             dailyAggregates,
             summary,
+            // Don't update earthquakes array until complete to save memory
           });
         };
         
