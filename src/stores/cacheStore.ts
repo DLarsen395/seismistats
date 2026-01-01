@@ -8,7 +8,9 @@ import {
   getCacheInfo, 
   getCacheStats, 
   clearCache, 
-  clearStaleData 
+  clearStaleData,
+  resetDatabase,
+  checkCacheIntegrity,
 } from '../services/earthquake-cache';
 
 interface CacheStats {
@@ -20,11 +22,18 @@ interface CacheStats {
   sizeEstimateKB: number;
 }
 
+interface CacheIntegrity {
+  isHealthy: boolean;
+  issues: string[];
+  recommendation: string | null;
+}
+
 interface CacheStore {
   // Cache state
   isEnabled: boolean;
   info: CacheInfo | null;
   stats: CacheStats | null;
+  integrity: CacheIntegrity | null;
   
   // Progress tracking
   progress: CacheProgress;
@@ -34,8 +43,10 @@ interface CacheStore {
   setProgress: (progress: CacheProgress) => void;
   refreshInfo: () => Promise<void>;
   refreshStats: () => Promise<void>;
+  checkIntegrity: () => Promise<void>;
   clearAllCache: () => Promise<void>;
   clearStale: () => Promise<number>;
+  resetDB: () => Promise<void>;
 }
 
 const initialProgress: CacheProgress = {
@@ -51,6 +62,7 @@ export const useCacheStore = create<CacheStore>((set, get) => ({
   isEnabled: true,
   info: null,
   stats: null,
+  integrity: null,
   progress: initialProgress,
   
   // Actions
@@ -71,8 +83,27 @@ export const useCacheStore = create<CacheStore>((set, get) => ({
     try {
       const stats = await getCacheStats();
       set({ stats });
+      
+      // Also check integrity when refreshing stats
+      await get().checkIntegrity();
     } catch (error) {
       console.error('Failed to get cache stats:', error);
+    }
+  },
+  
+  checkIntegrity: async () => {
+    try {
+      const integrity = await checkCacheIntegrity();
+      set({ integrity });
+    } catch (error) {
+      console.error('Failed to check cache integrity:', error);
+      set({ 
+        integrity: { 
+          isHealthy: false, 
+          issues: ['Failed to check integrity'], 
+          recommendation: 'Try resetting the database' 
+        } 
+      });
     }
   },
   
@@ -125,6 +156,32 @@ export const useCacheStore = create<CacheStore>((set, get) => ({
       console.error('Failed to clear stale data:', error);
       set({ progress: initialProgress });
       return 0;
+    }
+  },
+  
+  resetDB: async () => {
+    try {
+      set({ 
+        progress: { 
+          ...initialProgress, 
+          operation: 'validating', 
+          message: 'Resetting database...' 
+        } 
+      });
+      
+      await resetDatabase();
+      
+      set({ 
+        info: null, 
+        stats: null, 
+        progress: initialProgress 
+      });
+      
+      // Refresh to get fresh state
+      await get().refreshStats();
+    } catch (error) {
+      console.error('Failed to reset database:', error);
+      set({ progress: initialProgress });
     }
   },
 }));

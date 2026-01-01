@@ -13,7 +13,7 @@ import type { EarthquakeFeature } from '../../services/usgs-earthquake-api';
 /**
  * Time grouping options
  */
-export type TimeGrouping = 'year' | 'month' | 'week';
+export type TimeGrouping = 'day' | 'week' | 'month' | 'year';
 
 /**
  * Magnitude range definition
@@ -93,6 +93,7 @@ export const MAGNITUDE_RANGES: MagnitudeRange[] = [
  * Time grouping options
  */
 export const TIME_GROUPING_OPTIONS: { value: TimeGrouping; label: string }[] = [
+  { value: 'day', label: 'By Day' },
   { value: 'week', label: 'By Week' },
   { value: 'month', label: 'By Month' },
   { value: 'year', label: 'By Year' },
@@ -144,6 +145,8 @@ export function formatPeriodLabel(date: Date, grouping: TimeGrouping): string {
       const { year, week } = getWeekKey(date);
       return `${year} W${week.toString().padStart(2, '0')}`;
     }
+    case 'day':
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     default:
       return date.toISOString().split('T')[0];
   }
@@ -162,6 +165,8 @@ export function getPeriodKey(date: Date, grouping: TimeGrouping): string {
       const { year, week } = getWeekKey(date);
       return `${year}-W${week.toString().padStart(2, '0')}`;
     }
+    case 'day':
+      return date.toISOString().split('T')[0];
     default:
       return date.toISOString().split('T')[0];
   }
@@ -192,6 +197,8 @@ export function getDateFromPeriodKey(key: string, grouping: TimeGrouping): Date 
       }
       return new Date();
     }
+    case 'day':
+      return new Date(key);
     default:
       return new Date(key);
   }

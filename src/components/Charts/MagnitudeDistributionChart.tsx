@@ -5,7 +5,7 @@
  * Uses Recharts AreaChart with stacked areas for magnitude ranges.
  */
 
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import {
   AreaChart,
   Area,
@@ -36,6 +36,8 @@ export interface MagnitudeDistributionChartProps {
   title?: string;
   /** Chart height in pixels */
   height?: number;
+  /** Number of days in the data range - used for smart grouping defaults */
+  daysInRange?: number;
 }
 
 // =============================================================================
@@ -259,16 +261,42 @@ function RangeFilter({
 // Main Component
 // =============================================================================
 
+/**
+ * Get smart default time grouping based on date range
+ */
+function getDefaultTimeGrouping(daysInRange: number): TimeGrouping {
+  if (daysInRange <= 30) return 'day';       // Last 30 days or less → By Day
+  if (daysInRange <= 90) return 'week';      // Last 90 days → By Week
+  if (daysInRange <= 730) return 'month';    // Last 2 years → By Month
+  return 'year';                              // 5+ years → By Year
+}
+
 export function MagnitudeDistributionChart({
   earthquakes,
   title = 'Magnitude Distribution Over Time',
   height = 400,
+  daysInRange = 30,
 }: MagnitudeDistributionChartProps) {
-  // State for configuration
-  const [timeGrouping, setTimeGrouping] = useState<TimeGrouping>('month');
+  // Calculate smart default based on date range
+  const defaultGrouping = useMemo(() => getDefaultTimeGrouping(daysInRange), [daysInRange]);
+  
+  // State for configuration - initialize with smart default
+  const [timeGrouping, setTimeGrouping] = useState<TimeGrouping>(defaultGrouping);
   const [enabledRanges, setEnabledRanges] = useState<Set<string>>(
     () => new Set(MAGNITUDE_RANGES.map(r => r.key))
   );
+  
+  // Update grouping when date range changes significantly
+  const prevDaysRef = useRef(daysInRange);
+  useEffect(() => {
+    const prevDefault = getDefaultTimeGrouping(prevDaysRef.current);
+    const newDefault = getDefaultTimeGrouping(daysInRange);
+    // Only auto-switch if the optimal grouping changed
+    if (prevDefault !== newDefault) {
+      setTimeGrouping(newDefault);
+    }
+    prevDaysRef.current = daysInRange;
+  }, [daysInRange]);
 
   // Aggregate data
   const chartData = useMemo(

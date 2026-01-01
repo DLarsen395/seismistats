@@ -2,7 +2,7 @@
  * Main container page for Earthquake Charts view
  */
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useEarthquakeStore } from '../../stores/earthquakeStore';
 import { ChartFilters } from './ChartFilters';
 import { EarthquakeSummary } from './EarthquakeSummary';
@@ -11,6 +11,7 @@ import { ChartJSBarChart } from './ChartJSBarChart';
 import { MagnitudeDistributionChart } from './MagnitudeDistributionChart';
 import { CacheProgressBanner } from './CacheProgressBanner';
 import { CacheStatusPanel } from './CacheStatusPanel';
+import { TIME_RANGE_OPTIONS } from '../../types/earthquake';
 
 export function EarthquakeChartsPage() {
   const {
@@ -25,7 +26,19 @@ export function EarthquakeChartsPage() {
     regionScope,
     minMagnitude,
     maxMagnitude,
+    timeRange,
+    customStartDate,
+    customEndDate,
   } = useEarthquakeStore();
+  
+  // Calculate days in range for smart chart defaults
+  const daysInRange = useMemo(() => {
+    if (timeRange === 'custom' && customStartDate && customEndDate) {
+      return Math.ceil((customEndDate.getTime() - customStartDate.getTime()) / (24 * 60 * 60 * 1000));
+    }
+    const option = TIME_RANGE_OPTIONS.find(o => o.value === timeRange);
+    return option?.days || 30;
+  }, [timeRange, customStartDate, customEndDate]);
 
   // Fetch data on mount if not already loaded
   useEffect(() => {
@@ -58,100 +71,128 @@ export function EarthquakeChartsPage() {
       style={{
         height: '100%',
         display: 'flex',
-        flexDirection: 'column',
-        overflowY: 'auto',
+        flexDirection: 'row',
         backgroundColor: '#111827',
       }}
     >
-      {/* Cache Progress Banner - shows when caching is in progress */}
-      <CacheProgressBanner />
-      
-      {/* Main content with padding */}
-      <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1 }}>
-        {/* Filters */}
-        <ChartFilters />
-
-      {/* Main content area */}
+      {/* Main content area - left side */}
       <div
         style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 300px',
-          gap: '1rem',
           flex: 1,
-          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          overflowY: 'auto',
+          minWidth: 0,
         }}
       >
-        {/* Chart area */}
-        <div
-          style={{
-            backgroundColor: 'rgba(31, 41, 55, 0.8)',
-            borderRadius: '0.5rem',
-            backdropFilter: 'blur(8px)',
-            border: '1px solid rgba(75, 85, 99, 0.3)',
-            padding: '1rem',
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          {/* Chart header */}
+        {/* Cache Progress Banner - shows when caching is in progress */}
+        <CacheProgressBanner />
+        
+        {/* Main content with padding */}
+        <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1 }}>
+          {/* Filters */}
+          <ChartFilters />
+
+          {/* Chart area */}
           <div
             style={{
+              backgroundColor: 'rgba(31, 41, 55, 0.8)',
+              borderRadius: '0.5rem',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(75, 85, 99, 0.3)',
+              padding: '1rem',
               display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '1rem',
+              flexDirection: 'column',
+              flex: 1,
+              minHeight: 350,
             }}
           >
-            <h2
+            {/* Chart header */}
+            <div
               style={{
-                color: 'white',
-                fontSize: '1.125rem',
-                fontWeight: 600,
-                margin: 0,
-              }}
-            >
-              {getChartTitle()}
-            </h2>
-            <button
-              onClick={refreshData}
-              disabled={isLoading}
-              style={{
-                padding: '0.375rem 0.75rem',
-                fontSize: '0.875rem',
-                color: isLoading ? '#6b7280' : '#60a5fa',
-                backgroundColor: 'transparent',
-                border: '1px solid',
-                borderColor: isLoading ? '#374151' : '#60a5fa',
-                borderRadius: '0.375rem',
-                cursor: isLoading ? 'not-allowed' : 'pointer',
                 display: 'flex',
+                justifyContent: 'space-between',
                 alignItems: 'center',
-                gap: '0.375rem',
-                transition: 'all 0.15s ease',
+                marginBottom: '1rem',
               }}
             >
-              {isLoading ? (
-                <>
-                  <span
-                    style={{
-                      display: 'inline-block',
-                      width: '0.875rem',
-                      height: '0.875rem',
-                      border: '2px solid #374151',
-                      borderTopColor: '#60a5fa',
-                      borderRadius: '50%',
-                      animation: 'spin 1s linear infinite',
-                    }}
-                  />
-                  Loading...
-                </>
-              ) : (
-                <>🔄 Refresh</>
-              )}
-            </button>
-          </div>
+              <h2
+                style={{
+                  color: 'white',
+                  fontSize: '1.125rem',
+                  fontWeight: 600,
+                  margin: 0,
+                }}
+              >
+                {getChartTitle()}
+              </h2>
+              
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                {/* Loading indicator for progressive updates */}
+                {isLoading && dailyAggregates.length > 0 && (
+                  <span style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.375rem',
+                    color: '#9ca3af',
+                    fontSize: '0.75rem',
+                  }}>
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        width: '0.75rem',
+                        height: '0.75rem',
+                        border: '2px solid #374151',
+                        borderTopColor: '#60a5fa',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite',
+                      }}
+                    />
+                    Loading...
+                  </span>
+                )}
+                
+                <button
+                  onClick={refreshData}
+                  disabled={isLoading}
+                  style={{
+                    padding: '0.375rem 0.75rem',
+                    fontSize: '0.875rem',
+                    color: isLoading ? '#6b7280' : '#60a5fa',
+                    backgroundColor: 'transparent',
+                    border: '1px solid',
+                    borderColor: isLoading ? '#374151' : '#60a5fa',
+                    borderRadius: '0.375rem',
+                    cursor: isLoading ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.375rem',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  {isLoading ? (
+                    <>
+                      <span
+                        style={{
+                          display: 'inline-block',
+                          width: '0.875rem',
+                          height: '0.875rem',
+                          border: '2px solid #374151',
+                          borderTopColor: '#60a5fa',
+                          borderRadius: '50%',
+                          animation: 'spin 1s linear infinite',
+                        }}
+                      />
+                      Loading...
+                    </>
+                  ) : (
+                    <>🔄 Refresh</>
+                  )}
+                </button>
+              </div>
+            </div>
 
-          {/* Error state */}
+            {/* Error state */}
           {error && (
             <div
               style={{
@@ -235,70 +276,93 @@ export function EarthquakeChartsPage() {
             </div>
           )}
         </div>
-
-        {/* Sidebar with summary */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <EarthquakeSummary />
-          
-          {/* Cache Status Panel */}
-          <CacheStatusPanel />
-
-          {/* Info card */}
-          <div
-            style={{
-              padding: '1rem',
-              backgroundColor: 'rgba(31, 41, 55, 0.8)',
-              borderRadius: '0.5rem',
-              backdropFilter: 'blur(8px)',
-              border: '1px solid rgba(75, 85, 99, 0.3)',
-            }}
-          >
-            <h3
-              style={{
-                color: '#d1d5db',
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                marginBottom: '0.5rem',
-              }}
-            >
-              About This Data
-            </h3>
-            <p style={{ fontSize: '0.75rem', color: '#9ca3af', lineHeight: 1.5 }}>
-              Earthquake data is sourced from the{' '}
-              <a
-                href="https://earthquake.usgs.gov/fdsnws/event/1/"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ color: '#60a5fa' }}
-              >
-                USGS Earthquake Catalog API
-              </a>
-              . Data is typically updated within minutes of an earthquake occurring.
-            </p>
-            {regionScope === 'us' && (
-              <p
-                style={{
-                  fontSize: '0.75rem',
-                  color: '#9ca3af',
-                  lineHeight: 1.5,
-                  marginTop: '0.5rem',
-                }}
-              >
-                US data includes: Continental US, Alaska, Hawaii, Puerto Rico/USVI, and Guam.
-              </p>
-            )}
-          </div>
         </div>
+
+        {/* Magnitude Distribution Chart - Full Width */}
+        {earthquakes.length > 0 && (
+          <MagnitudeDistributionChart 
+            earthquakes={earthquakes}
+            title="Magnitude Distribution Over Time"
+            height={300}
+            daysInRange={daysInRange}
+          />
+        )}
       </div>
 
-      {/* Magnitude Distribution Chart - Full Width */}
-      {earthquakes.length > 0 && (
-        <MagnitudeDistributionChart 
-          earthquakes={earthquakes}
-          title="Magnitude Distribution Over Time"
-          height={300}
-        />
-      )}
+      {/* Right Sidebar - extends full height from header to bottom */}
+      <div
+        style={{
+          width: '300px',
+          flexShrink: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1rem',
+          padding: '1rem',
+          borderLeft: '1px solid rgba(75, 85, 99, 0.3)',
+          overflowY: 'auto',
+        }}
+      >
+        <EarthquakeSummary />
+        
+        {/* Cache Status Panel */}
+        <CacheStatusPanel />
+
+        {/* Info card */}
+        <div
+          style={{
+            padding: '1rem',
+            backgroundColor: 'rgba(31, 41, 55, 0.8)',
+            borderRadius: '0.5rem',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(75, 85, 99, 0.3)',
+          }}
+        >
+          <h3
+            style={{
+              color: '#d1d5db',
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              marginBottom: '0.5rem',
+            }}
+          >
+            About This Data
+          </h3>
+          <p style={{ fontSize: '0.75rem', color: '#9ca3af', lineHeight: 1.5 }}>
+            Earthquake data is sourced from the{' '}
+            <a
+              href="https://earthquake.usgs.gov/fdsnws/event/1/"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: '#60a5fa' }}
+            >
+              USGS Earthquake Catalog API
+            </a>
+            . Data is typically updated within minutes of an earthquake occurring.
+          </p>
+          <p
+            style={{
+              fontSize: '0.75rem',
+              color: '#9ca3af',
+              lineHeight: 1.5,
+              marginTop: '0.5rem',
+            }}
+          >
+            <strong style={{ color: '#d1d5db' }}>Data availability:</strong> Comprehensive global coverage from 1973.
+            US data with some gaps back to 1900. Historical significant earthquakes to ~1568.
+          </p>
+          {regionScope === 'us' && (
+            <p
+              style={{
+                fontSize: '0.75rem',
+                color: '#9ca3af',
+                lineHeight: 1.5,
+                marginTop: '0.5rem',
+              }}
+            >
+              US data includes: Continental US, Alaska, Hawaii, Puerto Rico/USVI, and Guam.
+            </p>
+          )}
+        </div>
       </div>
 
       {/* CSS for spin animation */}

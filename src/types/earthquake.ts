@@ -5,6 +5,28 @@
  * This file contains chart-specific types and constants.
  */
 
+// =============================================================================
+// USGS Data Availability Constants
+// =============================================================================
+
+/**
+ * USGS earthquake data availability:
+ * - Comprehensive global data starts from ~1973
+ * - US data with some gaps goes back to ~1900  
+ * - Historical significant earthquakes back to ~1568
+ * 
+ * We silently clamp queries to 1500-01-01 as the earliest date.
+ * The API won't return data for future dates.
+ */
+export const USGS_DATA_RANGE = {
+  /** Earliest date we query (USGS has data back to ~1568) */
+  earliestDate: new Date('1500-01-01'),
+  /** Latest allowed date (today) - computed dynamically */
+  getLatestDate: () => new Date(),
+  /** Earliest year for display */
+  earliestYear: 1500,
+} as const;
+
 // Re-export types from the service for convenience
 export type {
   EarthquakeProperties,
@@ -76,7 +98,7 @@ export const MAX_MAGNITUDE_OPTIONS: MagnitudeOption[] = [
 /**
  * Time range options for earthquake queries
  */
-export type TimeRange = '7days' | '30days' | '90days' | '365days';
+export type TimeRange = '7days' | '30days' | '90days' | '365days' | '2years' | '5years' | '10years' | '15years' | '20years' | '25years' | 'custom';
 
 /**
  * Time range configuration
@@ -95,6 +117,13 @@ export const TIME_RANGE_OPTIONS: TimeRangeOption[] = [
   { label: 'Last 30 Days', value: '30days', days: 30 },
   { label: 'Last 90 Days', value: '90days', days: 90 },
   { label: 'Last Year', value: '365days', days: 365 },
+  { label: 'Last 2 Years', value: '2years', days: 730 },
+  { label: 'Last 5 Years', value: '5years', days: 1825 },
+  { label: 'Last 10 Years', value: '10years', days: 3650 },
+  { label: 'Last 15 Years', value: '15years', days: 5475 },
+  { label: 'Last 20 Years', value: '20years', days: 7300 },
+  { label: 'Last 25 Years', value: '25years', days: 9125 },
+  { label: 'Custom Range', value: 'custom', days: 0 },
 ];
 
 /**

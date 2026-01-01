@@ -2,12 +2,14 @@
  * Filter controls for earthquake charts
  */
 
+import { useState } from 'react';
+import { format, subYears } from 'date-fns';
 import { useEarthquakeStore } from '../../stores/earthquakeStore';
 import { 
   MIN_MAGNITUDE_OPTIONS, 
   MAX_MAGNITUDE_OPTIONS,
   TIME_RANGE_OPTIONS, 
-  REGION_SCOPE_OPTIONS 
+  REGION_SCOPE_OPTIONS,
 } from '../../types/earthquake';
 import type { ChartLibrary } from '../../types/earthquake';
 
@@ -21,6 +23,17 @@ const selectStyle: React.CSSProperties = {
   cursor: 'pointer',
   outline: 'none',
   minWidth: '100px',
+};
+
+const inputStyle: React.CSSProperties = {
+  padding: '0.5rem 0.75rem',
+  fontSize: '0.875rem',
+  color: 'white',
+  backgroundColor: 'rgba(55, 65, 81, 0.8)',
+  border: '1px solid rgba(75, 85, 99, 0.5)',
+  borderRadius: '0.375rem',
+  outline: 'none',
+  minWidth: '130px',
 };
 
 const labelStyle: React.CSSProperties = {
@@ -37,13 +50,32 @@ export function ChartFilters() {
     timeRange,
     regionScope,
     chartLibrary,
+    customStartDate,
+    customEndDate,
     setMinMagnitude,
     setMaxMagnitude,
     setTimeRange,
     setRegionScope,
     setChartLibrary,
+    setCustomDateRange,
     isLoading,
   } = useEarthquakeStore();
+
+  // Local state for custom date inputs
+  const [startInput, setStartInput] = useState(
+    customStartDate ? format(customStartDate, 'yyyy-MM-dd') : format(subYears(new Date(), 1), 'yyyy-MM-dd')
+  );
+  const [endInput, setEndInput] = useState(
+    customEndDate ? format(customEndDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd')
+  );
+
+  const handleApplyCustomRange = () => {
+    const start = new Date(startInput);
+    const end = new Date(endInput);
+    if (start <= end) {
+      setCustomDateRange(start, end);
+    }
+  };
 
   return (
     <div
@@ -56,6 +88,7 @@ export function ChartFilters() {
         borderRadius: '0.5rem',
         backdropFilter: 'blur(8px)',
         border: '1px solid rgba(75, 85, 99, 0.3)',
+        alignItems: 'flex-end',
       }}
     >
       {/* Time Range */}
@@ -77,6 +110,58 @@ export function ChartFilters() {
           ))}
         </select>
       </div>
+
+      {/* Custom Date Range - only shown when 'custom' is selected */}
+      {timeRange === 'custom' && (
+        <>
+          <div>
+            <label style={labelStyle}>Start Date</label>
+            <input
+              type="date"
+              value={startInput}
+              onChange={(e) => setStartInput(e.target.value)}
+              max={format(new Date(), 'yyyy-MM-dd')}
+              disabled={isLoading}
+              style={{
+                ...inputStyle,
+                opacity: isLoading ? 0.5 : 1,
+                colorScheme: 'dark',
+              }}
+            />
+          </div>
+          <div>
+            <label style={labelStyle}>End Date</label>
+            <input
+              type="date"
+              value={endInput}
+              onChange={(e) => setEndInput(e.target.value)}
+              max={format(new Date(), 'yyyy-MM-dd')}
+              disabled={isLoading}
+              style={{
+                ...inputStyle,
+                opacity: isLoading ? 0.5 : 1,
+                colorScheme: 'dark',
+              }}
+            />
+          </div>
+          <button
+            onClick={handleApplyCustomRange}
+            disabled={isLoading}
+            style={{
+              padding: '0.5rem 1rem',
+              fontSize: '0.875rem',
+              color: 'white',
+              backgroundColor: 'rgba(59, 130, 246, 0.8)',
+              border: 'none',
+              borderRadius: '0.375rem',
+              cursor: isLoading ? 'not-allowed' : 'pointer',
+              opacity: isLoading ? 0.5 : 1,
+            }}
+          >
+            Apply
+          </button>
+        </>
+      )}
 
       {/* Min Magnitude Filter */}
       <div>

@@ -12,10 +12,12 @@ export function CacheStatusPanel() {
     isEnabled, 
     stats, 
     info, 
+    integrity,
     setEnabled, 
     refreshStats, 
     clearAllCache, 
     clearStale,
+    resetDB,
     progress,
   } = useCacheStore();
   
@@ -74,6 +76,34 @@ export function CacheStatusPanel() {
           {isEnabled ? 'Enabled' : 'Disabled'}
         </button>
       </div>
+      
+      {/* Cache integrity warning */}
+      {isEnabled && integrity && !integrity.isHealthy && (
+        <div style={{
+          padding: '0.5rem',
+          marginBottom: '0.75rem',
+          backgroundColor: 'rgba(251, 191, 36, 0.15)',
+          border: '1px solid rgba(251, 191, 36, 0.3)',
+          borderRadius: '0.25rem',
+        }}>
+          <p style={{ 
+            fontSize: '0.7rem', 
+            color: '#fbbf24', 
+            margin: 0,
+            marginBottom: '0.25rem',
+            fontWeight: 600,
+          }}>
+            ⚠️ Cache Issue Detected
+          </p>
+          <p style={{ 
+            fontSize: '0.65rem', 
+            color: '#d1d5db', 
+            margin: 0,
+          }}>
+            {integrity.recommendation || 'Click "Clear All" to fix.'}
+          </p>
+        </div>
+      )}
       
       {isEnabled && stats ? (
         <>
@@ -162,6 +192,26 @@ export function CacheStatusPanel() {
               Clear All
             </button>
           </div>
+          
+          {/* Reset DB button - for recovering from errors */}
+          <button
+            onClick={resetDB}
+            disabled={isProcessing}
+            style={{
+              marginTop: '0.5rem',
+              width: '100%',
+              padding: '0.375rem 0.5rem',
+              fontSize: '0.7rem',
+              color: isProcessing ? '#6b7280' : '#9ca3af',
+              backgroundColor: 'transparent',
+              border: `1px solid ${isProcessing ? '#374151' : '#4b5563'}`,
+              borderRadius: '0.25rem',
+              cursor: isProcessing ? 'not-allowed' : 'pointer',
+              opacity: isProcessing ? 0.5 : 1,
+            }}
+          >
+            🔄 Reset Database
+          </button>
         </>
       ) : isEnabled ? (
         <p style={{ fontSize: '0.75rem', color: '#9ca3af' }}>

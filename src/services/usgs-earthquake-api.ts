@@ -377,27 +377,67 @@ async function fetchEarthquakesForRegion(
 
   const url = `${USGS_API_BASE_URL}?${buildQueryString(queryParams)}`;
 
-  try {
-    const response = await fetch(url);
+  // Retry logic with exponential backoff for rate limiting
+  const maxRetries = 3;
+  let lastError: Error | null = null;
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      if (attempt > 0) {
+        // Exponential backoff: 2s, 4s, 8s
+        const delay = Math.pow(2, attempt) * 1000;
+        console.log(`Retry attempt ${attempt}/${maxRetries} after ${delay}ms delay...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+      
+      const response = await fetch(url);
 
-    if (!response.ok) {
-      throw new USGSApiError(
-        `USGS API request failed: ${response.statusText}`,
-        response.status,
-        response.statusText
-      );
-    }
+      if (!response.ok) {
+        // Check for rate limiting (HTTP 429) or server errors
+        if (response.status === 429 || response.status >= 500) {
+          throw new USGSApiError(
+            `USGS API rate limited or server error: ${response.statusText}`,
+            response.status,
+            response.statusText
+          );
+        }
+        throw new USGSApiError(
+          `USGS API request failed: ${response.statusText}`,
+          response.status,
+          response.statusText
+        );
+      }
 
-    const data: USGSEarthquakeResponse = await response.json();
-    return data;
-  } catch (error) {
-    if (error instanceof USGSApiError) {
-      throw error;
+      const data: USGSEarthquakeResponse = await response.json();
+      return data;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      
+      // Check if this is a CORS or network error (often due to rate limiting)
+      const isCorsOrNetworkError = lastError.message.includes('CORS') || 
+                                   lastError.message.includes('Failed to fetch') ||
+                                   lastError.message.includes('NetworkError');
+      
+      // Only retry on rate limit, server errors, or network issues
+      if (error instanceof USGSApiError && error.status && error.status < 500 && error.status !== 429) {
+        throw error; // Don't retry client errors
+      }
+      
+      if (attempt === maxRetries) {
+        console.error(`All ${maxRetries + 1} attempts failed for ${url}`);
+        if (isCorsOrNetworkError) {
+          throw new USGSApiError(
+            `USGS API temporarily unavailable (possible rate limiting). Please try again in a few minutes or select a shorter time range.`
+          );
+        }
+        throw error;
+      }
+      // Continue to next retry
     }
-    throw new USGSApiError(
-      `Failed to fetch earthquake data: ${error instanceof Error ? error.message : 'Unknown error'}`
-    );
   }
+  
+  // Should never reach here, but TypeScript needs it
+  throw lastError || new USGSApiError('Unknown error');
 }
 
 /**
@@ -432,17 +472,30 @@ export async function fetchUSGSEarthquakes(
   // Determine which regions to query
   const regions = params.regions?.length ? params.regions : ALL_US_REGIONS;
 
-  // Fetch data for each region in parallel
-  const regionPromises = regions.map((region) =>
-    fetchEarthquakesForRegion({
-      ...params,
-      bounds: US_REGION_BOUNDS[region],
-    })
-  );
+  // Fetch data for each region SEQUENTIALLY to avoid rate limiting
+  // This is slower but much more reliable for large date ranges
+  const responses: USGSEarthquakeResponse[] = [];
+  
+  for (let i = 0; i < regions.length; i++) {
+    const region = regions[i];
+    try {
+      const response = await fetchEarthquakesForRegion({
+        ...params,
+        bounds: US_REGION_BOUNDS[region],
+      });
+      responses.push(response);
+      
+      // Small delay between region requests to be nice to the API
+      if (i < regions.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    } catch (error) {
+      console.error(`Error fetching region ${region}:`, error);
+      throw error;
+    }
+  }
 
   try {
-    const responses = await Promise.all(regionPromises);
-
     // Merge all features and deduplicate
     const allFeatures = responses.flatMap((response) => response.features);
     const uniqueFeatures = deduplicateFeatures(allFeatures);
