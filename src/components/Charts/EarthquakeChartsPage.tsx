@@ -9,6 +9,7 @@ import { EarthquakeSummary } from './EarthquakeSummary';
 import { RechartsBarChart } from './RechartsBarChart';
 import { ChartJSBarChart } from './ChartJSBarChart';
 import { MagnitudeDistributionChart } from './MagnitudeDistributionChart';
+import { EnergyReleaseChart } from './EnergyReleaseChart';
 import { CacheProgressBanner } from './CacheProgressBanner';
 import { CacheStatusPanel } from './CacheStatusPanel';
 import { TIME_RANGE_OPTIONS } from '../../types/earthquake';
@@ -119,7 +120,7 @@ export function EarthquakeChartsPage() {
         <CacheProgressBanner />
         
         {/* Main content with padding */}
-        <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1 }}>
+        <div style={{ padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', flex: 1 }}>
           {/* Filters */}
           <ChartFilters />
 
@@ -130,11 +131,10 @@ export function EarthquakeChartsPage() {
               borderRadius: '0.5rem',
               backdropFilter: 'blur(8px)',
               border: '1px solid rgba(75, 85, 99, 0.3)',
-              padding: '1rem',
+              padding: '0.75rem 1rem',
               display: 'flex',
               flexDirection: 'column',
-              flex: 1,
-              minHeight: 350,
+              minHeight: 280,
             }}
           >
             {/* Chart header */}
@@ -143,7 +143,7 @@ export function EarthquakeChartsPage() {
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                marginBottom: '1rem',
+                marginBottom: '0.5rem',
                 flexWrap: 'wrap',
                 gap: '0.5rem',
               }}
@@ -151,7 +151,7 @@ export function EarthquakeChartsPage() {
               <h2
                 style={{
                   color: 'white',
-                  fontSize: '1.125rem',
+                  fontSize: '1rem',
                   fontWeight: 600,
                   margin: 0,
                 }}
@@ -269,7 +269,7 @@ export function EarthquakeChartsPage() {
 
           {/* Chart */}
           {topChartData.length > 0 && (
-            <div style={{ flex: 1, minHeight: 300 }}>
+            <div style={{ flex: 1, minHeight: 220 }}>
               {chartLibrary === 'recharts' ? (
                 <RechartsBarChart data={topChartData} />
               ) : (
@@ -297,8 +297,8 @@ export function EarthquakeChartsPage() {
           {lastFetched && (
             <div
               style={{
-                marginTop: '0.75rem',
-                fontSize: '0.75rem',
+                marginTop: '0.5rem',
+                fontSize: '0.7rem',
                 color: '#6b7280',
                 textAlign: 'right',
               }}
@@ -309,12 +309,22 @@ export function EarthquakeChartsPage() {
         </div>
         </div>
 
-        {/* Magnitude Distribution Chart - Full Width */}
+        {/* Magnitude Distribution Chart */}
         {earthquakes.length > 0 && (
           <MagnitudeDistributionChart 
             earthquakes={earthquakes}
             title="Magnitude Distribution Over Time"
-            height={300}
+            height={240}
+            daysInRange={daysInRange}
+          />
+        )}
+        
+        {/* Energy Release Chart */}
+        {earthquakes.length > 0 && (
+          <EnergyReleaseChart 
+            earthquakes={earthquakes}
+            title="Seismic Energy Released"
+            height={240}
             daysInRange={daysInRange}
           />
         )}

@@ -369,3 +369,125 @@ export function aggregateByTimePeriod(
   
   return result;
 }
+
+// =============================================================================
+// Energy Chart Data Types and Functions
+// =============================================================================
+
+/**
+ * Data point for the energy release chart
+ */
+export interface EnergyDataPoint {
+  /** Period label (formatted date) */
+  period: string;
+  /** Total seismic energy released in Joules */
+  totalEnergy: number;
+  /** Average seismic energy per earthquake in Joules */
+  avgEnergy: number;
+  /** Number of earthquakes in this period */
+  count: number;
+  /** Average magnitude for the period */
+  avgMagnitude: number;
+}
+
+/**
+ * Aggregate earthquakes by time period for energy visualization
+ * 
+ * @param earthquakes - Array of earthquake features from USGS API
+ * @param grouping - How to group time periods (day, week, month, or year)
+ * @returns Energy data points for chart
+ */
+export function aggregateEnergyByTimePeriod(
+  earthquakes: EarthquakeFeature[],
+  grouping: TimeGrouping
+): EnergyDataPoint[] {
+  interface PeriodStats {
+    count: number;
+    sumMag: number;
+    totalEnergy: number;
+  }
+  
+  const aggregations = new Map<string, PeriodStats>();
+  
+  // Process each earthquake
+  for (const eq of earthquakes) {
+    const magnitude = eq.properties.mag ?? 0;
+    const energy = calculateSeismicEnergy(magnitude);
+    
+    const date = new Date(eq.properties.time);
+    const periodKey = getPeriodKey(date, grouping);
+    
+    const existing = aggregations.get(periodKey);
+    if (existing) {
+      existing.count++;
+      existing.sumMag += magnitude;
+      existing.totalEnergy += energy;
+    } else {
+      aggregations.set(periodKey, {
+        count: 1,
+        sumMag: magnitude,
+        totalEnergy: energy,
+      });
+    }
+  }
+  
+  // Convert to EnergyDataPoint format, sorted by date
+  const sortedKeys = Array.from(aggregations.keys()).sort();
+  
+  return sortedKeys.map(periodKey => {
+    const stats = aggregations.get(periodKey)!;
+    const periodDate = getDateFromPeriodKey(periodKey, grouping);
+    const dateLabel = formatPeriodLabel(periodDate, grouping);
+    
+    return {
+      period: dateLabel,
+      totalEnergy: stats.totalEnergy,
+      avgEnergy: stats.totalEnergy / stats.count,
+      count: stats.count,
+      avgMagnitude: stats.sumMag / stats.count,
+    };
+  });
+}
+
+/**
+ * Format energy value to human-readable string with SI prefixes
+ * Uses Joules with appropriate prefix (J, kJ, MJ, GJ, TJ, PJ, EJ)
+ */
+export function formatEnergy(joules: number): string {
+  if (joules < 1000) {
+    return `${joules.toFixed(1)} J`;
+  } else if (joules < 1e6) {
+    return `${(joules / 1e3).toFixed(1)} kJ`;
+  } else if (joules < 1e9) {
+    return `${(joules / 1e6).toFixed(1)} MJ`;
+  } else if (joules < 1e12) {
+    return `${(joules / 1e9).toFixed(1)} GJ`;
+  } else if (joules < 1e15) {
+    return `${(joules / 1e12).toFixed(1)} TJ`;
+  } else if (joules < 1e18) {
+    return `${(joules / 1e15).toFixed(1)} PJ`;
+  } else {
+    return `${(joules / 1e18).toFixed(1)} EJ`;
+  }
+}
+
+/**
+ * Format energy value for chart axis (shorter format)
+ */
+export function formatEnergyAxis(joules: number): string {
+  if (joules < 1000) {
+    return `${joules.toFixed(0)}`;
+  } else if (joules < 1e6) {
+    return `${(joules / 1e3).toFixed(0)}k`;
+  } else if (joules < 1e9) {
+    return `${(joules / 1e6).toFixed(0)}M`;
+  } else if (joules < 1e12) {
+    return `${(joules / 1e9).toFixed(0)}G`;
+  } else if (joules < 1e15) {
+    return `${(joules / 1e12).toFixed(0)}T`;
+  } else if (joules < 1e18) {
+    return `${(joules / 1e15).toFixed(0)}P`;
+  } else {
+    return `${(joules / 1e18).toFixed(0)}E`;
+  }
+}

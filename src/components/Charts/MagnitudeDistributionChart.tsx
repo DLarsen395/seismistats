@@ -415,14 +415,15 @@ export function MagnitudeDistributionChart({
       width: '100%',
       backgroundColor: colors.background,
       borderRadius: '0.5rem',
-      padding: '1rem',
+      padding: '0.75rem 1rem',
+      margin: '0 0.75rem',
     }}>
       {/* Header */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'flex-start',
-        marginBottom: '1rem',
+        marginBottom: '0.5rem',
         flexWrap: 'wrap',
         gap: '0.5rem',
       }}>
@@ -437,7 +438,7 @@ export function MagnitudeDistributionChart({
           </h3>
           <p style={{
             color: colors.textMuted,
-            fontSize: '0.75rem',
+            fontSize: '0.7rem',
             margin: '0.25rem 0 0 0',
           }}>
             {totalVisible.toLocaleString()} earthquakes in {chartData.length} periods
@@ -451,15 +452,15 @@ export function MagnitudeDistributionChart({
               key={option.value}
               onClick={() => setTimeGrouping(option.value)}
               style={{
-                padding: '0.375rem 0.75rem',
-                fontSize: '0.75rem',
+                padding: '0.2rem 0.5rem',
+                fontSize: '0.7rem',
                 backgroundColor: timeGrouping === option.value 
                   ? '#3b82f6' 
                   : 'transparent',
                 border: `1px solid ${timeGrouping === option.value 
                   ? '#3b82f6' 
                   : colors.grid}`,
-                borderRadius: '0.375rem',
+                borderRadius: '0.25rem',
                 color: timeGrouping === option.value 
                   ? '#ffffff' 
                   : colors.textMuted,

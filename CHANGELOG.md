@@ -5,6 +5,38 @@ All notable changes to the ETS Events Visualization project will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.9] - 2025-01-02
+
+### 🔋 Seismic Energy Release Chart
+
+New visualization showing cumulative seismic energy released over time.
+
+### Added
+- **Energy Release Chart** - Third chart showing seismic energy per time period
+  - Bars show total energy released per period (day/week/month/year)
+  - Cyan line with dots shows average energy per earthquake
+  - Uses scientific Gutenberg-Richter formula: E = 10^(1.5M + 4.8) joules
+  - Smart SI prefix formatting (J, kJ, MJ, GJ, TJ, PJ, EJ)
+  - Tooltip shows total energy, average energy, count, and avg magnitude
+  - Time grouping selector syncs with date range selection
+- **Energy Utility Functions** - New aggregation and formatting functions
+  - `aggregateEnergyByTimePeriod()` - Calculates energy stats per period
+  - `formatEnergy()` - Human-readable energy with SI prefixes
+  - `formatEnergyAxis()` - Shortened axis labels
+
+### Changed
+- **Tightened Chart Spacing** - Reduced vertical padding on all three charts
+  - Charts now fit better on screen without scrolling
+  - Reduced header margins, font sizes slightly smaller
+  - Chart heights reduced from 300px to 220-240px
+
+### Fixed
+- **Live Event Count During Fetch** - Progress banner now shows live event count
+  - Previously cache stats didn't update until fetch completed
+  - Now shows "X events" in green as data streams in
+
+---
+
 ## [1.3.0] - 2025-01-02
 
 ### 🌍 Earthquake Charts Enhanced
