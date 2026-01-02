@@ -174,6 +174,7 @@ async function fetchStaleDays(
   }
   
   let daysFetched = 0;
+  let rangesFetched = 0;
   
   for (const range of ranges) {
     const startDate = new Date(range.start);
@@ -208,10 +209,12 @@ async function fetchStaleDays(
       }
       
       daysFetched += rangeDays;
+      rangesFetched++;
       
       // Update intermediate data for progressive chart updates
-      // Call on every range to keep UI responsive
-      if (onIntermediateData) {
+      // Throttle to every 5 ranges to balance responsiveness vs memory
+      const isLastRange = ranges.indexOf(range) === ranges.length - 1;
+      if (onIntermediateData && (rangesFetched % 5 === 0 || isLastRange)) {
         onIntermediateData(allFeatures);
       }
       
@@ -549,9 +552,9 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
             const dailyAggregates = aggregateEarthquakesByDay(combinedFeatures);
             const summary = getEarthquakeSummary(combinedFeatures);
             set({
+              earthquakes: combinedFeatures,  // Update for charts that need raw data
               dailyAggregates,
               summary,
-              // Don't update earthquakes array until complete to save memory
             });
           };
           
@@ -603,14 +606,13 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
       } else {
         // Cache disabled, fetch directly with progress
         // Handler to progressively update UI during long fetches
-        // Only update aggregates to save memory
         const handleIntermediateData = (intermediateFeatures: EarthquakeFeature[]) => {
           const dailyAggregates = aggregateEarthquakesByDay(intermediateFeatures);
           const summary = getEarthquakeSummary(intermediateFeatures);
           set({
+            earthquakes: intermediateFeatures,  // Update for charts that need raw data
             dailyAggregates,
             summary,
-            // Don't update earthquakes array until complete to save memory
           });
         };
         
