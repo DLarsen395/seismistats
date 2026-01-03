@@ -5,6 +5,7 @@
 
 import { useEffect } from 'react';
 import { useCacheStore } from '../../stores/cacheStore';
+import { useEarthquakeStore } from '../../stores/earthquakeStore';
 import { format } from 'date-fns';
 
 export function CacheStatusPanel() {
@@ -21,6 +22,8 @@ export function CacheStatusPanel() {
     resetDB,
     progress,
   } = useCacheStore();
+
+  const { refreshData, isLoading } = useEarthquakeStore();
 
   // Refresh info and stats on mount
   useEffect(() => {
@@ -60,23 +63,62 @@ export function CacheStatusPanel() {
           Cache
         </h3>
 
-        {/* Enable/Disable toggle */}
-        <button
-          onClick={() => setEnabled(!isEnabled)}
-          style={{
-            padding: '0.25rem 0.5rem',
-            fontSize: '0.7rem',
-            color: isEnabled ? '#86efac' : '#fca5a5',
-            backgroundColor: isEnabled
-              ? 'rgba(34, 197, 94, 0.2)'
-              : 'rgba(239, 68, 68, 0.2)',
-            border: `1px solid ${isEnabled ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
-            borderRadius: '0.25rem',
-            cursor: 'pointer',
-          }}
-        >
-          {isEnabled ? 'Enabled' : 'Disabled'}
-        </button>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          {/* Refresh Data button */}
+          <button
+            onClick={refreshData}
+            disabled={isLoading || isProcessing}
+            style={{
+              padding: '0.25rem 0.5rem',
+              fontSize: '0.7rem',
+              color: isLoading || isProcessing ? '#6b7280' : '#60a5fa',
+              backgroundColor: 'transparent',
+              border: `1px solid ${isLoading || isProcessing ? '#374151' : '#60a5fa'}`,
+              borderRadius: '0.25rem',
+              cursor: isLoading || isProcessing ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.25rem',
+            }}
+          >
+            {isLoading ? (
+              <>
+                <span
+                  style={{
+                    display: 'inline-block',
+                    width: '0.625rem',
+                    height: '0.625rem',
+                    border: '1.5px solid #374151',
+                    borderTopColor: '#60a5fa',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite',
+                  }}
+                />
+                Loading
+              </>
+            ) : (
+              <>🔄 Refresh</>
+            )}
+          </button>
+
+          {/* Enable/Disable toggle */}
+          <button
+            onClick={() => setEnabled(!isEnabled)}
+            style={{
+              padding: '0.25rem 0.5rem',
+              fontSize: '0.7rem',
+              color: isEnabled ? '#86efac' : '#fca5a5',
+              backgroundColor: isEnabled
+                ? 'rgba(34, 197, 94, 0.2)'
+                : 'rgba(239, 68, 68, 0.2)',
+              border: `1px solid ${isEnabled ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+              borderRadius: '0.25rem',
+              cursor: 'pointer',
+            }}
+          >
+            {isEnabled ? 'Enabled' : 'Disabled'}
+          </button>
+        </div>
       </div>
 
       {/* Cache integrity warning */}

@@ -159,7 +159,7 @@ export function RechartsBarChart({ data, title }: RechartsBarChartProps) {
           {title}
         </h3>
       )}
-      <ResponsiveContainer width="100%" height={280}>
+      <ResponsiveContainer width="100%" height={280} minWidth={100} minHeight={100}>
         <BarChart
           data={chartData}
           margin={{ top: 10, right: 15, left: 0, bottom: 40 }}

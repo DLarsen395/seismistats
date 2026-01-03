@@ -24,6 +24,12 @@ Simplified the codebase by removing Chart.js and standardizing on Recharts as th
   - Simplified EarthquakeChartsPage to render Recharts directly (no conditional)
   - Cleaner, more maintainable codebase
 
+### Fixed
+- **Progress Bar Step Display** - Restored "Step X of Y" display during multi-chunk fetches
+- **Refresh Button Location** - Moved from "Earthquakes By" panel to Cache panel (where it belongs)
+- **Progress Bar Layout Jumping** - Fixed stats (events, %, seconds) jumping left/right by adding fixed widths
+- **Recharts Console Warning** - Added minWidth/minHeight to ResponsiveContainer to fix width/height warning
+
 ### Technical Notes
 - Reduced bundle size by removing Chart.js dependencies
 - Streamlined state management (fewer store properties)

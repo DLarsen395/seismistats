@@ -339,6 +339,11 @@ function FetchProgressBar() {
           <span style={{ color: '#93c5fd', fontSize: '0.75rem', fontWeight: 500 }}>
             {getOperationLabel()}
           </span>
+          {progress.totalSteps > 1 && (
+            <span style={{ color: '#60a5fa', fontSize: '0.7rem', fontWeight: 500 }}>
+              Step {progress.currentStep} of {progress.totalSteps}
+            </span>
+          )}
           {progress.currentDate && (
             <span style={{ color: '#60a5fa', fontSize: '0.7rem' }}>
               {progress.currentDate}
@@ -396,23 +401,17 @@ function FetchProgressBar() {
         )}
       </div>
 
-      {/* Stats */}
-      <div style={{ display: 'flex', gap: '0.75rem', flexShrink: 0, fontSize: '0.7rem' }}>
-        {progress.eventsLoaded !== undefined && progress.eventsLoaded > 0 && (
-          <span style={{ color: '#86efac', fontWeight: 500 }}>
-            {progress.eventsLoaded.toLocaleString()} events
-          </span>
-        )}
-        {progress.totalSteps > 0 && (
-          <span style={{ color: '#9ca3af' }}>
-            {percentage}%
-          </span>
-        )}
-        {elapsed > 0 && (
-          <span style={{ color: '#6b7280' }}>
-            {elapsed}s
-          </span>
-        )}
+      {/* Stats - fixed layout to prevent jumping */}
+      <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0, fontSize: '0.7rem', minWidth: '140px', justifyContent: 'flex-end' }}>
+        <span style={{ color: '#86efac', fontWeight: 500, minWidth: '70px', textAlign: 'right' }}>
+          {(progress.eventsLoaded ?? 0).toLocaleString()} events
+        </span>
+        <span style={{ color: '#9ca3af', minWidth: '32px', textAlign: 'right' }}>
+          {progress.totalSteps > 0 ? `${percentage}%` : '0%'}
+        </span>
+        <span style={{ color: '#6b7280', minWidth: '24px', textAlign: 'right' }}>
+          {elapsed}s
+        </span>
       </div>
 
       {/* Animation keyframes */}

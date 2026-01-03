@@ -32,7 +32,6 @@ export function EarthquakeChartsPage() {
     error,
     lastFetched,
     fetchEarthquakes,
-    refreshData,
     regionScope,
     minMagnitude,
     maxMagnitude,
@@ -190,43 +189,6 @@ export function EarthquakeChartsPage() {
                   ))}
                 </div>
 
-                <button
-                  onClick={refreshData}
-                  disabled={isLoading}
-                  style={{
-                    padding: '0.375rem 0.75rem',
-                    fontSize: '0.875rem',
-                    color: isLoading ? '#6b7280' : '#60a5fa',
-                    backgroundColor: 'transparent',
-                    border: '1px solid',
-                    borderColor: isLoading ? '#374151' : '#60a5fa',
-                    borderRadius: '0.375rem',
-                    cursor: isLoading ? 'not-allowed' : 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.375rem',
-                    transition: 'all 0.15s ease',
-                  }}
-                >
-                  {isLoading ? (
-                    <>
-                      <span
-                        style={{
-                          display: 'inline-block',
-                          width: '0.875rem',
-                          height: '0.875rem',
-                          border: '2px solid #374151',
-                          borderTopColor: '#60a5fa',
-                          borderRadius: '50%',
-                          animation: 'spin 1s linear infinite',
-                        }}
-                      />
-                      Loading...
-                    </>
-                  ) : (
-                    <>🔄 Refresh</>
-                  )}
-                </button>
               </div>
             </div>
 

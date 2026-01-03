@@ -483,7 +483,7 @@ export function MagnitudeDistributionChart({
       />
 
       {/* Chart */}
-      <ResponsiveContainer width="100%" height={height}>
+      <ResponsiveContainer width="100%" height={height} minWidth={100} minHeight={100}>
         <AreaChart
           data={chartData}
           margin={{ top: 10, right: 15, left: 0, bottom: 60 }}

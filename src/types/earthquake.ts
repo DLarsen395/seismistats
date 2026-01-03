@@ -1,6 +1,6 @@
 /**
  * TypeScript types for Earthquake Charts feature
- * 
+ *
  * Core earthquake types are defined in the USGS API service.
  * This file contains chart-specific types and constants.
  */
@@ -12,9 +12,9 @@
 /**
  * USGS earthquake data availability:
  * - Comprehensive global data starts from ~1973
- * - US data with some gaps goes back to ~1900  
+ * - US data with some gaps goes back to ~1900
  * - Historical significant earthquakes back to ~1568
- * 
+ *
  * We silently clamp queries to 1500-01-01 as the earliest date.
  * The API won't return data for future dates.
  */

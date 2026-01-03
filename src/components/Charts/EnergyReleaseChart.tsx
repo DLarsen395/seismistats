@@ -351,7 +351,7 @@ export function EnergyReleaseChart({
 
       {/* Chart */}
       <div style={{ height }}>
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={100}>
           <ComposedChart
             data={chartData}
             margin={{ top: 10, right: 15, left: 5, bottom: 0 }}
