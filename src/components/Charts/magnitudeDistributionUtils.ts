@@ -409,8 +409,8 @@ export interface EnergyDataPoint {
   avgEnergy: number;
   /** Number of earthquakes in this period */
   count: number;
-  /** Average magnitude for the period */
-  avgMagnitude: number;
+  /** Average magnitude for the period (null if no earthquakes) */
+  avgMagnitude: number | null;
 }
 
 /**
@@ -494,8 +494,8 @@ export function aggregateEnergyByTimePeriod(
       totalEnergy: stats.totalEnergy,
       avgEnergy: stats.count > 0 ? stats.totalEnergy / stats.count : 0,
       count: stats.count,
-      // Avoid NaN when count is 0 - set to null for chart to show gap
-      avgMagnitude: stats.count > 0 ? stats.sumMag / stats.count : null as unknown as number,
+      // Return null for days with no earthquakes (Recharts will show gap in line)
+      avgMagnitude: stats.count > 0 ? stats.sumMag / stats.count : null,
     };
   });
 }

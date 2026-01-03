@@ -5,6 +5,18 @@ All notable changes to the ETS Events Visualization project will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.15] - 2026-01-03
+
+### 🐛 Critical Bug Fix
+
+### Fixed
+- **Blank Screen Crash** - Fixed JavaScript crash causing app to go blank
+  - Root cause: `avgMagnitude` was typed as `number` but code used `null as unknown as number` 
+  - Calling `.toFixed(1)` on `null` crashed React rendering
+  - Properly typed `avgMagnitude` as `number | null` in `EnergyDataPoint` interface
+  - Tooltip now conditionally renders avg magnitude section only when data exists
+  - Stats calculation properly filters out null values before weighted average
+
 ## [1.2.14] - 2026-01-03
 
 ### 🐛 Bug Fixes and Accessibility Improvements

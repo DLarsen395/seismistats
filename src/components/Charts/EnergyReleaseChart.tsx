@@ -181,21 +181,23 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
           </span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem' }}>
-          <span
-            style={{
-              width: '12px',
-              height: '12px',
-              backgroundColor: colors.line,
-              borderRadius: '50%',
-              flexShrink: 0,
-            }}
-          />
-          <span style={{ color: colors.textMuted }}>Avg Magnitude:</span>
-          <span style={{ color: colors.line, fontWeight: 600 }}>
-            M{data.avgMagnitude.toFixed(1)}
-          </span>
-        </div>
+        {data.avgMagnitude !== null && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem' }}>
+            <span
+              style={{
+                width: '12px',
+                height: '12px',
+                backgroundColor: colors.line,
+                borderRadius: '50%',
+                flexShrink: 0,
+              }}
+            />
+            <span style={{ color: colors.textMuted }}>Avg Magnitude:</span>
+            <span style={{ color: colors.line, fontWeight: 600 }}>
+              M{data.avgMagnitude.toFixed(1)}
+            </span>
+          </div>
+        )}
 
         <div style={{
           fontSize: '0.75rem',
@@ -265,8 +267,10 @@ export function EnergyReleaseChart({
     }
     const totalEnergy = chartData.reduce((sum, d) => sum + d.totalEnergy, 0);
     const maxEnergy = Math.max(...chartData.map(d => d.totalEnergy));
-    const totalCount = chartData.reduce((sum, d) => sum + d.count, 0);
-    const weightedMagSum = chartData.reduce((sum, d) => sum + d.avgMagnitude * d.count, 0);
+    // Only include days with actual earthquakes in the weighted average
+    const daysWithData = chartData.filter(d => d.count > 0 && d.avgMagnitude !== null);
+    const totalCount = daysWithData.reduce((sum, d) => sum + d.count, 0);
+    const weightedMagSum = daysWithData.reduce((sum, d) => sum + (d.avgMagnitude as number) * d.count, 0);
     return {
       totalEnergy,
       maxEnergy,
