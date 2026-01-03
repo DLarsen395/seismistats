@@ -415,7 +415,6 @@ export function MagnitudeDistributionChart({
       backgroundColor: colors.background,
       borderRadius: '0.5rem',
       padding: '0.75rem 1rem 0.5rem 1rem',
-      margin: '0 0.75rem',
       border: '1px solid rgba(75, 85, 99, 0.3)',
     }}>
       {/* Header */}

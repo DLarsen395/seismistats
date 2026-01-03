@@ -17,7 +17,7 @@ export function ViewNavigation({ currentView, onViewChange }: ViewNavigationProp
   ];
 
   return (
-    <nav 
+    <nav
       style={{
         display: 'inline-flex',
         padding: '2px',
@@ -38,7 +38,7 @@ export function ViewNavigation({ currentView, onViewChange }: ViewNavigationProp
             fontSize: '0.8rem',
             fontWeight: currentView === view.id ? '600' : '400',
             color: currentView === view.id ? 'white' : '#9ca3af',
-            backgroundColor: currentView === view.id 
+            backgroundColor: currentView === view.id
               ? '#3b82f6'
               : 'transparent',
             border: 'none',

@@ -159,10 +159,10 @@ export function RechartsBarChart({ data, title }: RechartsBarChartProps) {
           {title}
         </h3>
       )}
-      <ResponsiveContainer width="100%" height={300}>
+      <ResponsiveContainer width="100%" height={260}>
         <BarChart 
           data={chartData} 
-          margin={{ top: 10, right: 10, left: 0, bottom: 60 }}
+          margin={{ top: 10, right: 10, left: 0, bottom: 40 }}
           barGap={barConfig.barGap}
         >
           <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} vertical={false} />
@@ -171,7 +171,7 @@ export function RechartsBarChart({ data, title }: RechartsBarChartProps) {
             tick={{ fill: colors.text, fontSize: data.length > 60 ? 10 : 11 }}
             angle={-45}
             textAnchor="end"
-            height={60}
+            height={45}
             interval={tickInterval}
             tickLine={{ stroke: colors.grid }}
             axisLine={{ stroke: colors.grid }}

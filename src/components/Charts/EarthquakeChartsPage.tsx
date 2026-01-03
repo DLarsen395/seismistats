@@ -80,8 +80,14 @@ export function EarthquakeChartsPage() {
   // Build chart title
   const getChartTitle = () => {
     const parts = [];
-    const groupLabel = TIME_GROUPING_OPTIONS.find(o => o.value === topChartGrouping)?.label || 'Day';
-    parts.push(`Earthquakes per ${groupLabel}`);
+    // Use clean labels (TIME_GROUPING_OPTIONS has 'By Day' etc, we just want 'Day')
+    const groupLabels: Record<TimeGrouping, string> = {
+      day: 'Day',
+      week: 'Week',
+      month: 'Month',
+      year: 'Year',
+    };
+    parts.push(`Earthquakes by ${groupLabels[topChartGrouping]}`);
 
     // Build magnitude range string
     const minStr = `M${minMagnitude}`;
@@ -266,30 +272,27 @@ export function EarthquakeChartsPage() {
 
           {/* Chart */}
           {topChartData.length > 0 && (
-            <div style={{ minHeight: 280 }}>
-              {chartLibrary === 'recharts' ? (
-                <RechartsBarChart data={topChartData} />
-              ) : (
-                <ChartJSBarChart data={topChartData} />
-              )}
-            </div>
+            chartLibrary === 'recharts' ? (
+              <RechartsBarChart data={topChartData} />
+            ) : (
+              <ChartJSBarChart data={topChartData} />
+            )
           )}
 
           {/* No data state */}
           {!isLoading && !error && topChartData.length === 0 && (
             <div
               style={{
-                flex: 1,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: '#9ca3af',
+                padding: '2rem',
               }}
             >
               <p>No earthquake data available for the selected filters</p>
             </div>
           )}
-        </div>
         </div>
 
         {/* Magnitude Distribution Chart */}
@@ -311,6 +314,7 @@ export function EarthquakeChartsPage() {
             daysInRange={daysInRange}
           />
         )}
+        </div>
       </div>
 
       {/* Right Sidebar - extends full height from header to bottom */}

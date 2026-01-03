@@ -142,16 +142,16 @@ export function CacheStatusPanel() {
             )}
           </div>
           
-          {/* Last updated */}
-          {info?.lastUpdated && (
-            <p style={{ 
-              fontSize: '0.7rem', 
-              color: '#6b7280', 
-              marginBottom: '0.75rem',
-            }}>
-              Last updated: {format(new Date(info.lastUpdated), 'MMM d, h:mm a')}
-            </p>
-          )}
+          {/* Last updated - always show */}
+          <p style={{ 
+            fontSize: '0.7rem', 
+            color: '#6b7280', 
+            marginBottom: '0.75rem',
+          }}>
+            Last updated: {info?.lastUpdated 
+              ? format(new Date(info.lastUpdated), 'MMM d, h:mm a')
+              : 'Never'}
+          </p>
           
           {/* Action buttons */}
           <div style={{ display: 'flex', gap: '0.5rem' }}>

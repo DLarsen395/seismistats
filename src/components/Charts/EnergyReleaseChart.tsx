@@ -292,7 +292,6 @@ export function EnergyReleaseChart({
         backdropFilter: 'blur(8px)',
         border: '1px solid rgba(75, 85, 99, 0.3)',
         padding: '0.75rem 1rem',
-        margin: '0 0.75rem 0.75rem 0.75rem',
       }}
     >
       {/* Header */}
