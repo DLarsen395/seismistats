@@ -10,7 +10,6 @@ import { RechartsBarChart } from './RechartsBarChart';
 import { ChartJSBarChart } from './ChartJSBarChart';
 import { MagnitudeDistributionChart } from './MagnitudeDistributionChart';
 import { EnergyReleaseChart } from './EnergyReleaseChart';
-import { CacheProgressBanner } from './CacheProgressBanner';
 import { CacheStatusPanel } from './CacheStatusPanel';
 import { TIME_RANGE_OPTIONS } from '../../types/earthquake';
 import type { TimeGrouping } from './magnitudeDistributionUtils';
@@ -118,17 +117,24 @@ export function EarthquakeChartsPage() {
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
-          overflowY: 'auto',
           minWidth: 0,
         }}
       >
-        {/* Cache Progress Banner - shows when caching is in progress */}
-        <CacheProgressBanner />
-
-        {/* Main content with padding */}
-        <div style={{ padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          {/* Filters */}
+        {/* Pinned filter section - doesn't scroll */}
+        <div style={{ padding: '0.75rem 0.75rem 0 0.75rem', flexShrink: 0 }}>
+          {/* Filters with embedded progress */}
           <ChartFilters />
+        </div>
+
+        {/* Scrollable charts area */}
+        <div style={{
+          flex: 1,
+          overflowY: 'auto',
+          padding: '0.5rem 0.75rem 0.75rem 0.75rem',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.5rem',
+        }}>
 
           {/* Chart area */}
           <div
@@ -300,7 +306,7 @@ export function EarthquakeChartsPage() {
           <MagnitudeDistributionChart
             earthquakes={earthquakes}
             title="Magnitude Distribution Over Time"
-            height={240}
+            height={280}
             daysInRange={daysInRange}
           />
         )}
@@ -310,7 +316,7 @@ export function EarthquakeChartsPage() {
           <EnergyReleaseChart
             earthquakes={earthquakes}
             title="Seismic Energy Released"
-            height={240}
+            height={280}
             daysInRange={daysInRange}
           />
         )}

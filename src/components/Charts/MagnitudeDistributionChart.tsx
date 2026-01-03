@@ -486,7 +486,7 @@ export function MagnitudeDistributionChart({
       <ResponsiveContainer width="100%" height={height}>
         <AreaChart
           data={chartData}
-          margin={{ top: 10, right: 10, left: 0, bottom: 60 }}
+          margin={{ top: 10, right: 15, left: 0, bottom: 60 }}
         >
           <CartesianGrid
             strokeDasharray="3 3"
@@ -515,7 +515,10 @@ export function MagnitudeDistributionChart({
               style: { textAnchor: 'middle', fontSize: 12 },
             }}
           />
-          <Tooltip content={<CustomTooltip />} />
+          <Tooltip
+            content={<CustomTooltip />}
+            wrapperStyle={{ zIndex: 1000 }}
+          />
           <Legend
             wrapperStyle={{
               paddingTop: '0',

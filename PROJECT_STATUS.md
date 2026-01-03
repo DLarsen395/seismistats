@@ -1,11 +1,11 @@
 # ETS Events Visualization - Project Status
 
-**Last Updated**: November 27, 2025  
-**Version**: 1.0.0
+**Last Updated**: January 2, 2026  
+**Version**: 1.2.10
 
-## 📊 Current Status: V1.0.0 Released ✅
+## 📊 Current Status: V1.2.10 Active Development ✅
 
-All core features implemented, tested, and deployed to production.
+All core features implemented. Earthquake Charts view with enhanced visualizations and intelligent caching.
 
 ### ✅ All Phases Complete (100%)
 - Phase 1: Core Visualization ✅
@@ -13,6 +13,7 @@ All core features implemented, tested, and deployed to production.
 - Phase 3: UI Components ✅
 - Phase 4: Mobile Support ✅
 - Phase 5: Docker Deployment ✅
+- Phase 6: Earthquake Charts ✅
 
 ---
 
@@ -27,10 +28,12 @@ All core features implemented, tested, and deployed to production.
 | Magnitude Sizing | ✅ Complete | 3-10.5px radius |
 | **Data Integration** | | |
 | PNSN API Connection | ✅ Complete | Real-time data fetching |
-| Time Range Presets | ✅ Complete | 48h, Week, Month, Year |
+| USGS API Connection | ✅ Complete | Chunked fetching for large ranges |
+| Time Range Presets | ✅ Complete | 48h, Week, Month, Year, Custom |
 | Custom Date Range | ✅ Complete | With validation |
 | Loading States | ✅ Complete | Spinner + overlay |
 | Error Handling | ✅ Complete | Retry functionality |
+| IndexedDB Caching | ✅ Complete | Intelligent historical/recent caching |
 | **Playback System** | | |
 | Play/Pause | ✅ Complete | Smooth state transitions |
 | Speed Controls | ✅ Complete | 0.1x - 10x |
@@ -38,6 +41,14 @@ All core features implemented, tested, and deployed to production.
 | Range Brackets | ✅ Complete | Draggable start/end |
 | Fade Animations | ✅ Complete | 500ms exit + 1.5s fade |
 | Auto-restart | ✅ Complete | Loops from beginning |
+| **Earthquake Charts** | | |
+| Bar Chart (Recharts) | ✅ Complete | Daily/weekly/monthly/yearly aggregation |
+| Bar Chart (Chart.js) | ✅ Complete | Alternative visualization library |
+| Magnitude Distribution | ✅ Complete | Stacked area chart with toggles |
+| Energy Release Chart | ✅ Complete | Log scale bars + avg magnitude line |
+| Pinned Filter Panel | ✅ Complete | Stays fixed while charts scroll |
+| Fetch Progress | ✅ Complete | Embedded in filter panel |
+| Cache Status Panel | ✅ Complete | Stats, management controls |
 | **UI Components** | | |
 | Legend | ✅ Complete | Depth + magnitude guide |
 | Statistics Panel | ✅ Complete | Real-time metrics |
@@ -69,7 +80,12 @@ All core features implemented, tested, and deployed to production.
 - ✅ Mapbox GL JS 3.9.0
 - ✅ Zustand 5.0.2
 - ✅ Tailwind CSS 3.4.1
+- ✅ Recharts 2.x (Chart visualizations)
+- ✅ Chart.js (Alternative chart library)
+- ✅ date-fns (Date manipulation)
+- ✅ idb (IndexedDB wrapper)
 - ✅ PNSN Tremor API integration
+- ✅ USGS Earthquake API integration
 - ✅ Docker (multi-stage build)
 - ✅ Nginx Alpine
 - ✅ GitHub Container Registry
@@ -85,6 +101,7 @@ All core features implemented, tested, and deployed to production.
 | Memory Usage | < 200MB | ~120MB | ✅ |
 | API Response | < 5s | 1-4s | ✅ |
 | Bundle Size | < 500KB | ~380KB | ✅ |
+| Cache Size | Variable | ~10-15MB/year | ✅ |
 
 ---
 

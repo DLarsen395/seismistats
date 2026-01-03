@@ -2,13 +2,14 @@
  * Filter controls for earthquake charts
  */
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { format, subYears } from 'date-fns';
 import { useEarthquakeStore } from '../../stores/earthquakeStore';
-import { 
-  MIN_MAGNITUDE_OPTIONS, 
+import { useCacheStore } from '../../stores/cacheStore';
+import {
+  MIN_MAGNITUDE_OPTIONS,
   MAX_MAGNITUDE_OPTIONS,
-  TIME_RANGE_OPTIONS, 
+  TIME_RANGE_OPTIONS,
   REGION_SCOPE_OPTIONS,
 } from '../../types/earthquake';
 import type { ChartLibrary } from '../../types/earthquake';
@@ -196,8 +197,8 @@ export function ChartFilters() {
           }}
         >
           {MAX_MAGNITUDE_OPTIONS.map((option) => (
-            <option 
-              key={option.value} 
+            <option
+              key={option.value}
               value={option.value}
               disabled={option.value < minMagnitude}
             >
@@ -262,6 +263,207 @@ export function ChartFilters() {
           ))}
         </div>
       </div>
+
+      {/* Fetch Progress - embedded at bottom of filters panel */}
+      <FetchProgressBar />
+    </div>
+  );
+}
+
+/**
+ * Fetch Progress Bar Component
+ * Shows progress when earthquake data is being fetched/cached
+ */
+function FetchProgressBar() {
+  const { progress } = useCacheStore();
+  const { isLoading } = useEarthquakeStore();
+  const [elapsed, setElapsed] = useState(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const loadingStartRef = useRef<number | null>(null);
+
+  const hasProgress = progress.operation !== 'idle';
+  const shouldShow = hasProgress || isLoading;
+
+  useEffect(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
+    if (shouldShow) {
+      const startTime = progress.startedAt || loadingStartRef.current || Date.now();
+      if (!loadingStartRef.current && isLoading) {
+        loadingStartRef.current = Date.now();
+      }
+
+      const initialElapsed = Math.round((Date.now() - startTime) / 1000);
+
+      intervalRef.current = setInterval(() => {
+        setElapsed(Math.round((Date.now() - startTime) / 1000));
+      }, 1000);
+
+      requestAnimationFrame(() => {
+        setElapsed(initialElapsed);
+      });
+    } else {
+      loadingStartRef.current = null;
+      requestAnimationFrame(() => {
+        setElapsed(0);
+      });
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [shouldShow, progress.startedAt, isLoading]);
+
+  if (!shouldShow) {
+    return null;
+  }
+
+  const percentage = progress.totalSteps > 0
+    ? Math.round((progress.currentStep / progress.totalSteps) * 100)
+    : 0;
+
+  const getMessage = () => {
+    if (progress.operation !== 'idle' && progress.message) {
+      return progress.message;
+    }
+    if (isLoading) {
+      return 'Loading earthquake data...';
+    }
+    return 'Processing...';
+  };
+
+  const getOperationLabel = () => {
+    if (progress.operation === 'fetching') return 'Fetching';
+    if (progress.operation === 'storing') return 'Caching';
+    if (progress.operation === 'validating') return 'Preparing';
+    if (isLoading) return 'Loading';
+    return 'Processing';
+  };
+
+  return (
+    <div
+      style={{
+        width: '100%',
+        marginTop: '0.5rem',
+        padding: '0.5rem 0.75rem',
+        backgroundColor: 'rgba(59, 130, 246, 0.15)',
+        borderRadius: '0.375rem',
+        border: '1px solid rgba(59, 130, 246, 0.3)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.75rem',
+      }}
+    >
+      {/* Spinner */}
+      <div
+        style={{
+          width: '1rem',
+          height: '1rem',
+          border: '2px solid rgba(59, 130, 246, 0.3)',
+          borderTopColor: '#60a5fa',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite',
+          flexShrink: 0,
+        }}
+      />
+
+      {/* Progress info */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <span style={{ color: '#93c5fd', fontSize: '0.75rem', fontWeight: 500 }}>
+            {getOperationLabel()}
+          </span>
+          {progress.currentDate && (
+            <span style={{ color: '#60a5fa', fontSize: '0.7rem' }}>
+              {progress.currentDate}
+            </span>
+          )}
+          <span style={{ color: '#9ca3af', fontSize: '0.7rem' }}>
+            {getMessage()}
+          </span>
+        </div>
+
+        {/* Progress bar */}
+        {progress.totalSteps > 0 && (
+          <div
+            style={{
+              marginTop: '0.25rem',
+              height: '3px',
+              backgroundColor: 'rgba(59, 130, 246, 0.2)',
+              borderRadius: '2px',
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              style={{
+                height: '100%',
+                width: `${percentage}%`,
+                backgroundColor: '#60a5fa',
+                transition: 'width 0.3s ease',
+              }}
+            />
+          </div>
+        )}
+
+        {/* Indeterminate progress bar */}
+        {progress.totalSteps === 0 && (
+          <div
+            style={{
+              marginTop: '0.25rem',
+              height: '3px',
+              backgroundColor: 'rgba(59, 130, 246, 0.2)',
+              borderRadius: '2px',
+              overflow: 'hidden',
+              position: 'relative',
+            }}
+          >
+            <div
+              style={{
+                position: 'absolute',
+                height: '100%',
+                width: '30%',
+                backgroundColor: '#60a5fa',
+                animation: 'indeterminate 1.5s ease-in-out infinite',
+              }}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Stats */}
+      <div style={{ display: 'flex', gap: '0.75rem', flexShrink: 0, fontSize: '0.7rem' }}>
+        {progress.eventsLoaded !== undefined && progress.eventsLoaded > 0 && (
+          <span style={{ color: '#86efac', fontWeight: 500 }}>
+            {progress.eventsLoaded.toLocaleString()} events
+          </span>
+        )}
+        {progress.totalSteps > 0 && (
+          <span style={{ color: '#9ca3af' }}>
+            {percentage}%
+          </span>
+        )}
+        {elapsed > 0 && (
+          <span style={{ color: '#6b7280' }}>
+            {elapsed}s
+          </span>
+        )}
+      </div>
+
+      {/* Animation keyframes */}
+      <style>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        @keyframes indeterminate {
+          0% { left: -30%; }
+          100% { left: 100%; }
+        }
+      `}</style>
     </div>
   );
 }

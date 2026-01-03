@@ -5,6 +5,41 @@ All notable changes to the ETS Events Visualization project will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.10] - 2026-01-02
+
+### 🎨 UI/UX Improvements
+
+Major layout, alignment, and user experience improvements to the Earthquake Charts view.
+
+### Added
+- **Pinned Filter Panel** - Time Range and filter controls now stay fixed at top while charts scroll
+  - Ensures filters are always visible regardless of scroll position
+  - Fetch progress bar moved inside filters panel (appears at bottom when fetching)
+  - Cleaner separation between controls and scrollable chart content
+
+### Changed
+- **Chart Column Alignment** - All three charts now align horizontally
+  - Unified right margin (15px) across all charts
+  - Removed "Avg Mag" axis label from Energy chart to reduce width
+  - Simplified right Y-axis ticks on Energy chart
+- **Increased Chart Heights** - All charts now 280px (up from 240-260px)
+  - Better variance visibility in the data
+  - More vertical space for bar/line details
+- **Energy Chart Button Color** - Changed from orange to blue for consistency with other charts
+- **Energy Chart Legend Color** - Fixed missing legend color (was black, now shows orange)
+- **Cache "Last Updated" Display** - Now properly shows timestamp after data fetch
+  - Added `refreshInfo()` call on panel mount
+  - Added cache info refresh after successful data fetch
+
+### Fixed
+- **Tooltip Z-Index** - Magnitude Distribution chart tooltip now appears above legend
+  - Added `wrapperStyle={{ zIndex: 1000 }}` to Tooltip component
+- **Scrollbar Styling** - Dark themed scrollbars throughout the app
+- **Navigation Toggle** - Redesigned as compact pill-style toggle
+- **Grammar Fix** - "Earthquakes per By Day" → "Earthquakes by Day"
+
+---
+
 ## [1.2.9] - 2025-01-02
 
 ### 🔋 Seismic Energy Release Chart

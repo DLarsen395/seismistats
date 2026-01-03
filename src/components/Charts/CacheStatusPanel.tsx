@@ -8,26 +8,28 @@ import { useCacheStore } from '../../stores/cacheStore';
 import { format } from 'date-fns';
 
 export function CacheStatusPanel() {
-  const { 
-    isEnabled, 
-    stats, 
-    info, 
+  const {
+    isEnabled,
+    stats,
+    info,
     integrity,
-    setEnabled, 
-    refreshStats, 
-    clearAllCache, 
+    setEnabled,
+    refreshInfo,
+    refreshStats,
+    clearAllCache,
     clearStale,
     resetDB,
     progress,
   } = useCacheStore();
-  
-  // Refresh stats on mount
+
+  // Refresh info and stats on mount
   useEffect(() => {
+    refreshInfo();
     refreshStats();
-  }, [refreshStats]);
-  
+  }, [refreshInfo, refreshStats]);
+
   const isProcessing = progress.operation !== 'idle';
-  
+
   return (
     <div
       style={{
@@ -39,16 +41,16 @@ export function CacheStatusPanel() {
       }}
     >
       {/* Header */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: '0.75rem',
       }}>
-        <h3 style={{ 
-          color: '#d1d5db', 
-          fontSize: '0.875rem', 
-          fontWeight: 600, 
+        <h3 style={{
+          color: '#d1d5db',
+          fontSize: '0.875rem',
+          fontWeight: 600,
           margin: 0,
           display: 'flex',
           alignItems: 'center',
@@ -57,7 +59,7 @@ export function CacheStatusPanel() {
           <span>💾</span>
           Cache
         </h3>
-        
+
         {/* Enable/Disable toggle */}
         <button
           onClick={() => setEnabled(!isEnabled)}
@@ -65,8 +67,8 @@ export function CacheStatusPanel() {
             padding: '0.25rem 0.5rem',
             fontSize: '0.7rem',
             color: isEnabled ? '#86efac' : '#fca5a5',
-            backgroundColor: isEnabled 
-              ? 'rgba(34, 197, 94, 0.2)' 
+            backgroundColor: isEnabled
+              ? 'rgba(34, 197, 94, 0.2)'
               : 'rgba(239, 68, 68, 0.2)',
             border: `1px solid ${isEnabled ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
             borderRadius: '0.25rem',
@@ -76,7 +78,7 @@ export function CacheStatusPanel() {
           {isEnabled ? 'Enabled' : 'Disabled'}
         </button>
       </div>
-      
+
       {/* Cache integrity warning */}
       {isEnabled && integrity && !integrity.isHealthy && (
         <div style={{
@@ -86,73 +88,73 @@ export function CacheStatusPanel() {
           border: '1px solid rgba(251, 191, 36, 0.3)',
           borderRadius: '0.25rem',
         }}>
-          <p style={{ 
-            fontSize: '0.7rem', 
-            color: '#fbbf24', 
+          <p style={{
+            fontSize: '0.7rem',
+            color: '#fbbf24',
             margin: 0,
             marginBottom: '0.25rem',
             fontWeight: 600,
           }}>
             ⚠️ Cache Issue Detected
           </p>
-          <p style={{ 
-            fontSize: '0.65rem', 
-            color: '#d1d5db', 
+          <p style={{
+            fontSize: '0.65rem',
+            color: '#d1d5db',
             margin: 0,
           }}>
             {integrity.recommendation || 'Click "Clear All" to fix.'}
           </p>
         </div>
       )}
-      
+
       {isEnabled && stats ? (
         <>
           {/* Stats grid */}
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(2, 1fr)', 
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
             gap: '0.5rem',
             marginBottom: '0.75rem',
           }}>
             <StatItem label="Total Events" value={stats.totalEvents.toLocaleString()} />
             <StatItem label="Days Cached" value={stats.totalDays.toString()} />
-            <StatItem 
-              label="Historical" 
-              value={stats.historicalEvents.toLocaleString()} 
+            <StatItem
+              label="Historical"
+              value={stats.historicalEvents.toLocaleString()}
               subtext="(>4 weeks)"
             />
-            <StatItem 
-              label="Recent" 
-              value={stats.recentEvents.toLocaleString()} 
+            <StatItem
+              label="Recent"
+              value={stats.recentEvents.toLocaleString()}
               subtext="(<4 weeks)"
             />
-            <StatItem 
-              label="Est. Size" 
-              value={stats.sizeEstimateKB > 1024 
+            <StatItem
+              label="Est. Size"
+              value={stats.sizeEstimateKB > 1024
                 ? `${(stats.sizeEstimateKB / 1024).toFixed(1)} MB`
                 : `${stats.sizeEstimateKB} KB`
-              } 
+              }
             />
             {stats.staleDays > 0 && (
-              <StatItem 
-                label="Stale Days" 
-                value={stats.staleDays.toString()} 
+              <StatItem
+                label="Stale Days"
+                value={stats.staleDays.toString()}
                 highlight
               />
             )}
           </div>
-          
+
           {/* Last updated - always show */}
-          <p style={{ 
-            fontSize: '0.7rem', 
-            color: '#6b7280', 
+          <p style={{
+            fontSize: '0.7rem',
+            color: '#6b7280',
             marginBottom: '0.75rem',
           }}>
-            Last updated: {info?.lastUpdated 
+            Last updated: {info?.lastUpdated
               ? format(new Date(info.lastUpdated), 'MMM d, h:mm a')
               : 'Never'}
           </p>
-          
+
           {/* Action buttons */}
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             {stats.staleDays > 0 && (
@@ -192,7 +194,7 @@ export function CacheStatusPanel() {
               Clear All
             </button>
           </div>
-          
+
           {/* Reset DB button - for recovering from errors */}
           <button
             onClick={resetDB}
@@ -236,17 +238,17 @@ interface StatItemProps {
 function StatItem({ label, value, subtext, highlight }: StatItemProps) {
   return (
     <div>
-      <p style={{ 
-        fontSize: '0.7rem', 
-        color: '#9ca3af', 
+      <p style={{
+        fontSize: '0.7rem',
+        color: '#9ca3af',
         marginBottom: '0.125rem',
       }}>
         {label}
         {subtext && <span style={{ color: '#6b7280' }}> {subtext}</span>}
       </p>
-      <p style={{ 
-        fontSize: '0.875rem', 
-        fontWeight: 600, 
+      <p style={{
+        fontSize: '0.875rem',
+        fontWeight: 600,
         color: highlight ? '#fbbf24' : 'white',
         margin: 0,
       }}>

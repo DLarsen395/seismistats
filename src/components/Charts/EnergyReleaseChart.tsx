@@ -335,9 +335,9 @@ export function EnergyReleaseChart({
                 padding: '0.2rem 0.4rem',
                 fontSize: '0.7rem',
                 color: grouping === option.value ? '#111827' : '#9ca3af',
-                backgroundColor: grouping === option.value ? colors.bar : 'transparent',
+                backgroundColor: grouping === option.value ? '#60a5fa' : 'transparent',
                 border: '1px solid',
-                borderColor: grouping === option.value ? colors.bar : '#374151',
+                borderColor: grouping === option.value ? '#60a5fa' : '#374151',
                 borderRadius: '0.25rem',
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
@@ -354,7 +354,7 @@ export function EnergyReleaseChart({
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart
             data={chartData}
-            margin={{ top: 10, right: 45, left: 5, bottom: 0 }}
+            margin={{ top: 10, right: 15, left: 5, bottom: 0 }}
           >
             <CartesianGrid
               strokeDasharray="3 3"
@@ -398,18 +398,12 @@ export function EnergyReleaseChart({
               yAxisId="magnitude"
               orientation="right"
               domain={[0, 6]}
+              ticks={[1, 2, 3, 4, 5]}
               tick={{ fill: colors.line, fontSize: 10 }}
               tickLine={{ stroke: colors.grid }}
               axisLine={{ stroke: colors.grid }}
               tickFormatter={(v) => `M${v}`}
-              label={{
-                value: 'Avg Mag',
-                angle: 90,
-                position: 'insideRight',
-                fill: colors.line,
-                fontSize: 10,
-                offset: 5,
-              }}
+              width={28}
             />
 
             <Tooltip content={<CustomTooltip />} />
@@ -428,6 +422,7 @@ export function EnergyReleaseChart({
               yAxisId="energy"
               dataKey="logEnergy"
               name="Energy (log)"
+              fill={colors.bar}
               maxBarSize={barConfig.maxBarSize}
               radius={[2, 2, 0, 0]}
             >

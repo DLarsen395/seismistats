@@ -92,9 +92,9 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
         boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)',
       }}
     >
-      <p style={{ 
-        color: colors.tooltip.text, 
-        fontWeight: 600, 
+      <p style={{
+        color: colors.tooltip.text,
+        fontWeight: 600,
         marginBottom: '0.25rem',
         fontSize: '0.875rem',
       }}>
@@ -120,7 +120,7 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
 export function RechartsBarChart({ data, title }: RechartsBarChartProps) {
   const dateFormat = getDateFormat(data.length);
   const barConfig = getBarConfig(data.length);
-  
+
   // Format data with labels
   // The date field might already be a formatted string (for week/month/year grouping)
   // or an ISO date string (for day grouping), so we check before parsing
@@ -128,41 +128,41 @@ export function RechartsBarChart({ data, title }: RechartsBarChartProps) {
     // Try to parse as date - if it fails or gives Invalid Date, use the original string
     const parsedDate = new Date(d.date);
     const isValidDate = !isNaN(parsedDate.getTime());
-    
+
     return {
       ...d,
-      label: isValidDate 
+      label: isValidDate
         ? parsedDate.toLocaleDateString('en-US', dateFormat)
         : d.date,  // Already formatted (e.g., "Oct 2025", "2025")
     };
   });
 
   // Calculate tick interval based on data length
-  const tickInterval = data.length > 60 
+  const tickInterval = data.length > 60
     ? Math.floor(data.length / 12)  // ~12 labels for year view
-    : data.length > 30 
+    : data.length > 30
       ? Math.floor(data.length / 10)
-      : data.length > 14 
+      : data.length > 14
         ? 1  // Every other day for 2 weeks
         : 0;  // Every day for 1 week
 
   return (
     <div style={{ width: '100%', height: '100%' }}>
       {title && (
-        <h3 style={{ 
-          color: colors.text, 
-          fontSize: '1rem', 
-          fontWeight: 600, 
+        <h3 style={{
+          color: colors.text,
+          fontSize: '1rem',
+          fontWeight: 600,
           marginBottom: '0.5rem',
           textAlign: 'center',
         }}>
           {title}
         </h3>
       )}
-      <ResponsiveContainer width="100%" height={260}>
-        <BarChart 
-          data={chartData} 
-          margin={{ top: 10, right: 10, left: 0, bottom: 40 }}
+      <ResponsiveContainer width="100%" height={280}>
+        <BarChart
+          data={chartData}
+          margin={{ top: 10, right: 15, left: 0, bottom: 40 }}
           barGap={barConfig.barGap}
         >
           <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} vertical={false} />

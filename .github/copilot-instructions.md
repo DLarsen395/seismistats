@@ -67,3 +67,11 @@ interface ETSEvent {
 - Tailwind CSS with dark mode support
 - Glassmorphism for control panels
 - High contrast for accessibility
+
+## Development Workflow - CRITICAL
+**BEFORE any build/test command (`npm run build`, `npm run dev`, `docker build`, etc.):**
+1. **Save all files** - Ensure all changes are saved
+2. **Update documentation** - Update CHANGELOG.md and PROJECT_STATUS.md with changes
+3. **Commit changes** - Commit with descriptive message before building
+
+This ensures changes are preserved and documented before testing.

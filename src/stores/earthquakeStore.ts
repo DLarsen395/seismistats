@@ -4,19 +4,19 @@
 
 import { create } from 'zustand';
 import { subDays } from 'date-fns';
-import type { 
-  EarthquakeFeature, 
+import type {
+  EarthquakeFeature,
   DailyEarthquakeAggregate,
 } from '../services/usgs-earthquake-api';
-import type { 
-  ChartLibrary, 
-  TimeRange, 
+import type {
+  ChartLibrary,
+  TimeRange,
   RegionScope,
   AppView,
 } from '../types/earthquake';
 import { USGS_DATA_RANGE } from '../types/earthquake';
-import { 
-  fetchUSGSEarthquakes, 
+import {
+  fetchUSGSEarthquakes,
   fetchWorldwideEarthquakes,
   aggregateEarthquakesByDay,
   getEarthquakeSummary,
@@ -43,30 +43,30 @@ interface EarthquakeStore {
   // Current app view
   currentView: AppView;
   setCurrentView: (view: AppView) => void;
-  
+
   // Earthquake data
   earthquakes: EarthquakeFeature[];
   dailyAggregates: DailyEarthquakeAggregate[];
   summary: EarthquakeSummary | null;
-  
+
   // Loading and error states
   isLoading: boolean;
   error: string | null;
   lastFetched: Date | null;
-  
+
   // Filter settings - now with min AND max magnitude
   minMagnitude: number;
   maxMagnitude: number;
   timeRange: TimeRange;
   regionScope: RegionScope;
-  
+
   // Custom date range (used when timeRange === 'custom')
   customStartDate: Date | null;
   customEndDate: Date | null;
-  
+
   // Chart settings
   chartLibrary: ChartLibrary;
-  
+
   // Actions
   setMinMagnitude: (mag: number) => void;
   setMaxMagnitude: (mag: number) => void;
@@ -74,7 +74,7 @@ interface EarthquakeStore {
   setRegionScope: (scope: RegionScope) => void;
   setChartLibrary: (library: ChartLibrary) => void;
   setCustomDateRange: (startDate: Date, endDate: Date) => void;
-  
+
   // Data fetching
   fetchEarthquakes: () => Promise<void>;
   refreshData: () => Promise<void>;
@@ -144,10 +144,10 @@ async function fetchStaleDays(
   const allFeatures: EarthquakeFeature[] = [];
   const seenIds = new Set<string>();
   const fetchFn = regionScope === 'us' ? fetchUSGSEarthquakes : fetchWorldwideEarthquakes;
-  
+
   // Sort stale days to group consecutive days for batch fetching
   const sortedDays = [...staleDays].sort();
-  
+
   // Determine max range size based on magnitude to avoid hitting 20k API limit
   // Lower magnitudes have more events per day, so use smaller ranges
   // Each US region query returns up to 20k events, and we query 5 regions
@@ -172,18 +172,18 @@ async function fetchStaleDays(
     // 3 days * 600 * 5 regions = 9k, well under 20k limit
     maxRangeDays = 3;
   }
-  
+
   // Group consecutive days into ranges, respecting max range size
   const ranges: { start: string; end: string }[] = [];
   let rangeStart = sortedDays[0];
   let rangeEnd = sortedDays[0];
   let rangeDayCount = 1;
-  
+
   for (let i = 1; i < sortedDays.length; i++) {
     const prevDate = new Date(rangeEnd);
     const currDate = new Date(sortedDays[i]);
     const dayDiff = (currDate.getTime() - prevDate.getTime()) / (24 * 60 * 60 * 1000);
-    
+
     if (dayDiff === 1 && rangeDayCount < maxRangeDays) {
       // Consecutive day and within limit, extend range
       rangeEnd = sortedDays[i];
@@ -200,25 +200,25 @@ async function fetchStaleDays(
   if (rangeStart) {
     ranges.push({ start: rangeStart, end: rangeEnd });
   }
-  
+
   let daysFetched = 0;
   let rangesFetched = 0;
-  
+
   for (const range of ranges) {
     const startDate = new Date(range.start);
     // Add 1 day to end to make it inclusive
     const endDate = new Date(range.end);
     endDate.setDate(endDate.getDate() + 1);
-    
+
     const rangeDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000));
-    
+
     onProgress?.({
       currentDay: daysFetched + 1,
       totalDays: staleDays.length,
       currentDate: rangeDays > 1 ? `${range.start} to ${range.end}` : range.start,
       eventsFound: allFeatures.length,
     });
-    
+
     try {
       const response = await fetchFn({
         starttime: startDate,
@@ -227,7 +227,7 @@ async function fetchStaleDays(
         maxmagnitude: maxMagnitude && maxMagnitude < 10 ? maxMagnitude : undefined,
         limit: 20000,
       });
-      
+
       // Deduplicate as we go
       for (const feature of response.features) {
         if (!seenIds.has(feature.id)) {
@@ -235,17 +235,17 @@ async function fetchStaleDays(
           allFeatures.push(feature);
         }
       }
-      
+
       daysFetched += rangeDays;
       rangesFetched++;
-      
+
       // Update intermediate data for progressive chart updates
       // Throttle to every 5 ranges to balance responsiveness vs memory
       const isLastRange = ranges.indexOf(range) === ranges.length - 1;
       if (onIntermediateData && (rangesFetched % 5 === 0 || isLastRange)) {
         onIntermediateData(allFeatures);
       }
-      
+
       // Small delay between ranges to avoid rate limiting (only if more ranges to fetch)
       if (ranges.indexOf(range) < ranges.length - 1) {
         await new Promise(resolve => setTimeout(resolve, 50));
@@ -255,7 +255,7 @@ async function fetchStaleDays(
       throw err;
     }
   }
-  
+
   return allFeatures;
 }
 
@@ -274,16 +274,16 @@ async function fetchInChunks(
 ): Promise<EarthquakeFeature[]> {
   const allFeatures: EarthquakeFeature[] = [];
   const seenIds = new Set<string>();
-  
+
   // Calculate total days
   const totalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000));
-  
+
   // Determine chunk size based on magnitude filter AND time range
   // For short time ranges (< 14 days), we can be more aggressive with chunk sizes
   // since we won't hit the 20k limit as easily
   let chunkSizeDays: number;
   const isShortRange = totalDays <= 14;
-  
+
   if (minMagnitude >= 6) {
     chunkSizeDays = 3650; // 10 years - very few M6+ events
   } else if (minMagnitude >= 5) {
@@ -303,10 +303,10 @@ async function fetchInChunks(
     // For short ranges, try 2 days; for long ranges, use 1 day
     chunkSizeDays = isShortRange ? 2 : 1;
   }
-  
+
   // Calculate number of chunks
   const totalChunks = Math.max(1, Math.ceil(totalDays / chunkSizeDays));
-  
+
   // If total days <= chunk size, just do one request
   if (totalDays <= chunkSizeDays) {
     onProgress?.({
@@ -317,7 +317,7 @@ async function fetchInChunks(
       eventsFound: 0,
       message: 'Fetching earthquake data...',
     });
-    
+
     const fetchFn = regionScope === 'us' ? fetchUSGSEarthquakes : fetchWorldwideEarthquakes;
     const response = await fetchFn({
       starttime: startDate,
@@ -328,22 +328,22 @@ async function fetchInChunks(
     });
     return response.features;
   }
-  
+
   // Split into chunks
   let chunkStart = new Date(startDate);
   let chunkNumber = 0;
   const fetchFn = regionScope === 'us' ? fetchUSGSEarthquakes : fetchWorldwideEarthquakes;
-  
+
   while (chunkStart < endDate) {
     chunkNumber++;
     const chunkEnd = new Date(Math.min(
       chunkStart.getTime() + chunkSizeDays * 24 * 60 * 60 * 1000,
       endDate.getTime()
     ));
-    
+
     const chunkStartStr = chunkStart.toISOString().split('T')[0];
     const chunkEndStr = chunkEnd.toISOString().split('T')[0];
-    
+
     // Report progress BEFORE fetching
     onProgress?.({
       currentChunk: chunkNumber,
@@ -353,7 +353,7 @@ async function fetchInChunks(
       eventsFound: allFeatures.length,
       message: `Fetching ${chunkStartStr} to ${chunkEndStr}...`,
     });
-    
+
     try {
       const response = await fetchFn({
         starttime: chunkStart,
@@ -362,7 +362,7 @@ async function fetchInChunks(
         maxmagnitude: maxMagnitude && maxMagnitude < 10 ? maxMagnitude : undefined,
         limit: 20000,
       });
-      
+
       // Deduplicate as we go
       for (const feature of response.features) {
         if (!seenIds.has(feature.id)) {
@@ -370,14 +370,14 @@ async function fetchInChunks(
           allFeatures.push(feature);
         }
       }
-      
+
       // Call intermediate data callback less frequently to avoid memory pressure
       // Only update every 10 chunks and don't sort (saves memory with large datasets)
       if (onIntermediateData && chunkNumber % 10 === 0) {
         // Pass current data without copying - aggregation functions will handle it
         onIntermediateData(allFeatures);
       }
-      
+
       // Minimal delay between requests - USGS API can handle rapid requests
       // Only add delay if we have many chunks to avoid rate limiting on very large queries
       if (chunkEnd < endDate && totalChunks > 10) {
@@ -387,13 +387,13 @@ async function fetchInChunks(
       console.error(`Error fetching chunk ${chunkStart.toISOString()} to ${chunkEnd.toISOString()}:`, err);
       throw err;
     }
-    
+
     chunkStart = chunkEnd;
   }
-  
+
   // Sort by time descending (most recent first)
   allFeatures.sort((a, b) => b.properties.time - a.properties.time);
-  
+
   return allFeatures;
 }
 
@@ -406,23 +406,23 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
   isLoading: false,
   error: null,
   lastFetched: null,
-  
+
   // Default filter settings - now M4+ to M9+ (no upper limit)
   minMagnitude: 4,
   maxMagnitude: 10,  // 10 = no upper limit
   timeRange: '7days',  // Default to 7 days for fast initial load
   regionScope: 'us',
-  
+
   // Custom date range (for 'custom' timeRange)
   customStartDate: null,
   customEndDate: null,
-  
+
   // Default chart settings
   chartLibrary: 'recharts',
-  
+
   // View setter
   setCurrentView: (view) => set({ currentView: view }),
-  
+
   // Filter setters - refetch when filters change
   setMinMagnitude: (mag) => {
     const { maxMagnitude } = get();
@@ -434,7 +434,7 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
     }
     get().fetchEarthquakes();
   },
-  
+
   setMaxMagnitude: (mag) => {
     const { minMagnitude } = get();
     // Ensure max doesn't go below min
@@ -445,7 +445,7 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
     }
     get().fetchEarthquakes();
   },
-  
+
   setTimeRange: (range) => {
     set({ timeRange: range });
     // Don't auto-fetch for 'custom' - wait for date selection
@@ -453,37 +453,37 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
       get().fetchEarthquakes();
     }
   },
-  
+
   setRegionScope: (scope) => {
     set({ regionScope: scope });
     get().fetchEarthquakes();
   },
-  
+
   // Chart settings setter
   setChartLibrary: (library) => set({ chartLibrary: library }),
-  
+
   // Custom date range setter
   setCustomDateRange: (startDate, endDate) => {
-    set({ 
-      customStartDate: startDate, 
+    set({
+      customStartDate: startDate,
       customEndDate: endDate,
       timeRange: 'custom',
     });
     get().fetchEarthquakes();
   },
-  
+
   // Fetch earthquake data based on current filters
   fetchEarthquakes: async () => {
     const { minMagnitude, maxMagnitude, timeRange, regionScope, customStartDate, customEndDate, isLoading } = get();
     const cacheStore = useCacheStore.getState();
-    
+
     // Prevent concurrent fetches
     if (isLoading) {
       return;
     }
-    
+
     set({ isLoading: true, error: null });
-    
+
     // Show initial processing message
     cacheStore.setProgress({
       operation: 'validating',
@@ -492,11 +492,11 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
       message: 'Preparing to fetch data...',
       startedAt: Date.now(),
     });
-    
+
     try {
       let startTime: Date;
       let endTime: Date;
-      
+
       if (timeRange === 'custom' && customStartDate && customEndDate) {
         startTime = customStartDate;
         endTime = customEndDate;
@@ -505,25 +505,25 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
         startTime = subDays(new Date(), days);
         endTime = new Date();
       }
-      
+
       // Clamp dates to valid USGS data range
       const earliestAllowed = USGS_DATA_RANGE.earliestDate;
       const latestAllowed = USGS_DATA_RANGE.getLatestDate();
-      
+
       if (startTime < earliestAllowed) {
         startTime = earliestAllowed;
       }
       if (endTime > latestAllowed) {
         endTime = latestAllowed;
       }
-      
+
       // Validate date range
       if (startTime >= endTime) {
         throw new Error('Start date must be before end date');
       }
-      
+
       let earthquakes: EarthquakeFeature[] = [];
-      
+
       // Progress callback for fetch operations
       const handleFetchProgress = (progress: { currentChunk: number; totalChunks: number; currentChunkStart: string; currentChunkEnd: string; eventsFound: number; message: string }) => {
         cacheStore.setProgress({
@@ -536,7 +536,7 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
           eventsLoaded: progress.eventsFound,
         });
       };
-      
+
       // Check cache first if enabled
       if (cacheStore.isEnabled) {
         const cacheQuery: CacheQuery = {
@@ -546,7 +546,7 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
           maxMagnitude,
           regionScope,
         };
-        
+
         cacheStore.setProgress({
           operation: 'validating',
           currentStep: 0,
@@ -554,16 +554,16 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
           message: 'Checking cache...',
           startedAt: Date.now(),
         });
-        
+
         const cacheResult = await queryCache(cacheQuery);
-        
+
         if (cacheResult.isComplete) {
           // All data from cache!
           earthquakes = cacheResult.earthquakes;
         } else {
           // Need to fetch missing/stale days - but ONLY those days, not the full range!
           const { staleDays, earthquakes: cachedEarthquakes } = cacheResult;
-          
+
           // Update progress
           cacheStore.setProgress({
             operation: 'fetching',
@@ -572,7 +572,7 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
             message: `Fetching ${staleDays.length} missing days...`,
             startedAt: Date.now(),
           });
-          
+
           // Handler to progressively update UI during stale day fetches
           // Merges cached data with fresh data as it streams in
           const handleIntermediateData = (freshFeaturesSoFar: EarthquakeFeature[]) => {
@@ -588,12 +588,12 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
             // Note: Cache stats are NOT updated here because data isn't stored yet.
             // The progress banner shows live eventsLoaded count instead.
           };
-          
+
           // Show cached data immediately while fetching missing days
           if (cachedEarthquakes.length > 0) {
             handleIntermediateData([]);
           }
-          
+
           // Fetch ONLY the stale days
           const freshEarthquakes = await fetchStaleDays(
             staleDays,
@@ -613,7 +613,7 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
             },
             handleIntermediateData,  // Progressive chart updates
           );
-          
+
           // Store ONLY the fresh data in cache
           if (freshEarthquakes.length > 0) {
             cacheStore.setProgress({
@@ -623,15 +623,15 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
               message: 'Caching new data...',
               startedAt: Date.now(),
             });
-            
+
             await storeEarthquakes(freshEarthquakes, cacheQuery, (progress) => {
               cacheStore.setProgress(progress);
             });
           }
-          
+
           // Merge cached + fresh earthquakes
           earthquakes = [...cachedEarthquakes, ...freshEarthquakes];
-          
+
           // Refresh cache stats
           cacheStore.refreshStats();
         }
@@ -647,7 +647,7 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
             summary,
           });
         };
-        
+
         earthquakes = await fetchInChunks(
           startTime,
           endTime,
@@ -658,7 +658,7 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
           handleIntermediateData,
         );
       }
-      
+
       // Reset progress
       cacheStore.setProgress({
         operation: 'idle',
@@ -667,10 +667,14 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
         message: '',
         startedAt: null,
       });
-      
+
+      // Refresh cache info to update last updated timestamp
+      cacheStore.refreshInfo();
+      cacheStore.refreshStats();
+
       const dailyAggregates = aggregateEarthquakesByDay(earthquakes);
       const summary = getEarthquakeSummary(earthquakes);
-      
+
       set({
         earthquakes,
         dailyAggregates,
@@ -684,7 +688,7 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
         error: message,
         isLoading: false,
       });
-      
+
       // Reset cache progress on error
       useCacheStore.getState().setProgress({
         operation: 'idle',
@@ -693,11 +697,11 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
         message: '',
         startedAt: null,
       });
-      
+
       console.error('Error fetching earthquakes:', err);
     }
   },
-  
+
   // Force refresh data
   refreshData: async () => {
     await get().fetchEarthquakes();
