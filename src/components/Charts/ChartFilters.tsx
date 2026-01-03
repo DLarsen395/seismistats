@@ -99,8 +99,11 @@ export function ChartFilters({ isAutoRefreshing = false, newEventsFound = 0 }: C
     >
       {/* Time Range */}
       <div>
-        <label style={labelStyle}>Time Range</label>
+        <label htmlFor="time-range-select" style={labelStyle}>Time Range</label>
         <select
+          id="time-range-select"
+          name="timeRange"
+          title="Select time range for earthquake data"
           value={timeRange}
           onChange={(e) => setTimeRange(e.target.value as typeof timeRange)}
           disabled={isLoading}
@@ -121,8 +124,11 @@ export function ChartFilters({ isAutoRefreshing = false, newEventsFound = 0 }: C
       {timeRange === 'custom' && (
         <>
           <div>
-            <label style={labelStyle}>Start Date</label>
+            <label htmlFor="start-date-input" style={labelStyle}>Start Date</label>
             <input
+              id="start-date-input"
+              name="startDate"
+              title="Start date for custom range"
               type="date"
               value={startInput}
               onChange={(e) => setStartInput(e.target.value)}
@@ -136,8 +142,11 @@ export function ChartFilters({ isAutoRefreshing = false, newEventsFound = 0 }: C
             />
           </div>
           <div>
-            <label style={labelStyle}>End Date</label>
+            <label htmlFor="end-date-input" style={labelStyle}>End Date</label>
             <input
+              id="end-date-input"
+              name="endDate"
+              title="End date for custom range"
               type="date"
               value={endInput}
               onChange={(e) => setEndInput(e.target.value)}
@@ -171,8 +180,11 @@ export function ChartFilters({ isAutoRefreshing = false, newEventsFound = 0 }: C
 
       {/* Min Magnitude Filter */}
       <div>
-        <label style={labelStyle}>Min Magnitude</label>
+        <label htmlFor="min-magnitude-select" style={labelStyle}>Min Magnitude</label>
         <select
+          id="min-magnitude-select"
+          name="minMagnitude"
+          title="Minimum earthquake magnitude filter"
           value={minMagnitude}
           onChange={(e) => setMinMagnitude(parseFloat(e.target.value))}
           disabled={isLoading}
@@ -191,8 +203,11 @@ export function ChartFilters({ isAutoRefreshing = false, newEventsFound = 0 }: C
 
       {/* Max Magnitude Filter */}
       <div>
-        <label style={labelStyle}>Max Magnitude</label>
+        <label htmlFor="max-magnitude-select" style={labelStyle}>Max Magnitude</label>
         <select
+          id="max-magnitude-select"
+          name="maxMagnitude"
+          title="Maximum earthquake magnitude filter"
           value={maxMagnitude}
           onChange={(e) => setMaxMagnitude(parseFloat(e.target.value))}
           disabled={isLoading}
@@ -215,8 +230,11 @@ export function ChartFilters({ isAutoRefreshing = false, newEventsFound = 0 }: C
 
       {/* Region Scope */}
       <div>
-        <label style={labelStyle}>Region</label>
+        <label htmlFor="region-scope-select" style={labelStyle}>Region</label>
         <select
+          id="region-scope-select"
+          name="regionScope"
+          title="Geographic region filter"
           value={regionScope}
           onChange={(e) => setRegionScope(e.target.value as typeof regionScope)}
           disabled={isLoading}

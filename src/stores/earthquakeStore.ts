@@ -664,35 +664,12 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
       cacheStore.refreshInfo();
       cacheStore.refreshStats();
 
+      // Update last auto-refresh timestamp (for the "Last auto-refresh" display)
+      // This ensures it shows a time even after initial load
+      cacheStore.updateLastAutoRefresh();
+
       const dailyAggregates = aggregateEarthquakesByDay(earthquakes);
       const summary = getEarthquakeSummary(earthquakes);
-
-      // === DEBUG OUTPUT ===
-      console.group('📦 Earthquake Store Final Data');
-      console.log('Total Earthquakes Fetched:', earthquakes.length);
-      console.log('Daily Aggregates Generated:', dailyAggregates.length);
-      console.log('Summary:', summary);
-
-      // Show M4+ earthquakes
-      const m4Plus = earthquakes.filter(eq => (eq.properties.mag ?? 0) >= 4);
-      if (m4Plus.length > 0) {
-        console.log(`M4+ Earthquakes (${m4Plus.length}):`, m4Plus.map(eq => ({
-          mag: eq.properties.mag,
-          time: new Date(eq.properties.time).toISOString(),
-          localTime: new Date(eq.properties.time).toLocaleString(),
-          place: eq.properties.place,
-        })));
-      } else {
-        console.log('No M4+ earthquakes in dataset');
-      }
-
-      // Show first and last aggregates
-      if (dailyAggregates.length > 0) {
-        console.log('First 3 Daily Aggregates:', dailyAggregates.slice(0, 3));
-        console.log('Last 3 Daily Aggregates:', dailyAggregates.slice(-3));
-      }
-      console.groupEnd();
-      // === END DEBUG OUTPUT ===
 
       set({
         earthquakes,

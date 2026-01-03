@@ -492,9 +492,10 @@ export function aggregateEnergyByTimePeriod(
     return {
       period: dateLabel,
       totalEnergy: stats.totalEnergy,
-      avgEnergy: stats.totalEnergy / stats.count,
+      avgEnergy: stats.count > 0 ? stats.totalEnergy / stats.count : 0,
       count: stats.count,
-      avgMagnitude: stats.sumMag / stats.count,
+      // Avoid NaN when count is 0 - set to null for chart to show gap
+      avgMagnitude: stats.count > 0 ? stats.sumMag / stats.count : null as unknown as number,
     };
   });
 }

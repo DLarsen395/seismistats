@@ -5,6 +5,25 @@ All notable changes to the ETS Events Visualization project will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.14] - 2026-01-03
+
+### 🐛 Bug Fixes and Accessibility Improvements
+
+### Fixed
+- **Avg Magnitude Line Gaps** - Fixed broken line in Energy Release chart
+  - Root cause: Division by zero when no earthquakes on a day
+  - `avgMagnitude` now returns `null` for empty days, allowing chart to show proper gaps
+- **"Last Auto-Refresh: Never"** - Now updates timestamp after any data fetch
+  - Previously only updated during auto-refresh cycles
+  - Now shows correct time after initial page load
+- **Accessibility Warnings** - Added proper attributes to form elements
+  - Select elements now have `id`, `name`, and `title` attributes
+  - Labels properly linked with `htmlFor` attribute
+  - Fixed 4 accessibility errors and 10 warnings
+
+### Removed
+- Debug console logging (was temporary for troubleshooting)
+
 ## [1.2.13] - 2026-01-03
 
 ### 🐛 Fixed Chart X-Axis Date Label Timezone Bug
@@ -17,14 +36,6 @@ Fixed a critical timezone bug where chart X-axis date labels were showing the wr
   - In US timezones (e.g., PST UTC-8), this displayed as Dec 31 at 4:00 PM
   - Fix: Parse YYYY-MM-DD dates as local midnight instead of UTC midnight
   - Chart bars now correctly align with their labeled dates
-
-### Added
-- **Debug Logging** - Added comprehensive console debugging for chart data flow
-  - `📦 Earthquake Store Final Data` - Logs when data is fetched
-  - `🔍 Chart Data Debug` - Logs when chart processes data
-  - `📊 Filled Chart Data` - Logs final data sent to chart
-  - Includes M4+ earthquake details with timestamps
-  - Helps diagnose data and date issues
 
 ## [1.2.12] - 2026-01-02
 

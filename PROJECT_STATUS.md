@@ -1,9 +1,9 @@
 # ETS Events Visualization - Project Status
 
 **Last Updated**: January 3, 2026
-**Version**: 1.2.13
+**Version**: 1.2.14
 
-## 📊 Current Status: V1.2.13 Active Development ✅
+## 📊 Current Status: V1.2.14 Active Development ✅
 
 All core features implemented. Earthquake Charts view with enhanced visualizations, intelligent caching, and auto-refresh.
 
@@ -17,16 +17,15 @@ All core features implemented. Earthquake Charts view with enhanced visualizatio
 
 ---
 
-## Recent Changes (v1.2.13)
+## Recent Changes (v1.2.14)
 
 ### Bug Fixes
-- **Chart X-Axis Date Labels** - Fixed timezone bug causing dates to display one day earlier
-  - Root cause: `new Date("YYYY-MM-DD")` parsed as UTC, shifted in US timezones
-  - Fix: Parse date components as local time instead
+- **Avg Magnitude Line Gaps** - Fixed NaN causing broken line in Energy chart
+- **"Last Auto-Refresh: Never"** - Now shows time after initial data load
+- **Accessibility** - Added proper id/name/title to form elements
 
-### Debug Features Added
-- Console logging for chart data flow debugging
-- M4+ earthquake tracking in debug output
+### Removed
+- Debug console logging (temporary troubleshooting code)
 
 ---
 

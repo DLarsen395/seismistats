@@ -89,52 +89,13 @@ export function EarthquakeChartsPage() {
   // Aggregate data for top chart based on selected grouping
   // Fill in missing days when grouped by day
   const topChartData = useMemo(() => {
-    // === DEBUG OUTPUT ===
-    console.group('🔍 Chart Data Debug');
-    console.log('Current Date:', new Date().toISOString());
-    console.log('Time Range:', timeRange);
-    console.log('Days in Range:', daysInRange);
-    console.log('Date Range:', {
-      startDate: dateRange.startDate.toISOString(),
-      endDate: dateRange.endDate.toISOString(),
-    });
-    console.log('Min Magnitude Filter:', minMagnitude);
-    console.log('Max Magnitude Filter:', maxMagnitude);
-    console.log('Total Earthquakes:', earthquakes.length);
-    console.log('Daily Aggregates Count:', dailyAggregates.length);
-    console.log('Top Chart Grouping:', topChartGrouping);
-
-    // Log M4+ earthquakes in the data
-    const m4Plus = earthquakes.filter(eq => (eq.properties.mag ?? 0) >= 4);
-    console.log(`M4+ Earthquakes (${m4Plus.length}):`, m4Plus.map(eq => ({
-      mag: eq.properties.mag,
-      time: new Date(eq.properties.time).toISOString(),
-      localTime: new Date(eq.properties.time).toLocaleString(),
-      place: eq.properties.place,
-    })));
-
-    // Log first and last few daily aggregates
-    if (dailyAggregates.length > 0) {
-      console.log('First 5 Daily Aggregates:', dailyAggregates.slice(0, 5));
-      console.log('Last 5 Daily Aggregates:', dailyAggregates.slice(-5));
-    }
-    console.groupEnd();
-    // === END DEBUG OUTPUT ===
-
     if (topChartGrouping === 'day') {
       // Fill in all days in the range, even those with no earthquakes
-      const filled = fillMissingDays(dailyAggregates, dateRange.startDate, dateRange.endDate);
-      console.log('📊 Filled Chart Data:', {
-        totalDays: filled.length,
-        first5: filled.slice(0, 5),
-        last5: filled.slice(-5),
-        daysWithEvents: filled.filter(d => d.count > 0).length,
-      });
-      return filled;
+      return fillMissingDays(dailyAggregates, dateRange.startDate, dateRange.endDate);
     }
     // Aggregate by the selected time period
     return aggregateByTimePeriod(earthquakes, topChartGrouping);
-  }, [earthquakes, dailyAggregates, topChartGrouping, dateRange, timeRange, daysInRange, minMagnitude, maxMagnitude]);
+  }, [earthquakes, dailyAggregates, topChartGrouping, dateRange]);
 
   // Build chart title
   const getChartTitle = () => {
