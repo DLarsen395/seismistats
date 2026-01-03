@@ -129,7 +129,7 @@ export function RechartsBarChart({ data, title }: RechartsBarChartProps) {
     // new Date("2026-01-01") would be interpreted as UTC midnight, which shows as
     // Dec 31 in US timezones. Instead, we parse the components to create local midnight.
     const isoMatch = d.date.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    
+
     if (isoMatch) {
       // Parse as LOCAL date to avoid timezone shift
       const [, year, month, day] = isoMatch;
@@ -139,7 +139,7 @@ export function RechartsBarChart({ data, title }: RechartsBarChartProps) {
         label: localDate.toLocaleDateString('en-US', dateFormat),
       };
     }
-    
+
     // Try to parse as date - if it fails or gives Invalid Date, use the original string
     const parsedDate = new Date(d.date);
     const isValidDate = !isNaN(parsedDate.getTime());

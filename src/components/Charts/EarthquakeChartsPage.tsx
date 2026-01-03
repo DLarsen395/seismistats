@@ -103,7 +103,7 @@ export function EarthquakeChartsPage() {
     console.log('Total Earthquakes:', earthquakes.length);
     console.log('Daily Aggregates Count:', dailyAggregates.length);
     console.log('Top Chart Grouping:', topChartGrouping);
-    
+
     // Log M4+ earthquakes in the data
     const m4Plus = earthquakes.filter(eq => (eq.properties.mag ?? 0) >= 4);
     console.log(`M4+ Earthquakes (${m4Plus.length}):`, m4Plus.map(eq => ({
@@ -112,7 +112,7 @@ export function EarthquakeChartsPage() {
       localTime: new Date(eq.properties.time).toLocaleString(),
       place: eq.properties.place,
     })));
-    
+
     // Log first and last few daily aggregates
     if (dailyAggregates.length > 0) {
       console.log('First 5 Daily Aggregates:', dailyAggregates.slice(0, 5));
