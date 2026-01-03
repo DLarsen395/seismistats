@@ -1,5 +1,6 @@
 /**
  * Navigation component for switching between app views
+ * Styled as a toggle/pill switch
  */
 
 import type { AppView } from '../../types/earthquake';
@@ -18,12 +19,11 @@ export function ViewNavigation({ currentView, onViewChange }: ViewNavigationProp
   return (
     <nav 
       style={{
-        display: 'flex',
-        gap: '0.25rem',
-        padding: '0.25rem',
-        backgroundColor: 'rgba(55, 65, 81, 0.5)',
-        borderRadius: '0.5rem',
-        backdropFilter: 'blur(8px)',
+        display: 'inline-flex',
+        padding: '2px',
+        backgroundColor: 'rgba(31, 41, 55, 0.9)',
+        borderRadius: '6px',
+        border: '1px solid rgba(75, 85, 99, 0.5)',
       }}
     >
       {views.map((view) => (
@@ -33,18 +33,18 @@ export function ViewNavigation({ currentView, onViewChange }: ViewNavigationProp
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '0.375rem',
-            padding: '0.375rem 0.75rem',
-            fontSize: '0.875rem',
+            gap: '0.25rem',
+            padding: '0.25rem 0.625rem',
+            fontSize: '0.8rem',
             fontWeight: currentView === view.id ? '600' : '400',
             color: currentView === view.id ? 'white' : '#9ca3af',
             backgroundColor: currentView === view.id 
-              ? 'rgba(59, 130, 246, 0.8)' 
+              ? '#3b82f6'
               : 'transparent',
             border: 'none',
-            borderRadius: '0.375rem',
+            borderRadius: '4px',
             cursor: 'pointer',
-            transition: 'all 0.2s ease',
+            transition: 'all 0.15s ease',
             whiteSpace: 'nowrap',
           }}
           onMouseEnter={(e) => {
@@ -60,7 +60,7 @@ export function ViewNavigation({ currentView, onViewChange }: ViewNavigationProp
             }
           }}
         >
-          <span style={{ fontSize: '1rem' }}>{view.icon}</span>
+          <span style={{ fontSize: '0.875rem' }}>{view.icon}</span>
           <span>{view.label}</span>
         </button>
       ))}

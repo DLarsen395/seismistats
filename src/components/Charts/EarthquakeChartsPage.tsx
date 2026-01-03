@@ -120,7 +120,7 @@ export function EarthquakeChartsPage() {
         <CacheProgressBanner />
 
         {/* Main content with padding */}
-        <div style={{ padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+        <div style={{ padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           {/* Filters */}
           <ChartFilters />
 
@@ -132,9 +132,6 @@ export function EarthquakeChartsPage() {
               backdropFilter: 'blur(8px)',
               border: '1px solid rgba(75, 85, 99, 0.3)',
               padding: '0.75rem 1rem',
-              display: 'flex',
-              flexDirection: 'column',
-              minHeight: 280,
             }}
           >
             {/* Chart header */}
@@ -269,7 +266,7 @@ export function EarthquakeChartsPage() {
 
           {/* Chart */}
           {topChartData.length > 0 && (
-            <div style={{ flex: 1, minHeight: 220 }}>
+            <div style={{ minHeight: 280 }}>
               {chartLibrary === 'recharts' ? (
                 <RechartsBarChart data={topChartData} />
               ) : (
@@ -290,20 +287,6 @@ export function EarthquakeChartsPage() {
               }}
             >
               <p>No earthquake data available for the selected filters</p>
-            </div>
-          )}
-
-          {/* Last updated */}
-          {lastFetched && (
-            <div
-              style={{
-                marginTop: '0.25rem',
-                fontSize: '0.7rem',
-                color: '#6b7280',
-                textAlign: 'right',
-              }}
-            >
-              Last updated: {lastFetched.toLocaleTimeString()}
             </div>
           )}
         </div>
