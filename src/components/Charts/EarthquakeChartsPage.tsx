@@ -62,12 +62,12 @@ export function EarthquakeChartsPage() {
   const dateRange = useMemo(() => {
     const endDate = new Date();
     let startDate: Date;
-    
+
     if (timeRange === 'custom' && customStartDate && customEndDate) {
       startDate = customStartDate;
       return { startDate, endDate: customEndDate };
     }
-    
+
     startDate = subDays(endDate, daysInRange);
     return { startDate, endDate };
   }, [timeRange, customStartDate, customEndDate, daysInRange]);
@@ -261,48 +261,27 @@ export function EarthquakeChartsPage() {
             </div>
           )}
 
-          {/* Chart */}
-          {topChartData.length > 0 && (
-            <RechartsBarChart data={topChartData} />
-          )}
-
-          {/* No data state */}
-          {!isLoading && !error && topChartData.length === 0 && (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#9ca3af',
-                padding: '2rem',
-              }}
-            >
-              <p>No earthquake data available for the selected filters</p>
-            </div>
-          )}
+          {/* Chart - always show, fillMissingDays ensures all days are present */}
+          <RechartsBarChart data={topChartData} />
         </div>
 
-        {/* Magnitude Distribution Chart */}
-        {earthquakes.length > 0 && (
-          <MagnitudeDistributionChart
-            earthquakes={earthquakes}
-            title="Magnitude Distribution Over Time"
-            height={280}
-            daysInRange={daysInRange}
-            dateRange={dateRange}
-          />
-        )}
+        {/* Magnitude Distribution Chart - always show */}
+        <MagnitudeDistributionChart
+          earthquakes={earthquakes}
+          title="Magnitude Distribution Over Time"
+          height={280}
+          daysInRange={daysInRange}
+          dateRange={dateRange}
+        />
 
-        {/* Energy Release Chart */}
-        {earthquakes.length > 0 && (
-          <EnergyReleaseChart
-            earthquakes={earthquakes}
-            title="Seismic Energy Released"
-            height={280}
-            daysInRange={daysInRange}
-            dateRange={dateRange}
-          />
-        )}
+        {/* Energy Release Chart - always show */}
+        <EnergyReleaseChart
+          earthquakes={earthquakes}
+          title="Seismic Energy Released"
+          height={280}
+          daysInRange={daysInRange}
+          dateRange={dateRange}
+        />
         </div>
       </div>
 

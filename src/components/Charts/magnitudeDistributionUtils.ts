@@ -1,6 +1,6 @@
 /**
  * Magnitude Distribution Chart Types and Utilities
- * 
+ *
  * Helper functions and constants for magnitude distribution visualization.
  */
 
@@ -109,16 +109,16 @@ export const TIME_GROUPING_OPTIONS: { value: TimeGrouping; label: string }[] = [
  */
 export function getMagnitudeRangeKey(magnitude: number | null): string | null {
   if (magnitude === null || isNaN(magnitude)) return null;
-  
+
   for (const range of MAGNITUDE_RANGES) {
     if (magnitude >= range.min && magnitude < range.max) {
       return range.key;
     }
   }
-  
+
   // Handle edge case for exactly 9+
   if (magnitude >= 9) return 'mag_9_plus';
-  
+
   return null;
 }
 
@@ -207,7 +207,7 @@ export function getDateFromPeriodKey(key: string, grouping: TimeGrouping): Date 
 
 /**
  * Aggregate earthquakes by time period and magnitude range
- * 
+ *
  * @param earthquakes - Array of earthquake features from USGS API
  * @param grouping - How to group time periods (year, month, week, or day)
  * @param dateRange - Optional date range to fill in missing periods with zeros
@@ -220,21 +220,21 @@ export function aggregateByTimePeriodAndMagnitude(
 ): MagnitudeTimeDataPoint[] {
   // Map to store aggregations: periodKey -> { rangeKey -> count }
   const aggregations = new Map<string, Map<string, number>>();
-  
+
   // Process each earthquake
   for (const eq of earthquakes) {
     const magnitude = eq.properties.mag;
     const rangeKey = getMagnitudeRangeKey(magnitude);
-    
+
     if (!rangeKey) continue;
-    
+
     const date = new Date(eq.properties.time);
     const periodKey = getPeriodKey(date, grouping);
-    
+
     if (!aggregations.has(periodKey)) {
       aggregations.set(periodKey, new Map());
     }
-    
+
     const periodCounts = aggregations.get(periodKey)!;
     periodCounts.set(rangeKey, (periodCounts.get(rangeKey) || 0) + 1);
   }
@@ -262,32 +262,32 @@ export function aggregateByTimePeriodAndMagnitude(
       current.setTime(current.getTime() + 24 * 60 * 60 * 1000);
     }
   }
-  
+
   // Convert to array and sort by date
   const result: MagnitudeTimeDataPoint[] = [];
-  
+
   for (const [periodKey, counts] of aggregations) {
     const dataPoint: MagnitudeTimeDataPoint = {
       period: formatPeriodLabel(getDateFromPeriodKey(periodKey, grouping), grouping),
       date: getDateFromPeriodKey(periodKey, grouping),
     };
-    
+
     // Initialize all ranges to 0
     for (const range of MAGNITUDE_RANGES) {
       dataPoint[range.key] = 0;
     }
-    
+
     // Fill in actual counts
     for (const [rangeKey, count] of counts) {
       dataPoint[rangeKey] = count;
     }
-    
+
     result.push(dataPoint);
   }
-  
+
   // Sort by date
   result.sort((a, b) => a.date.getTime() - b.date.getTime());
-  
+
   return result;
 }
 
@@ -304,10 +304,10 @@ export function getMagnitudeDistributionStats(
   periodCount: number;
 } {
   const activeRanges = MAGNITUDE_RANGES.filter(r => enabledRanges.has(r.key));
-  
+
   let totalEvents = 0;
   let maxInPeriod = 0;
-  
+
   for (const point of data) {
     let periodSum = 0;
     for (const range of activeRanges) {
@@ -316,7 +316,7 @@ export function getMagnitudeDistributionStats(
     totalEvents += periodSum;
     maxInPeriod = Math.max(maxInPeriod, periodSum);
   }
-  
+
   return {
     totalEvents,
     maxInPeriod,
@@ -328,7 +328,7 @@ export function getMagnitudeDistributionStats(
  * Aggregate earthquakes by time period (week, month, year)
  * Returns data in the same format as DailyEarthquakeAggregate for use with bar charts
  * Optimized: computes stats in single pass without storing individual values
- * 
+ *
  * @param earthquakes - Array of earthquake features from USGS API
  * @param grouping - How to group time periods (day, week, month, or year)
  * @returns Aggregated data points matching DailyEarthquakeAggregate format
@@ -345,17 +345,17 @@ export function aggregateByTimePeriod(
     minMag: number;
     totalEnergy: number;
   }
-  
+
   const aggregations = new Map<string, PeriodStats>();
-  
+
   // Process each earthquake
   for (const eq of earthquakes) {
     const magnitude = eq.properties.mag ?? 0;
     const energy = calculateSeismicEnergy(magnitude);
-    
+
     const date = new Date(eq.properties.time);
     const periodKey = getPeriodKey(date, grouping);
-    
+
     const existing = aggregations.get(periodKey);
     if (existing) {
       existing.count++;
@@ -373,16 +373,16 @@ export function aggregateByTimePeriod(
       });
     }
   }
-  
+
   // Convert to DailyEarthquakeAggregate format
   // Sort keys first, then build result in order
   const sortedKeys = Array.from(aggregations.keys()).sort();
-  
+
   const result: DailyEarthquakeAggregate[] = sortedKeys.map(periodKey => {
     const stats = aggregations.get(periodKey)!;
     const periodDate = getDateFromPeriodKey(periodKey, grouping);
     const dateLabel = formatPeriodLabel(periodDate, grouping);
-    
+
     return {
       date: dateLabel,
       count: stats.count,
@@ -392,7 +392,7 @@ export function aggregateByTimePeriod(
       totalEnergy: stats.totalEnergy,
     };
   });
-  
+
   return result;
 }
 
@@ -418,7 +418,7 @@ export interface EnergyDataPoint {
 
 /**
  * Aggregate earthquakes by time period for energy visualization
- * 
+ *
  * @param earthquakes - Array of earthquake features from USGS API
  * @param grouping - How to group time periods (day, week, month, or year)
  * @param dateRange - Optional date range to fill in missing periods with zeros
@@ -434,17 +434,17 @@ export function aggregateEnergyByTimePeriod(
     sumMag: number;
     totalEnergy: number;
   }
-  
+
   const aggregations = new Map<string, PeriodStats>();
-  
+
   // Process each earthquake
   for (const eq of earthquakes) {
     const magnitude = eq.properties.mag ?? 0;
     const energy = calculateSeismicEnergy(magnitude);
-    
+
     const date = new Date(eq.properties.time);
     const periodKey = getPeriodKey(date, grouping);
-    
+
     const existing = aggregations.get(periodKey);
     if (existing) {
       existing.count++;
@@ -486,15 +486,15 @@ export function aggregateEnergyByTimePeriod(
       current.setTime(current.getTime() + 24 * 60 * 60 * 1000);
     }
   }
-  
+
   // Convert to EnergyDataPoint format, sorted by date
   const sortedKeys = Array.from(aggregations.keys()).sort();
-  
+
   return sortedKeys.map(periodKey => {
     const stats = aggregations.get(periodKey)!;
     const periodDate = getDateFromPeriodKey(periodKey, grouping);
     const dateLabel = formatPeriodLabel(periodDate, grouping);
-    
+
     return {
       period: dateLabel,
       totalEnergy: stats.totalEnergy,

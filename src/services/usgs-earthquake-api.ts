@@ -187,7 +187,7 @@ export interface DailyEarthquakeAggregate {
 export class USGSApiError extends Error {
   status?: number;
   statusText?: string;
-  
+
   constructor(
     message: string,
     status?: number,
@@ -378,7 +378,7 @@ async function fetchEarthquakesForRegion(
   // Retry logic with exponential backoff for rate limiting
   const maxRetries = 3;
   let lastError: Error | null = null;
-  
+
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       if (attempt > 0) {
@@ -387,7 +387,7 @@ async function fetchEarthquakesForRegion(
         console.log(`Retry attempt ${attempt}/${maxRetries} after ${delay}ms delay...`);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
-      
+
       const response = await fetch(url);
 
       if (!response.ok) {
@@ -410,17 +410,17 @@ async function fetchEarthquakesForRegion(
       return data;
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
-      
+
       // Check if this is a CORS or network error (often due to rate limiting)
-      const isCorsOrNetworkError = lastError.message.includes('CORS') || 
+      const isCorsOrNetworkError = lastError.message.includes('CORS') ||
                                    lastError.message.includes('Failed to fetch') ||
                                    lastError.message.includes('NetworkError');
-      
+
       // Only retry on rate limit, server errors, or network issues
       if (error instanceof USGSApiError && error.status && error.status < 500 && error.status !== 429) {
         throw error; // Don't retry client errors
       }
-      
+
       if (attempt === maxRetries) {
         console.error(`All ${maxRetries + 1} attempts failed for ${url}`);
         if (isCorsOrNetworkError) {
@@ -433,7 +433,7 @@ async function fetchEarthquakesForRegion(
       // Continue to next retry
     }
   }
-  
+
   // Should never reach here, but TypeScript needs it
   throw lastError || new USGSApiError('Unknown error');
 }
@@ -473,7 +473,7 @@ export async function fetchUSGSEarthquakes(
   // Fetch data for each region SEQUENTIALLY to avoid rate limiting
   // This is slower but much more reliable for large date ranges
   const responses: USGSEarthquakeResponse[] = [];
-  
+
   for (let i = 0; i < regions.length; i++) {
     const region = regions[i];
     try {
@@ -482,7 +482,7 @@ export async function fetchUSGSEarthquakes(
         bounds: US_REGION_BOUNDS[region],
       });
       responses.push(response);
-      
+
       // Small delay between region requests to be nice to the API
       if (i < regions.length - 1) {
         await new Promise(resolve => setTimeout(resolve, 100));
@@ -650,7 +650,7 @@ export function aggregateEarthquakesByDay(
     minMag: number;
     totalEnergy: number;
   }
-  
+
   const dailyMap = new Map<string, DayStats>();
 
   for (const eq of earthquakes) {
@@ -661,7 +661,7 @@ export function aggregateEarthquakesByDay(
     const month = String(d.getUTCMonth() + 1).padStart(2, '0');
     const day = String(d.getUTCDate()).padStart(2, '0');
     const dateKey = `${year}-${month}-${day}`;
-    
+
     const magnitude = eq.properties.mag ?? 0;
     const energy = calculateSeismicEnergy(magnitude);
 
@@ -734,14 +734,14 @@ export function fillMissingDays(
   }
 
   const result: DailyEarthquakeAggregate[] = [];
-  
+
   // Work in UTC - create dates at UTC midnight
   const current = new Date(Date.UTC(
     startDate.getUTCFullYear(),
     startDate.getUTCMonth(),
     startDate.getUTCDate()
   ));
-  
+
   const end = new Date(Date.UTC(
     endDate.getUTCFullYear(),
     endDate.getUTCMonth(),
