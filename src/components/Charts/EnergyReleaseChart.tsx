@@ -52,6 +52,8 @@ export interface EnergyReleaseChartProps {
   height?: number;
   /** Number of days in the data range - used for smart grouping defaults */
   daysInRange?: number;
+  /** Date range for filling in missing days (optional - used when grouping by day) */
+  dateRange?: { startDate: Date; endDate: Date };
 }
 
 // =============================================================================
@@ -218,6 +220,7 @@ export function EnergyReleaseChart({
   title = 'Seismic Energy Released',
   height = 280,
   daysInRange = 30,
+  dateRange,
 }: EnergyReleaseChartProps) {
   // Time grouping state
   const [grouping, setGrouping] = useState<TimeGrouping>(() => getSmartGrouping(daysInRange));
@@ -229,7 +232,7 @@ export function EnergyReleaseChart({
 
   // Aggregate data by time period and add log values
   const { chartData, minLog, maxLog } = useMemo(() => {
-    const rawData = aggregateEnergyByTimePeriod(earthquakes, grouping);
+    const rawData = aggregateEnergyByTimePeriod(earthquakes, grouping, dateRange);
 
     // Convert to log scale for visualization
     const withLog: ChartDataPoint[] = rawData.map(d => ({
@@ -242,7 +245,7 @@ export function EnergyReleaseChart({
     const maxLog = logValues.length > 0 ? Math.max(...logValues) : 1;
 
     return { chartData: withLog, minLog, maxLog };
-  }, [earthquakes, grouping]);
+  }, [earthquakes, grouping, dateRange]);
 
   // Calculate bar configuration
   const barConfig = useMemo(() => getBarConfig(chartData.length), [chartData.length]);

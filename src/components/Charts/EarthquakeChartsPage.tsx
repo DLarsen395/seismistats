@@ -3,8 +3,10 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
+import { subDays } from 'date-fns';
 import { useEarthquakeStore } from '../../stores/earthquakeStore';
 import { useAutoRefresh } from '../../hooks/useAutoRefresh';
+import { fillMissingDays } from '../../services/usgs-earthquake-api';
 import { ChartFilters } from './ChartFilters';
 import { EarthquakeSummary } from './EarthquakeSummary';
 import { RechartsBarChart } from './RechartsBarChart';
@@ -56,6 +58,20 @@ export function EarthquakeChartsPage() {
     return option?.days || 30;
   }, [timeRange, customStartDate, customEndDate]);
 
+  // Calculate the actual date range for filling in missing days
+  const dateRange = useMemo(() => {
+    const endDate = new Date();
+    let startDate: Date;
+    
+    if (timeRange === 'custom' && customStartDate && customEndDate) {
+      startDate = customStartDate;
+      return { startDate, endDate: customEndDate };
+    }
+    
+    startDate = subDays(endDate, daysInRange);
+    return { startDate, endDate };
+  }, [timeRange, customStartDate, customEndDate, daysInRange]);
+
   // Update top chart grouping when date range changes
   useEffect(() => {
     setTopChartGrouping(getSmartGrouping(daysInRange));
@@ -69,13 +85,15 @@ export function EarthquakeChartsPage() {
   }, [fetchEarthquakes, lastFetched]);
 
   // Aggregate data for top chart based on selected grouping
+  // Fill in missing days when grouped by day
   const topChartData = useMemo(() => {
     if (topChartGrouping === 'day') {
-      return dailyAggregates;
+      // Fill in all days in the range, even those with no earthquakes
+      return fillMissingDays(dailyAggregates, dateRange.startDate, dateRange.endDate);
     }
     // Aggregate by the selected time period
     return aggregateByTimePeriod(earthquakes, topChartGrouping);
-  }, [earthquakes, dailyAggregates, topChartGrouping]);
+  }, [earthquakes, dailyAggregates, topChartGrouping, dateRange]);
 
   // Build chart title
   const getChartTitle = () => {
@@ -124,7 +142,7 @@ export function EarthquakeChartsPage() {
         {/* Pinned filter section - doesn't scroll */}
         <div style={{ padding: '0.75rem 0.75rem 0 0.75rem', flexShrink: 0 }}>
           {/* Filters with embedded progress */}
-          <ChartFilters 
+          <ChartFilters
             isAutoRefreshing={isRefreshing}
             newEventsFound={newEventsFound}
           />
@@ -271,6 +289,7 @@ export function EarthquakeChartsPage() {
             title="Magnitude Distribution Over Time"
             height={280}
             daysInRange={daysInRange}
+            dateRange={dateRange}
           />
         )}
 
@@ -281,6 +300,7 @@ export function EarthquakeChartsPage() {
             title="Seismic Energy Released"
             height={280}
             daysInRange={daysInRange}
+            dateRange={dateRange}
           />
         )}
         </div>

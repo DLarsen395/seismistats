@@ -654,12 +654,12 @@ export function aggregateEarthquakesByDay(
   const dailyMap = new Map<string, DayStats>();
 
   for (const eq of earthquakes) {
-    // Fast date extraction: avoid creating Date objects when possible
+    // Extract UTC date from timestamp (USGS times are in UTC)
     // eq.properties.time is milliseconds since epoch
     const d = new Date(eq.properties.time);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
+    const year = d.getUTCFullYear();
+    const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(d.getUTCDate()).padStart(2, '0');
     const dateKey = `${year}-${month}-${day}`;
     
     const magnitude = eq.properties.mag ?? 0;
@@ -701,6 +701,80 @@ export function aggregateEarthquakesByDay(
   aggregates.sort((a, b) => a.date.localeCompare(b.date));
 
   return aggregates;
+}
+
+/**
+ * Fill in missing days in a daily aggregate array with zero values.
+ * Ensures all days in a date range are represented, even if no earthquakes occurred.
+ *
+ * @param aggregates - Existing daily aggregates (may have gaps)
+ * @param startDate - Start of the date range
+ * @param endDate - End of the date range (inclusive)
+ * @returns Array with all days filled in, including days with 0 events
+ *
+ * @example
+ * ```typescript
+ * const filled = fillMissingDays(
+ *   aggregates,
+ *   new Date('2026-01-01'),
+ *   new Date('2026-01-07')
+ * );
+ * // Returns 7 entries, one for each day
+ * ```
+ */
+export function fillMissingDays(
+  aggregates: DailyEarthquakeAggregate[],
+  startDate: Date,
+  endDate: Date
+): DailyEarthquakeAggregate[] {
+  // Create a map for quick lookup of existing aggregates
+  const aggregateMap = new Map<string, DailyEarthquakeAggregate>();
+  for (const agg of aggregates) {
+    aggregateMap.set(agg.date, agg);
+  }
+
+  const result: DailyEarthquakeAggregate[] = [];
+  
+  // Work in UTC - create dates at UTC midnight
+  const current = new Date(Date.UTC(
+    startDate.getUTCFullYear(),
+    startDate.getUTCMonth(),
+    startDate.getUTCDate()
+  ));
+  
+  const end = new Date(Date.UTC(
+    endDate.getUTCFullYear(),
+    endDate.getUTCMonth(),
+    endDate.getUTCDate(),
+    23, 59, 59, 999
+  ));
+
+  while (current <= end) {
+    const year = current.getUTCFullYear();
+    const month = String(current.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(current.getUTCDate()).padStart(2, '0');
+    const dateKey = `${year}-${month}-${day}`;
+
+    const existing = aggregateMap.get(dateKey);
+    if (existing) {
+      result.push(existing);
+    } else {
+      // Create empty entry for this day
+      result.push({
+        date: dateKey,
+        count: 0,
+        avgMagnitude: 0,
+        maxMagnitude: 0,
+        minMagnitude: 0,
+        totalEnergy: 0,
+      });
+    }
+
+    // Move to next day (add 24 hours in ms)
+    current.setTime(current.getTime() + 24 * 60 * 60 * 1000);
+  }
+
+  return result;
 }
 
 /**

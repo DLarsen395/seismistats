@@ -38,6 +38,8 @@ export interface MagnitudeDistributionChartProps {
   height?: number;
   /** Number of days in the data range - used for smart grouping defaults */
   daysInRange?: number;
+  /** Date range for filling in missing days (optional - used when grouping by day) */
+  dateRange?: { startDate: Date; endDate: Date };
 }
 
 // =============================================================================
@@ -277,6 +279,7 @@ export function MagnitudeDistributionChart({
   title = 'Magnitude Distribution Over Time',
   height = 400,
   daysInRange = 30,
+  dateRange,
 }: MagnitudeDistributionChartProps) {
   // Calculate smart default based on date range
   const defaultGrouping = useMemo(() => getDefaultTimeGrouping(daysInRange), [daysInRange]);
@@ -302,10 +305,10 @@ export function MagnitudeDistributionChart({
     prevDaysRef.current = daysInRange;
   }, [daysInRange]);
 
-  // Aggregate data
+  // Aggregate data - pass dateRange to fill in missing days when grouping by day
   const chartData = useMemo(
-    () => aggregateByTimePeriodAndMagnitude(earthquakes, timeGrouping),
-    [earthquakes, timeGrouping]
+    () => aggregateByTimePeriodAndMagnitude(earthquakes, timeGrouping, dateRange),
+    [earthquakes, timeGrouping, dateRange]
   );
 
   // Get enabled magnitude ranges

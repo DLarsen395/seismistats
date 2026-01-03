@@ -4,10 +4,10 @@
 
 import { create } from 'zustand';
 import type { CacheProgress, CacheInfo } from '../services/earthquake-cache';
-import { 
-  getCacheInfo, 
-  getCacheStats, 
-  clearCache, 
+import {
+  getCacheInfo,
+  getCacheStats,
+  clearCache,
   clearStaleData,
   resetDatabase,
   checkCacheIntegrity,
@@ -87,13 +87,13 @@ interface CacheStore {
   info: CacheInfo | null;
   stats: CacheStats | null;
   integrity: CacheIntegrity | null;
-  
+
   // Progress tracking
   progress: CacheProgress;
-  
+
   // Auto-refresh state
   autoRefresh: AutoRefreshState;
-  
+
   // Actions
   setEnabled: (enabled: boolean) => void;
   setProgress: (progress: CacheProgress) => void;
@@ -103,7 +103,7 @@ interface CacheStore {
   clearAllCache: () => Promise<void>;
   clearStale: () => Promise<number>;
   resetDB: () => Promise<void>;
-  
+
   // Auto-refresh actions
   setAutoRefreshEnabled: (enabled: boolean) => void;
   setAutoRefreshInterval: (interval: AutoRefreshInterval) => void;
@@ -137,12 +137,12 @@ export const useCacheStore = create<CacheStore>((set, get) => ({
   integrity: null,
   progress: initialProgress,
   autoRefresh: initialAutoRefresh,
-  
+
   // Actions
   setEnabled: (enabled) => set({ isEnabled: enabled }),
-  
+
   setProgress: (progress) => set({ progress }),
-  
+
   // Auto-refresh actions
   setAutoRefreshEnabled: (enabled) => {
     set((state) => ({
@@ -150,14 +150,14 @@ export const useCacheStore = create<CacheStore>((set, get) => ({
     }));
     saveAutoRefreshSettings({ enabled });
   },
-  
+
   setAutoRefreshInterval: (interval) => {
     set((state) => ({
       autoRefresh: { ...state.autoRefresh, interval }
     }));
     saveAutoRefreshSettings({ interval });
   },
-  
+
   setAutoRefreshState: (newState) => {
     set((state) => ({
       autoRefresh: { ...state.autoRefresh, ...newState }
@@ -168,7 +168,7 @@ export const useCacheStore = create<CacheStore>((set, get) => ({
       saveAutoRefreshSettings({ enabled, interval, lastAutoRefresh });
     }
   },
-  
+
   updateLastAutoRefresh: () => {
     const now = Date.now();
     set((state) => ({
@@ -176,7 +176,7 @@ export const useCacheStore = create<CacheStore>((set, get) => ({
     }));
     saveAutoRefreshSettings({ lastAutoRefresh: now });
   },
-  
+
   refreshInfo: async () => {
     try {
       const info = await getCacheInfo();
@@ -185,53 +185,53 @@ export const useCacheStore = create<CacheStore>((set, get) => ({
       console.error('Failed to get cache info:', error);
     }
   },
-  
+
   refreshStats: async () => {
     try {
       const stats = await getCacheStats();
       set({ stats });
-      
+
       // Also check integrity when refreshing stats
       await get().checkIntegrity();
     } catch (error) {
       console.error('Failed to get cache stats:', error);
     }
   },
-  
+
   checkIntegrity: async () => {
     try {
       const integrity = await checkCacheIntegrity();
       set({ integrity });
     } catch (error) {
       console.error('Failed to check cache integrity:', error);
-      set({ 
-        integrity: { 
-          isHealthy: false, 
-          issues: ['Failed to check integrity'], 
-          recommendation: 'Try resetting the database' 
-        } 
+      set({
+        integrity: {
+          isHealthy: false,
+          issues: ['Failed to check integrity'],
+          recommendation: 'Try resetting the database'
+        }
       });
     }
   },
-  
+
   clearAllCache: async () => {
     try {
-      set({ 
-        progress: { 
-          ...initialProgress, 
-          operation: 'validating', 
-          message: 'Clearing cache...' 
-        } 
+      set({
+        progress: {
+          ...initialProgress,
+          operation: 'validating',
+          message: 'Clearing cache...'
+        }
       });
-      
+
       await clearCache();
-      
-      set({ 
-        info: null, 
-        stats: null, 
-        progress: initialProgress 
+
+      set({
+        info: null,
+        stats: null,
+        progress: initialProgress
       });
-      
+
       // Refresh to get updated empty state
       await get().refreshInfo();
       await get().refreshStats();
@@ -240,24 +240,24 @@ export const useCacheStore = create<CacheStore>((set, get) => ({
       set({ progress: initialProgress });
     }
   },
-  
+
   clearStale: async () => {
     try {
-      set({ 
-        progress: { 
-          ...initialProgress, 
-          operation: 'validating', 
-          message: 'Clearing stale data...' 
-        } 
+      set({
+        progress: {
+          ...initialProgress,
+          operation: 'validating',
+          message: 'Clearing stale data...'
+        }
       });
-      
+
       const cleared = await clearStaleData();
-      
+
       set({ progress: initialProgress });
-      
+
       // Refresh stats
       await get().refreshStats();
-      
+
       return cleared;
     } catch (error) {
       console.error('Failed to clear stale data:', error);
@@ -265,25 +265,25 @@ export const useCacheStore = create<CacheStore>((set, get) => ({
       return 0;
     }
   },
-  
+
   resetDB: async () => {
     try {
-      set({ 
-        progress: { 
-          ...initialProgress, 
-          operation: 'validating', 
-          message: 'Resetting database...' 
-        } 
+      set({
+        progress: {
+          ...initialProgress,
+          operation: 'validating',
+          message: 'Resetting database...'
+        }
       });
-      
+
       await resetDatabase();
-      
-      set({ 
-        info: null, 
-        stats: null, 
-        progress: initialProgress 
+
+      set({
+        info: null,
+        stats: null,
+        progress: initialProgress
       });
-      
+
       // Refresh to get fresh state
       await get().refreshStats();
     } catch (error) {

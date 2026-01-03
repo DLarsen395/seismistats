@@ -73,7 +73,7 @@ interface EarthquakeStore {
   // Data fetching
   fetchEarthquakes: () => Promise<void>;
   refreshData: () => Promise<void>;
-  
+
   // Auto-refresh top-off (fetches only new events since last known)
   topOffRecentEvents: () => Promise<number>;  // Returns count of new events
 }
@@ -707,7 +707,7 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
   topOffRecentEvents: async () => {
     const { earthquakes, regionScope, minMagnitude, maxMagnitude, isLoading } = get();
     const cacheStore = useCacheStore.getState();
-    
+
     // Don't run if a manual fetch is in progress
     if (isLoading) {
       return 0;
@@ -764,7 +764,7 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
 
       // Merge new events into existing data
       const mergedEarthquakes = [...earthquakes, ...trulyNewFeatures];
-      
+
       // Sort by time (newest first for consistency)
       mergedEarthquakes.sort((a, b) => b.properties.time - a.properties.time);
 

@@ -23,22 +23,22 @@ export interface AutoRefreshCallbacks {
 /**
  * Hook to manage auto-refresh of earthquake data.
  * Only active when on the Charts page and auto-refresh is enabled.
- * 
+ *
  * @param isActive - Whether auto-refresh should be active (e.g., on Charts page)
  * @param callbacks - Optional callbacks for refresh lifecycle events
  */
 export function useAutoRefresh(isActive: boolean, callbacks?: AutoRefreshCallbacks) {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isProcessingRef = useRef(false);
-  
-  const { 
-    autoRefresh, 
+
+  const {
+    autoRefresh,
     setAutoRefreshState,
     updateLastAutoRefresh,
     isEnabled: cacheEnabled,
   } = useCacheStore();
-  
-  const { 
+
+  const {
     isLoading: manualFetchInProgress,
     earthquakes,
     topOffRecentEvents,
@@ -51,7 +51,7 @@ export function useAutoRefresh(isActive: boolean, callbacks?: AutoRefreshCallbac
   const determineRefreshStrategy = useCallback((): 'top-off' | 'normal' | 'full' | 'skip' => {
     const { lastAutoRefresh, interval } = autoRefresh;
     const now = Date.now();
-    
+
     // If never refreshed, need initial data load
     if (!lastAutoRefresh) {
       return 'skip';  // Let the initial fetch handle this
@@ -99,7 +99,7 @@ export function useAutoRefresh(isActive: boolean, callbacks?: AutoRefreshCallbac
     }
 
     const strategy = determineRefreshStrategy();
-    
+
     if (strategy === 'skip') {
       return;
     }
@@ -123,9 +123,9 @@ export function useAutoRefresh(isActive: boolean, callbacks?: AutoRefreshCallbac
       }
 
       updateLastAutoRefresh();
-      setAutoRefreshState({ 
-        isRefreshing: false, 
-        newEventsFound: newEventsCount 
+      setAutoRefreshState({
+        isRefreshing: false,
+        newEventsFound: newEventsCount
       });
       callbacks?.onRefreshComplete?.(newEventsCount);
     } catch (error) {
@@ -156,7 +156,7 @@ export function useAutoRefresh(isActive: boolean, callbacks?: AutoRefreshCallbac
     }
 
     const strategy = determineRefreshStrategy();
-    
+
     // If there's a meaningful gap, do an immediate refresh
     if (strategy !== 'skip') {
       // Small delay to let the page settle

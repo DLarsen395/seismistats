@@ -17,7 +17,7 @@ New auto-refresh system that periodically checks for new earthquakes, ensuring r
   - Selectable intervals: 1, 5, 15, 30, or 60 minutes
   - Shows last auto-refresh timestamp
   - Settings persist in localStorage across sessions
-  
+
 - **Smart Top-Off Fetching** - Efficient incremental updates
   - Only fetches events since the most recent known earthquake
   - Typically completes in under 1 second

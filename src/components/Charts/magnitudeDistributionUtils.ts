@@ -209,12 +209,14 @@ export function getDateFromPeriodKey(key: string, grouping: TimeGrouping): Date 
  * Aggregate earthquakes by time period and magnitude range
  * 
  * @param earthquakes - Array of earthquake features from USGS API
- * @param grouping - How to group time periods (year, month, or week)
+ * @param grouping - How to group time periods (year, month, week, or day)
+ * @param dateRange - Optional date range to fill in missing periods with zeros
  * @returns Aggregated data points for chart visualization
  */
 export function aggregateByTimePeriodAndMagnitude(
   earthquakes: EarthquakeFeature[],
-  grouping: TimeGrouping
+  grouping: TimeGrouping,
+  dateRange?: { startDate: Date; endDate: Date }
 ): MagnitudeTimeDataPoint[] {
   // Map to store aggregations: periodKey -> { rangeKey -> count }
   const aggregations = new Map<string, Map<string, number>>();
@@ -235,6 +237,30 @@ export function aggregateByTimePeriodAndMagnitude(
     
     const periodCounts = aggregations.get(periodKey)!;
     periodCounts.set(rangeKey, (periodCounts.get(rangeKey) || 0) + 1);
+  }
+
+  // If dateRange provided and grouping is 'day', fill in missing days
+  if (dateRange && grouping === 'day') {
+    const { startDate, endDate } = dateRange;
+    const current = new Date(Date.UTC(
+      startDate.getUTCFullYear(),
+      startDate.getUTCMonth(),
+      startDate.getUTCDate()
+    ));
+    const end = new Date(Date.UTC(
+      endDate.getUTCFullYear(),
+      endDate.getUTCMonth(),
+      endDate.getUTCDate(),
+      23, 59, 59, 999
+    ));
+
+    while (current <= end) {
+      const periodKey = current.toISOString().split('T')[0];
+      if (!aggregations.has(periodKey)) {
+        aggregations.set(periodKey, new Map());
+      }
+      current.setTime(current.getTime() + 24 * 60 * 60 * 1000);
+    }
   }
   
   // Convert to array and sort by date
@@ -395,11 +421,13 @@ export interface EnergyDataPoint {
  * 
  * @param earthquakes - Array of earthquake features from USGS API
  * @param grouping - How to group time periods (day, week, month, or year)
+ * @param dateRange - Optional date range to fill in missing periods with zeros
  * @returns Energy data points for chart
  */
 export function aggregateEnergyByTimePeriod(
   earthquakes: EarthquakeFeature[],
-  grouping: TimeGrouping
+  grouping: TimeGrouping,
+  dateRange?: { startDate: Date; endDate: Date }
 ): EnergyDataPoint[] {
   interface PeriodStats {
     count: number;
@@ -428,6 +456,34 @@ export function aggregateEnergyByTimePeriod(
         sumMag: magnitude,
         totalEnergy: energy,
       });
+    }
+  }
+
+  // If dateRange provided and grouping is 'day', fill in missing days
+  if (dateRange && grouping === 'day') {
+    const { startDate, endDate } = dateRange;
+    const current = new Date(Date.UTC(
+      startDate.getUTCFullYear(),
+      startDate.getUTCMonth(),
+      startDate.getUTCDate()
+    ));
+    const end = new Date(Date.UTC(
+      endDate.getUTCFullYear(),
+      endDate.getUTCMonth(),
+      endDate.getUTCDate(),
+      23, 59, 59, 999
+    ));
+
+    while (current <= end) {
+      const periodKey = current.toISOString().split('T')[0];
+      if (!aggregations.has(periodKey)) {
+        aggregations.set(periodKey, {
+          count: 0,
+          sumMag: 0,
+          totalEnergy: 0,
+        });
+      }
+      current.setTime(current.getTime() + 24 * 60 * 60 * 1000);
     }
   }
   

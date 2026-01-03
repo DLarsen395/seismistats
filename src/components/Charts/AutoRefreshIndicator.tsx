@@ -62,8 +62,8 @@ function EarthquakeIcon({ size, className }: { size: number; className?: string 
   );
 }
 
-export function AutoRefreshIndicator({ 
-  isRefreshing, 
+export function AutoRefreshIndicator({
+  isRefreshing,
   newEventsFound,
   containerHeight = 40,
 }: AutoRefreshIndicatorProps) {
@@ -73,7 +73,7 @@ export function AutoRefreshIndicator({
 
   // Calculate icon size (80% of container height)
   const iconSize = Math.round(containerHeight * 0.8);
-  
+
   // Track when refresh state changes from true to false (refresh completed)
   useEffect(() => {
     if (wasRefreshing && !isRefreshing && newEventsFound > 0) {
@@ -118,13 +118,13 @@ export function AutoRefreshIndicator({
     >
       {isRefreshing ? (
         // Spinning refresh icon
-        <RefreshIcon 
-          size={iconSize} 
+        <RefreshIcon
+          size={iconSize}
           className="auto-refresh-spin"
         />
       ) : showEarthquake ? (
         // Pulsing earthquake icon
-        <EarthquakeIcon 
+        <EarthquakeIcon
           size={iconSize}
           className="auto-refresh-pulse"
         />
@@ -136,17 +136,17 @@ export function AutoRefreshIndicator({
           color: #60a5fa;
           animation: spin 1s linear infinite;
         }
-        
+
         .auto-refresh-pulse {
           color: #f97316;
           animation: pulse 2s ease-in-out;
         }
-        
+
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
-        
+
         @keyframes pulse {
           0% { opacity: 0; transform: scale(0.8); }
           50% { opacity: 1; transform: scale(1.1); }
