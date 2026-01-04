@@ -6,5 +6,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     allowedHosts: ['seismistats.home.hushrush.com', 'seismistats.hushrush.com'],
+    open: false,
   },
+  clearScreen: false,
 })

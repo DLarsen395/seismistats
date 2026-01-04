@@ -1,9 +1,82 @@
-# Project Status V2 - ETS Events Visualization
+# Project Status V2 - SeismiStats
 
-**Date:** January 2, 2026  
-**Version:** 1.2.9
+**Date:** January 4, 2026  
+**Version:** 2.0.0-alpha.2
 
-## 🔋 New Feature: Seismic Energy Release Chart (v1.2.9)
+## 🚀 V2 Backend Implementation (Functional)
+
+### What's New in V2
+V2 adds a server-side architecture with:
+- **Fastify API Server** - TypeScript backend on port 3000
+- **PostgreSQL + PostGIS** - Centralized earthquake database
+- **USGS Sync Service** - Server fetches USGS data every 5 minutes
+- **Real Chart Endpoints** - Database-backed aggregation queries
+- **Frontend API Integration** - Toggle between V1 and V2 modes
+
+### Architecture Change
+- **V1**: Frontend → USGS API (direct, with IndexedDB cache)
+- **V2**: Frontend → Fastify API → PostgreSQL ← USGS Sync
+
+### Current Status (January 4, 2026)
+
+✅ **Completed:**
+- Full API skeleton with Fastify 5.x + TypeScript
+- PostgreSQL + PostGIS database schema with Kysely migrations
+- USGS sync service (5-minute intervals)
+- Chart endpoints with real database queries:
+  - `/api/charts/daily-counts` - Aggregated counts by day/week/month/year
+  - `/api/charts/magnitude-distribution` - Counts by magnitude range
+  - `/api/charts/energy-release` - Energy release calculations
+- Earthquakes query endpoint with filtering
+- Docker dev stack (docker-compose.dev.yml)
+- TypeScript compiles cleanly
+- **Frontend API service layer** (`src/services/api.ts`)
+- **Chart data hook** (`src/components/Charts/useChartData.ts`)
+- **Environment toggle** - `VITE_USE_API=true` to enable V2 mode
+
+📋 **Pending:**
+- Wire up useChartData hook in chart components
+- Production Docker configuration
+- Merge to main branch
+
+### Docker Dev Stack
+
+```bash
+# Start all services
+docker compose -f docker-compose.dev.yml up -d
+
+# Services:
+# - seismistats-db (PostgreSQL + PostGIS) - port 5432
+# - seismistats-api (Fastify) - port 3000
+# - seismistats-frontend (Vite) - port 5173 (with VITE_USE_API=true)
+```
+
+### API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/health` | GET | API health check |
+| `/api/earthquakes` | GET | Query earthquakes with filters |
+| `/api/charts/daily-counts` | GET | Aggregated counts |
+| `/api/charts/magnitude-distribution` | GET | By magnitude range |
+| `/api/charts/energy-release` | GET | Energy calculations |
+
+### Frontend Integration
+
+Toggle between V1 (direct USGS) and V2 (API) modes:
+
+```bash
+# V1 Mode (default) - direct USGS API calls
+VITE_USE_API=false
+
+# V2 Mode - use backend API
+VITE_USE_API=true
+VITE_API_URL=http://localhost:3000
+```
+
+---
+
+## 📦 Previous V1 Features (v1.2.9)
 
 ### Feature Summary
 A new third chart showing cumulative seismic energy released per time period.

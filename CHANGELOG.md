@@ -5,6 +5,57 @@ All notable changes to the SeismiStats Visualization project will be documented 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] - V2 Backend Development
+
+### 🚀 V2 API Server (Functional)
+
+Server-side backend with PostgreSQL + PostGIS for centralized earthquake data storage.
+
+### Added
+- **API Server** (`/api`) - Fastify 5.x + TypeScript backend
+  - `/api/charts/daily-counts` - Aggregated earthquake counts (day/week/month/year)
+  - `/api/charts/magnitude-distribution` - Counts by magnitude range
+  - `/api/charts/energy-release` - Seismic energy calculations
+  - `/api/earthquakes` - Filtered earthquake queries with pagination
+  - `/health` - Health check endpoint
+- **Database** - PostgreSQL 16 + PostGIS schema
+  - Full earthquake table with geospatial support
+  - Kysely migrations for schema management
+  - PostGIS `ST_Within` for bounding box queries
+- **USGS Sync Service** - Background data synchronization
+  - Runs every 5 minutes automatically
+  - Fetches last 7 days from USGS on startup
+  - Deduplication by source_event_id
+- **Docker Dev Stack** - Full `docker-compose.dev.yml` with:
+  - PostgreSQL + PostGIS database container (port 5432)
+  - API server with hot-reload (port 3000)
+  - Frontend with Vite hot-reload (port 5173)
+  - All services with health checks
+- **Vite CI Mode** - `cross-env CI=true` disables interactive prompts permanently
+- **Frontend API Layer** - New `src/services/api.ts` for V2 backend integration
+  - Typed API client functions for all endpoints
+  - `USE_API` toggle via `VITE_USE_API=true` environment variable
+  - Automatic conversion between API and USGS feature formats
+- **Chart Data Hook** - New `useChartData.ts` hook
+  - Supports both V1 (direct USGS) and V2 (API) modes
+  - Seamless switching via environment variable
+- **Environment Configuration**
+  - `.env.example` with frontend configuration
+  - `VITE_USE_API` to toggle V2 mode
+  - `VITE_API_URL` for API endpoint configuration
+
+### Changed
+- Dev script now uses `cross-env CI=true vite --host` to prevent terminal blocking
+- Chart SQL uses PostgreSQL `date_trunc()` instead of TimescaleDB `time_bucket()`
+- Docker dev frontend now has `VITE_USE_API=true` enabled by default
+
+### Technical Details
+- **Kysely** for type-safe SQL queries
+- **TypeBox** for request validation
+- All TypeScript errors resolved
+
+---
+
 ## [2.0.0-alpha.1] - 2026-01-04
 
 ### 🎨 SeismiStats Rebrand
