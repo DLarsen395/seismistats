@@ -166,10 +166,19 @@ export function getPeriodKey(date: Date, grouping: TimeGrouping): string {
       const { year, week } = getWeekKey(date);
       return `${year}-W${week.toString().padStart(2, '0')}`;
     }
-    case 'day':
-      return date.toISOString().split('T')[0];
-    default:
-      return date.toISOString().split('T')[0];
+    case 'day': {
+      // Use LOCAL date components, not UTC (toISOString uses UTC which can be wrong timezone)
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+    default: {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
   }
 }
 

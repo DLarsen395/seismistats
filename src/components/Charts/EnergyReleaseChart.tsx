@@ -451,6 +451,7 @@ export function EnergyReleaseChart({
               name="Avg Magnitude"
               stroke={colors.line}
               strokeWidth={2}
+              connectNulls={true}
               dot={{
                 fill: colors.lineDot,
                 stroke: colors.line,

@@ -53,6 +53,13 @@ interface EarthquakeStore {
   error: string | null;
   lastFetched: Date | null;
 
+  // Track what magnitude range the currently loaded data covers
+  // Used to avoid refetching when filtering to a subset
+  loadedMinMagnitude: number | null;
+  loadedMaxMagnitude: number | null;
+  loadedTimeRange: TimeRange | null;
+  loadedRegionScope: RegionScope | null;
+
   // Filter settings - now with min AND max magnitude
   minMagnitude: number;
   maxMagnitude: number;
@@ -405,6 +412,12 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
   error: null,
   lastFetched: null,
 
+  // Track what data is currently loaded (for avoiding redundant fetches)
+  loadedMinMagnitude: null,
+  loadedMaxMagnitude: null,
+  loadedTimeRange: null,
+  loadedRegionScope: null,
+
   // Default filter settings - now M4+ to M9+ (no upper limit)
   minMagnitude: 4,
   maxMagnitude: 10,  // 10 = no upper limit
@@ -418,27 +431,63 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
   // View setter
   setCurrentView: (view) => set({ currentView: view }),
 
-  // Filter setters - refetch when filters change
+  // Filter setters - use client-side filtering when possible to avoid refetch
   setMinMagnitude: (mag) => {
-    const { maxMagnitude } = get();
+    const { maxMagnitude, loadedMinMagnitude, loadedMaxMagnitude, loadedTimeRange, loadedRegionScope, 
+            earthquakes, timeRange, regionScope } = get();
+    
     // Ensure min doesn't exceed max
-    if (mag > maxMagnitude) {
-      set({ minMagnitude: mag, maxMagnitude: mag });
+    const newMin = mag;
+    const newMax = mag > maxMagnitude ? mag : maxMagnitude;
+    set({ minMagnitude: newMin, maxMagnitude: newMax });
+    
+    // Check if we can filter client-side:
+    // - Same time range and region
+    // - New magnitude range is a SUBSET of loaded data
+    if (loadedMinMagnitude !== null && loadedMaxMagnitude !== null &&
+        loadedTimeRange === timeRange && loadedRegionScope === regionScope &&
+        newMin >= loadedMinMagnitude && newMax <= loadedMaxMagnitude &&
+        earthquakes.length > 0) {
+      // Filter existing data client-side instead of refetching
+      const filtered = earthquakes.filter(eq => {
+        const m = eq.properties.mag ?? 0;
+        return m >= newMin && m <= newMax;
+      });
+      const dailyAggregates = aggregateEarthquakesByDay(filtered);
+      const summary = getEarthquakeSummary(filtered);
+      set({ dailyAggregates, summary });
     } else {
-      set({ minMagnitude: mag });
+      // Need to fetch new data
+      get().fetchEarthquakes();
     }
-    get().fetchEarthquakes();
   },
 
   setMaxMagnitude: (mag) => {
-    const { minMagnitude } = get();
+    const { minMagnitude, loadedMinMagnitude, loadedMaxMagnitude, loadedTimeRange, loadedRegionScope, 
+            earthquakes, timeRange, regionScope } = get();
+    
     // Ensure max doesn't go below min
-    if (mag < minMagnitude) {
-      set({ maxMagnitude: mag, minMagnitude: mag });
+    const newMax = mag;
+    const newMin = mag < minMagnitude ? mag : minMagnitude;
+    set({ maxMagnitude: newMax, minMagnitude: newMin });
+    
+    // Check if we can filter client-side
+    if (loadedMinMagnitude !== null && loadedMaxMagnitude !== null &&
+        loadedTimeRange === timeRange && loadedRegionScope === regionScope &&
+        newMin >= loadedMinMagnitude && newMax <= loadedMaxMagnitude &&
+        earthquakes.length > 0) {
+      // Filter existing data client-side
+      const filtered = earthquakes.filter(eq => {
+        const m = eq.properties.mag ?? 0;
+        return m >= newMin && m <= newMax;
+      });
+      const dailyAggregates = aggregateEarthquakesByDay(filtered);
+      const summary = getEarthquakeSummary(filtered);
+      set({ dailyAggregates, summary });
     } else {
-      set({ maxMagnitude: mag });
+      // Need to fetch new data
+      get().fetchEarthquakes();
     }
-    get().fetchEarthquakes();
   },
 
   setTimeRange: (range) => {
@@ -677,6 +726,11 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
         summary,
         isLoading: false,
         lastFetched: new Date(),
+        // Track what data was loaded for client-side filtering optimization
+        loadedMinMagnitude: minMagnitude,
+        loadedMaxMagnitude: maxMagnitude,
+        loadedTimeRange: timeRange,
+        loadedRegionScope: regionScope,
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to fetch earthquake data';

@@ -5,6 +5,23 @@ All notable changes to the ETS Events Visualization project will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.16] - 2026-01-03
+
+### 🐛 Bug Fixes
+
+### Fixed
+- **Charts 2 & 3 Missing Jan 3 Column** - Fixed timezone bug in date aggregation
+  - Root cause: `getPeriodKey()` used `toISOString()` which returns UTC date
+  - This caused earthquakes to be grouped into the wrong local day
+  - Now uses local date components consistent with the fill-missing-days logic
+- **Avg Magnitude Line Gaps** - Line now connects through days with no earthquakes
+  - Added `connectNulls={true}` to the Line component
+  - Line is continuous for visual clarity while still not showing dots on empty days
+- **Unnecessary Refetching on Magnitude Filter Change** - Now filters client-side when possible
+  - When switching from M4+ to M7+ (subset of existing data), no API call needed
+  - Tracks loaded data's magnitude range to enable smart filtering
+  - Only fetches when new filter requires data outside currently loaded range
+
 ## [1.2.15] - 2026-01-03
 
 ### 🐛 Critical Bug Fix
