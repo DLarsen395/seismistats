@@ -30,8 +30,10 @@ import {
  * Props for the component
  */
 export interface MagnitudeDistributionChartProps {
-  /** Earthquake data to visualize */
-  earthquakes: EarthquakeFeature[];
+  /** Earthquake data to visualize (V1 mode) */
+  earthquakes?: EarthquakeFeature[];
+  /** Pre-aggregated data from API (V2 mode) - if provided, bypasses internal aggregation */
+  aggregatedData?: import('./magnitudeDistributionUtils').MagnitudeTimeDataPoint[];
   /** Chart title */
   title?: string;
   /** Chart height in pixels */
@@ -40,6 +42,10 @@ export interface MagnitudeDistributionChartProps {
   daysInRange?: number;
   /** Date range for filling in missing days (optional - used when grouping by day) */
   dateRange?: { startDate: Date; endDate: Date };
+  /** External time grouping control (V2 mode) */
+  timeGrouping?: TimeGrouping;
+  /** Callback when time grouping changes (V2 mode) */
+  onTimeGroupingChange?: (grouping: TimeGrouping) => void;
 }
 
 // =============================================================================
@@ -276,40 +282,53 @@ function getDefaultTimeGrouping(daysInRange: number): TimeGrouping {
 
 export function MagnitudeDistributionChart({
   earthquakes,
+  aggregatedData,
   title = 'Magnitude Distribution Over Time',
   height = 400,
   daysInRange = 30,
   dateRange,
+  timeGrouping: externalGrouping,
+  onTimeGroupingChange,
 }: MagnitudeDistributionChartProps) {
   // Calculate smart default based on date range
   const defaultGrouping = useMemo(() => getDefaultTimeGrouping(daysInRange), [daysInRange]);
 
   // State for configuration - initialize with smart default
-  const [timeGrouping, setTimeGrouping] = useState<TimeGrouping>(defaultGrouping);
+  // Use external grouping if provided (V2 mode), otherwise internal state (V1 mode)
+  const [internalGrouping, setInternalGrouping] = useState<TimeGrouping>(defaultGrouping);
+  const timeGrouping = externalGrouping ?? internalGrouping;
+  const setTimeGrouping = onTimeGroupingChange ?? setInternalGrouping;
+
   const [enabledRanges, setEnabledRanges] = useState<Set<string>>(
     () => new Set(MAGNITUDE_RANGES.map(r => r.key))
   );
 
-  // Update grouping when date range changes significantly
+  // Update grouping when date range changes significantly (only in V1 mode)
   const prevDaysRef = useRef(daysInRange);
   useEffect(() => {
+    if (externalGrouping !== undefined) return; // Skip in V2 mode
     const prevDefault = getDefaultTimeGrouping(prevDaysRef.current);
     const newDefault = getDefaultTimeGrouping(daysInRange);
     // Only auto-switch if the optimal grouping changed
     if (prevDefault !== newDefault) {
       // Defer state update to avoid cascading renders
       requestAnimationFrame(() => {
-        setTimeGrouping(newDefault);
+        setInternalGrouping(newDefault);
       });
     }
     prevDaysRef.current = daysInRange;
-  }, [daysInRange]);
+  }, [daysInRange, externalGrouping]);
 
-  // Aggregate data - pass dateRange to fill in missing days when grouping by day
-  const chartData = useMemo(
-    () => aggregateByTimePeriodAndMagnitude(earthquakes, timeGrouping, dateRange),
-    [earthquakes, timeGrouping, dateRange]
-  );
+  // Use provided aggregated data (V2 mode) or compute it (V1 mode)
+  const chartData = useMemo(() => {
+    if (aggregatedData) {
+      return aggregatedData;
+    }
+    if (!earthquakes) {
+      return [];
+    }
+    return aggregateByTimePeriodAndMagnitude(earthquakes, timeGrouping, dateRange);
+  }, [earthquakes, aggregatedData, timeGrouping, dateRange]);
 
   // Get enabled magnitude ranges
   const activeRanges = useMemo(

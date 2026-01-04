@@ -13,6 +13,7 @@ import { RechartsBarChart } from './RechartsBarChart';
 import { MagnitudeDistributionChart } from './MagnitudeDistributionChart';
 import { EnergyReleaseChart } from './EnergyReleaseChart';
 import { CacheStatusPanel } from './CacheStatusPanel';
+import { useChartData, useIsApiMode } from './useChartData';
 import { TIME_RANGE_OPTIONS } from '../../types/earthquake';
 import type { TimeGrouping } from './magnitudeDistributionUtils';
 import { TIME_GROUPING_OPTIONS, aggregateByTimePeriod } from './magnitudeDistributionUtils';
@@ -43,21 +44,23 @@ export function EarthquakeChartsPage() {
     customEndDate,
   } = useEarthquakeStore();
 
+  // Check if using V2 API mode
+  const isApiMode = useIsApiMode();
+
   // Auto-refresh hook - active when on this page
   const { isRefreshing, newEventsFound } = useAutoRefresh(true);
 
-  // Time grouping for top chart
-  const [topChartGrouping, setTopChartGrouping] = useState<TimeGrouping>('day');
+  // Time grouping for all charts (shared in API mode for efficiency)
+  const [chartGrouping, setChartGrouping] = useState<TimeGrouping>('day');
 
-  // Filter earthquakes by current magnitude range
-  // Store keeps full data for efficient client-side re-filtering,
-  // but charts need the filtered subset
+  // Filter earthquakes by current magnitude range (V1 mode only)
   const filteredEarthquakes = useMemo(() => {
+    if (isApiMode) return []; // Not used in API mode
     return earthquakes.filter(eq => {
       const m = eq.properties.mag ?? 0;
       return m >= minMagnitude && m <= maxMagnitude;
     });
-  }, [earthquakes, minMagnitude, maxMagnitude]);
+  }, [earthquakes, minMagnitude, maxMagnitude, isApiMode]);
 
   // Calculate days in range for smart chart defaults
   const daysInRange = useMemo(() => {
@@ -84,28 +87,40 @@ export function EarthquakeChartsPage() {
     return { startDate, endDate };
   })();
 
-  // Update top chart grouping when date range changes
+  // Use chart data hook (fetches from API in V2 mode, computes locally in V1 mode)
+  const chartData = useChartData({
+    startDate: dateRange.startDate,
+    endDate: dateRange.endDate,
+    minMagnitude,
+    maxMagnitude,
+    timeGrouping: chartGrouping,
+  });
+
+  // Update chart grouping when date range changes
   useEffect(() => {
-    setTopChartGrouping(getSmartGrouping(daysInRange));
+    setChartGrouping(getSmartGrouping(daysInRange));
   }, [daysInRange]);
 
-  // Fetch data on mount if not already loaded
+  // Fetch data on mount if not already loaded (V1 mode - store needs data)
   useEffect(() => {
-    if (!lastFetched) {
+    if (!isApiMode && !lastFetched) {
       fetchEarthquakes();
     }
-  }, [fetchEarthquakes, lastFetched]);
+  }, [fetchEarthquakes, lastFetched, isApiMode]);
 
-  // Aggregate data for top chart based on selected grouping
-  // Fill in missing days when grouped by day
+  // Aggregate data for top chart based on selected grouping (V1 mode only)
+  // In API mode, this comes from chartData.dailyCounts
   const topChartData = useMemo(() => {
-    if (topChartGrouping === 'day') {
+    if (isApiMode) {
+      return chartData.dailyCounts;
+    }
+    if (chartGrouping === 'day') {
       // Fill in all days in the range, even those with no earthquakes
       return fillMissingDays(dailyAggregates, dateRange.startDate, dateRange.endDate);
     }
     // Aggregate by the selected time period (use filtered data)
-    return aggregateByTimePeriod(filteredEarthquakes, topChartGrouping);
-  }, [filteredEarthquakes, dailyAggregates, topChartGrouping, dateRange]);
+    return aggregateByTimePeriod(filteredEarthquakes, chartGrouping);
+  }, [isApiMode, chartData.dailyCounts, filteredEarthquakes, dailyAggregates, chartGrouping, dateRange]);
 
   // Build chart title
   const getChartTitle = () => {
@@ -117,7 +132,7 @@ export function EarthquakeChartsPage() {
       month: 'Month',
       year: 'Year',
     };
-    parts.push(`Earthquakes by ${groupLabels[topChartGrouping]}`);
+    parts.push(`Earthquakes by ${groupLabels[chartGrouping]}`);
 
     // Build magnitude range string
     const minStr = `M${minMagnitude}`;
@@ -132,6 +147,10 @@ export function EarthquakeChartsPage() {
     parts.push(regionScope === 'us' ? 'United States' : 'Worldwide');
     return parts.join(' ');
   };
+
+  // Determine loading state
+  const showLoading = isApiMode ? chartData.isLoading : isLoading;
+  const displayError = isApiMode ? chartData.error : error;
 
   return (
     <div
@@ -208,14 +227,14 @@ export function EarthquakeChartsPage() {
                   {TIME_GROUPING_OPTIONS.map(option => (
                     <button
                       key={option.value}
-                      onClick={() => setTopChartGrouping(option.value)}
+                      onClick={() => setChartGrouping(option.value)}
                       style={{
                         padding: '0.25rem 0.5rem',
                         fontSize: '0.75rem',
-                        color: topChartGrouping === option.value ? '#111827' : '#9ca3af',
-                        backgroundColor: topChartGrouping === option.value ? '#60a5fa' : 'transparent',
+                        color: chartGrouping === option.value ? '#111827' : '#9ca3af',
+                        backgroundColor: chartGrouping === option.value ? '#60a5fa' : 'transparent',
                         border: '1px solid',
-                        borderColor: topChartGrouping === option.value ? '#60a5fa' : '#374151',
+                        borderColor: chartGrouping === option.value ? '#60a5fa' : '#374151',
                         borderRadius: '0.375rem',
                         cursor: 'pointer',
                         transition: 'all 0.15s ease',
@@ -230,7 +249,7 @@ export function EarthquakeChartsPage() {
             </div>
 
             {/* Error state */}
-          {error && (
+          {displayError && (
             <div
               style={{
                 padding: '1rem',
@@ -241,12 +260,12 @@ export function EarthquakeChartsPage() {
                 marginBottom: '1rem',
               }}
             >
-              <strong>Error:</strong> {error}
+              <strong>Error:</strong> {displayError}
             </div>
           )}
 
           {/* Loading state */}
-          {isLoading && dailyAggregates.length === 0 && (
+          {showLoading && topChartData.length === 0 && (
             <div
               style={{
                 flex: 1,
@@ -279,20 +298,26 @@ export function EarthquakeChartsPage() {
 
         {/* Magnitude Distribution Chart - always show */}
         <MagnitudeDistributionChart
-          earthquakes={filteredEarthquakes}
+          earthquakes={isApiMode ? undefined : filteredEarthquakes}
+          aggregatedData={isApiMode ? chartData.magnitudeDistribution : undefined}
           title="Magnitude Distribution Over Time"
           height={280}
           daysInRange={daysInRange}
           dateRange={dateRange}
+          timeGrouping={isApiMode ? chartGrouping : undefined}
+          onTimeGroupingChange={isApiMode ? setChartGrouping : undefined}
         />
 
         {/* Energy Release Chart - always show */}
         <EnergyReleaseChart
-          earthquakes={filteredEarthquakes}
+          earthquakes={isApiMode ? undefined : filteredEarthquakes}
+          aggregatedData={isApiMode ? chartData.energyRelease : undefined}
           title="Seismic Energy Released"
           height={280}
           daysInRange={daysInRange}
           dateRange={dateRange}
+          timeGrouping={isApiMode ? chartGrouping : undefined}
+          onTimeGroupingChange={isApiMode ? setChartGrouping : undefined}
         />
         </div>
       </div>

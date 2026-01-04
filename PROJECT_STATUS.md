@@ -1,11 +1,11 @@
 # SeismiStats Visualization - Project Status
 
 **Last Updated**: January 4, 2026
-**Version**: 2.0.0-alpha.1
+**Version**: 2.0.0-alpha.2
 
-## 📊 Current Status: V2.0.0-alpha.1 - Backend Development In Progress
+## 📊 Current Status: V2.0.0-alpha.2 - Frontend Integration In Progress
 
-V2 backend skeleton complete. Docker dev stack operational with PostgreSQL + PostGIS, API server, and frontend all running with hot-reload.
+V2 backend complete. Frontend chart components now support both V1 (client-side) and V2 (API-backed) modes via environment toggle.
 
 ### ✅ V1 Phases Complete (100%)
 - Phase 1: Core Visualization ✅
@@ -20,8 +20,8 @@ V2 backend skeleton complete. Docker dev stack operational with PostgreSQL + Pos
 - Phase 2: Database Schema ✅ (PostgreSQL + PostGIS)
 - Phase 3: Docker Dev Stack ✅ (Full hot-reload environment)
 - Phase 4: USGS Sync Service ✅ (Scheduled + manual)
-- Phase 5: Chart Endpoints 🔄 (Stubs implemented, need real queries)
-- Phase 6: Frontend Integration ⏳ (Connect frontend to API)
+- Phase 5: Chart Endpoints ✅ (Daily counts, magnitude distribution, energy release)
+- Phase 6: Frontend Integration 🔄 (Charts support V2 mode, testing needed)
 
 ---
 

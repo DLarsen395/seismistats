@@ -5,7 +5,39 @@ All notable changes to the SeismiStats Visualization project will be documented 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] - V2 Backend Development
+## [Unreleased] - V2 Frontend Chart Integration
+
+### 🔗 Chart Components V2 Integration
+
+Chart components now support both V1 (client-side aggregation) and V2 (server-side aggregation) modes.
+
+### Added
+- **Chart V2 Props** - Updated MagnitudeDistributionChart and EnergyReleaseChart:
+  - `earthquakes` now optional (V1 mode)
+  - New `aggregatedData` prop for pre-aggregated API data (V2 mode)
+  - New `timeGrouping` prop for external grouping control (V2 mode)
+  - New `onTimeGroupingChange` callback for synced grouping (V2 mode)
+- **EarthquakeChartsPage V2 Support**:
+  - Integrates `useChartData` hook for API mode
+  - Single shared `chartGrouping` state for all charts (efficiency)
+  - Auto-detects V2 mode via `useIsApiMode()` hook
+  - Passes aggregated data to charts when API mode enabled
+
+### Changed
+- Chart components internally detect mode based on which props are provided
+- Internal time grouping state used in V1 mode, external control in V2 mode
+- Top bar chart now uses `chartData.dailyCounts` in V2 mode
+
+### How V2 Mode Works
+Set `VITE_USE_API=true` in environment (already set in docker-compose.dev.yml):
+1. EarthquakeChartsPage detects API mode via `useIsApiMode()`
+2. `useChartData` hook fetches aggregated data from `/api/charts/*` endpoints
+3. Charts receive `aggregatedData` prop and skip client-side aggregation
+4. Single grouping state shared across all charts for efficiency
+
+---
+
+## [2.0.0-alpha.2] - 2026-01-04
 
 ### 🚀 V2 API Server (Functional)
 

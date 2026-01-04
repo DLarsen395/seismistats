@@ -44,8 +44,10 @@ interface ChartDataPoint extends EnergyDataPoint {
 // =============================================================================
 
 export interface EnergyReleaseChartProps {
-  /** Earthquake data to visualize */
-  earthquakes: EarthquakeFeature[];
+  /** Earthquake data to visualize (V1 mode - optional when using aggregatedData) */
+  earthquakes?: EarthquakeFeature[];
+  /** Pre-aggregated data from API (V2 mode) */
+  aggregatedData?: EnergyDataPoint[];
   /** Chart title */
   title?: string;
   /** Chart height in pixels */
@@ -54,6 +56,10 @@ export interface EnergyReleaseChartProps {
   daysInRange?: number;
   /** Date range for filling in missing days (optional - used when grouping by day) */
   dateRange?: { startDate: Date; endDate: Date };
+  /** External time grouping control (V2 mode) */
+  timeGrouping?: TimeGrouping;
+  /** Callback when time grouping changes (V2 mode) */
+  onTimeGroupingChange?: (grouping: TimeGrouping) => void;
 }
 
 // =============================================================================
@@ -219,22 +225,36 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
 
 export function EnergyReleaseChart({
   earthquakes,
+  aggregatedData,
   title = 'Seismic Energy Released',
   height = 280,
   daysInRange = 30,
   dateRange,
+  timeGrouping: externalGrouping,
+  onTimeGroupingChange,
 }: EnergyReleaseChartProps) {
-  // Time grouping state
-  const [grouping, setGrouping] = useState<TimeGrouping>(() => getSmartGrouping(daysInRange));
+  // Time grouping state - use external if provided (V2 mode), otherwise internal (V1 mode)
+  const [internalGrouping, setInternalGrouping] = useState<TimeGrouping>(() => getSmartGrouping(daysInRange));
+  const grouping = externalGrouping ?? internalGrouping;
+  const setGrouping = onTimeGroupingChange ?? setInternalGrouping;
 
-  // Update grouping when date range changes
+  // Update grouping when date range changes (only in V1 mode)
   useEffect(() => {
-    setGrouping(getSmartGrouping(daysInRange));
-  }, [daysInRange]);
+    if (externalGrouping !== undefined) return; // Skip in V2 mode
+    setInternalGrouping(getSmartGrouping(daysInRange));
+  }, [daysInRange, externalGrouping]);
 
   // Aggregate data by time period and add log values
   const { chartData, minLog, maxLog } = useMemo(() => {
-    const rawData = aggregateEnergyByTimePeriod(earthquakes, grouping, dateRange);
+    // Use provided aggregated data (V2 mode) or compute it (V1 mode)
+    let rawData: EnergyDataPoint[];
+    if (aggregatedData) {
+      rawData = aggregatedData;
+    } else if (earthquakes) {
+      rawData = aggregateEnergyByTimePeriod(earthquakes, grouping, dateRange);
+    } else {
+      rawData = [];
+    }
 
     // Convert to log scale for visualization
     const withLog: ChartDataPoint[] = rawData.map(d => ({
@@ -247,7 +267,7 @@ export function EnergyReleaseChart({
     const maxLog = logValues.length > 0 ? Math.max(...logValues) : 1;
 
     return { chartData: withLog, minLog, maxLog };
-  }, [earthquakes, grouping, dateRange]);
+  }, [earthquakes, aggregatedData, grouping, dateRange]);
 
   // Calculate bar configuration
   const barConfig = useMemo(() => getBarConfig(chartData.length), [chartData.length]);
