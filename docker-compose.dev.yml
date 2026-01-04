@@ -1,0 +1,30 @@
+# SeismiStats API Development Setup
+
+version: "3.8"
+
+services:
+  # TimescaleDB with PostGIS
+  db:
+    image: timescale/timescaledb-ha:pg16-ts2.14-postgis
+    container_name: seismistats-db
+    environment:
+      - POSTGRES_USER=seismistats
+      - POSTGRES_PASSWORD=seismistats_dev
+      - POSTGRES_DB=seismistats
+    ports:
+      - "5432:5432"
+    volumes:
+      - seismistats_pgdata:/home/postgres/pgdata
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U seismistats -d seismistats"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  seismistats_pgdata:
+
+# Usage:
+# 1. Start database: docker compose -f docker-compose.dev.yml up -d
+# 2. Run migrations: cd api && npm run db:migrate
+# 3. Start API: cd api && npm run dev

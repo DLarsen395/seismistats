@@ -5,6 +5,32 @@ All notable changes to the SeismiStats Visualization project will be documented 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] - V2 Backend Development
+
+### 🚀 V2 API Server (In Progress)
+
+Adding server-side backend with TimescaleDB + PostGIS for centralized earthquake data storage.
+
+### Added
+- **API Server** (`/api`) - Fastify 5.x + TypeScript backend
+  - `/api/charts/*` - Pre-aggregated chart data endpoints
+  - `/api/earthquakes` - Filtered earthquake queries
+  - `/api/sync/*` - USGS sync status and manual trigger
+  - `/health` - Health check endpoints
+- **Database** - TimescaleDB + PostGIS schema
+  - Hypertable partitioned by time (monthly chunks)
+  - PostGIS geospatial indexes
+  - Continuous aggregates for chart performance
+  - 30-day compression policy
+- **USGS Sync Service** - Background data synchronization
+  - Scheduled sync (every 5 minutes)
+  - Manual sync trigger endpoint
+  - Chunked batch processing
+- **Shared Types** (`/shared`) - TypeScript interfaces for API contract
+- **Dev Infrastructure** - `docker-compose.dev.yml` for local TimescaleDB
+
+---
+
 ## [2.0.0-alpha.1] - 2026-01-04
 
 ### 🎨 SeismiStats Rebrand
