@@ -32,10 +32,22 @@ Server-side backend with PostgreSQL + PostGIS for centralized earthquake data st
   - Frontend with Vite hot-reload (port 5173)
   - All services with health checks
 - **Vite CI Mode** - `cross-env CI=true` disables interactive prompts permanently
+- **Frontend API Layer** - New `src/services/api.ts` for V2 backend integration
+  - Typed API client functions for all endpoints
+  - `USE_API` toggle via `VITE_USE_API=true` environment variable
+  - Automatic conversion between API and USGS feature formats
+- **Chart Data Hook** - New `useChartData.ts` hook
+  - Supports both V1 (direct USGS) and V2 (API) modes
+  - Seamless switching via environment variable
+- **Environment Configuration**
+  - `.env.example` with frontend configuration
+  - `VITE_USE_API` to toggle V2 mode
+  - `VITE_API_URL` for API endpoint configuration
 
 ### Changed
 - Dev script now uses `cross-env CI=true vite --host` to prevent terminal blocking
 - Chart SQL uses PostgreSQL `date_trunc()` instead of TimescaleDB `time_bucket()`
+- Docker dev frontend now has `VITE_USE_API=true` enabled by default
 
 ### Technical Details
 - **Kysely** for type-safe SQL queries

@@ -1,9 +1,9 @@
 # Project Status V2 - SeismiStats
 
 **Date:** January 4, 2026  
-**Version:** 2.0.0-alpha.1
+**Version:** 2.0.0-alpha.2
 
-## 🚀 V2 Backend Implementation (In Progress)
+## 🚀 V2 Backend Implementation (Functional)
 
 ### What's New in V2
 V2 adds a server-side architecture with:
@@ -11,6 +11,7 @@ V2 adds a server-side architecture with:
 - **PostgreSQL + PostGIS** - Centralized earthquake database
 - **USGS Sync Service** - Server fetches USGS data every 5 minutes
 - **Real Chart Endpoints** - Database-backed aggregation queries
+- **Frontend API Integration** - Toggle between V1 and V2 modes
 
 ### Architecture Change
 - **V1**: Frontend → USGS API (direct, with IndexedDB cache)
@@ -29,12 +30,12 @@ V2 adds a server-side architecture with:
 - Earthquakes query endpoint with filtering
 - Docker dev stack (docker-compose.dev.yml)
 - TypeScript compiles cleanly
-
-🔄 **In Progress:**
-- Frontend integration to use API instead of direct USGS calls
-- Frontend service layer for API communication
+- **Frontend API service layer** (`src/services/api.ts`)
+- **Chart data hook** (`src/components/Charts/useChartData.ts`)
+- **Environment toggle** - `VITE_USE_API=true` to enable V2 mode
 
 📋 **Pending:**
+- Wire up useChartData hook in chart components
 - Production Docker configuration
 - Merge to main branch
 
@@ -47,7 +48,7 @@ docker compose -f docker-compose.dev.yml up -d
 # Services:
 # - seismistats-db (PostgreSQL + PostGIS) - port 5432
 # - seismistats-api (Fastify) - port 3000
-# - seismistats-frontend (Vite) - port 5173
+# - seismistats-frontend (Vite) - port 5173 (with VITE_USE_API=true)
 ```
 
 ### API Endpoints
@@ -59,6 +60,19 @@ docker compose -f docker-compose.dev.yml up -d
 | `/api/charts/daily-counts` | GET | Aggregated counts |
 | `/api/charts/magnitude-distribution` | GET | By magnitude range |
 | `/api/charts/energy-release` | GET | Energy calculations |
+
+### Frontend Integration
+
+Toggle between V1 (direct USGS) and V2 (API) modes:
+
+```bash
+# V1 Mode (default) - direct USGS API calls
+VITE_USE_API=false
+
+# V2 Mode - use backend API
+VITE_USE_API=true
+VITE_API_URL=http://localhost:3000
+```
 
 ---
 
