@@ -107,7 +107,7 @@ export async function syncRoutes(app: FastifyInstance): Promise<void> {
     const { limit = 20 } = request.query as { limit?: number };
 
     const db = getDb();
-    
+
     const history = await db
       .selectFrom('sync_status')
       .selectAll()

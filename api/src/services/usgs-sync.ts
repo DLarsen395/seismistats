@@ -67,10 +67,10 @@ export interface USGSResponse {
  */
 export async function syncFromUSGS(options: SyncOptions): Promise<number> {
   const { startDate, endDate, minMagnitude = -2, maxMagnitude } = options;
-  
+
   const db = getDb();
   let totalSynced = 0;
-  
+
   // Build USGS API URL
   const params = new URLSearchParams({
     format: 'geojson',
@@ -79,29 +79,29 @@ export async function syncFromUSGS(options: SyncOptions): Promise<number> {
     minmagnitude: minMagnitude.toString(),
     orderby: 'time',
   });
-  
+
   if (maxMagnitude !== undefined) {
     params.set('maxmagnitude', maxMagnitude.toString());
   }
-  
+
   const url = `${config.usgs.baseUrl}/query?${params}`;
   console.log(`[USGS Sync] Fetching: ${url}`);
-  
+
   try {
     const response = await fetch(url);
-    
+
     if (!response.ok) {
       throw new Error(`USGS API error: ${response.status} ${response.statusText}`);
     }
-    
+
     const data: USGSResponse = await response.json();
     console.log(`[USGS Sync] Received ${data.features.length} events from USGS`);
-    
+
     // Process in batches
     const batchSize = 500;
     for (let i = 0; i < data.features.length; i += batchSize) {
       const batch = data.features.slice(i, i + batchSize);
-      
+
       const values = batch.map((feature) => ({
         time: new Date(feature.properties.time),
         source: 'USGS',
@@ -120,12 +120,12 @@ export async function syncFromUSGS(options: SyncOptions): Promise<number> {
         alert: feature.properties.alert,
         is_canonical: true,
       }));
-      
+
       // Upsert (insert or update on conflict)
       await db
         .insertInto('earthquakes')
         .values(values)
-        .onConflict((oc) => 
+        .onConflict((oc) =>
           oc.columns(['source', 'source_event_id']).doUpdateSet({
             magnitude: (eb) => eb.ref('excluded.magnitude'),
             magnitude_type: (eb) => eb.ref('excluded.magnitude_type'),
@@ -139,27 +139,27 @@ export async function syncFromUSGS(options: SyncOptions): Promise<number> {
           })
         )
         .execute();
-      
+
       totalSynced += batch.length;
       console.log(`[USGS Sync] Processed ${totalSynced}/${data.features.length}`);
     }
-    
+
     // Record sync status
     await db
       .insertInto('sync_status')
       .values({
         source: 'USGS',
         last_sync_time: new Date(),
-        last_event_time: data.features.length > 0 
-          ? new Date(data.features[0].properties.time) 
+        last_event_time: data.features.length > 0
+          ? new Date(data.features[0].properties.time)
           : null,
         events_synced: totalSynced,
         status: 'success',
       })
       .execute();
-    
+
     return totalSynced;
-    
+
   } catch (error) {
     // Record failed sync
     await db
@@ -172,7 +172,7 @@ export async function syncFromUSGS(options: SyncOptions): Promise<number> {
         error_message: error instanceof Error ? error.message : 'Unknown error',
       })
       .execute();
-    
+
     throw error;
   }
 }

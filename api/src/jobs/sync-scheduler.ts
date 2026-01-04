@@ -20,21 +20,21 @@ export function startSyncScheduler(): void {
   }
 
   const cronExpression = `*/${config.usgs.syncIntervalMinutes} * * * *`;
-  
+
   cronJob = cron.schedule(cronExpression, async () => {
     console.log(`[USGS Sync] Running scheduled sync...`);
-    
+
     try {
       // Sync last 30 minutes of data
       const endDate = new Date();
       const startDate = new Date(endDate.getTime() - 30 * 60 * 1000);
-      
+
       await syncFromUSGS({
         startDate,
         endDate,
         minMagnitude: -2,
       });
-      
+
       console.log(`[USGS Sync] Scheduled sync complete`);
     } catch (err) {
       console.error('[USGS Sync] Scheduled sync failed:', err);
@@ -60,13 +60,13 @@ export function stopSyncScheduler(): void {
  */
 export async function triggerManualSync(options: SyncOptions): Promise<string> {
   const jobId = `manual-${++jobCounter}-${Date.now()}`;
-  
+
   console.log(`[USGS Sync] Manual sync triggered (${jobId}):`, options);
-  
+
   // Run async (don't await)
   syncFromUSGS(options)
     .then(() => console.log(`[USGS Sync] Manual sync ${jobId} complete`))
     .catch((err) => console.error(`[USGS Sync] Manual sync ${jobId} failed:`, err));
-  
+
   return jobId;
 }

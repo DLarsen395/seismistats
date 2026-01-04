@@ -82,7 +82,7 @@ async function seed() {
         .values(eq)
         .onConflict((oc) => oc.columns(['source', 'source_event_id']).doNothing())
         .execute();
-      
+
       console.log(`✅ Inserted: ${eq.place} (M${eq.magnitude})`);
     }
 

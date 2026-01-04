@@ -161,7 +161,7 @@ export async function earthquakeRoutes(app: FastifyInstance): Promise<void> {
     const { id } = request.params as { id: string };
 
     const db = getDb();
-    
+
     const earthquake = await db
       .selectFrom('earthquakes')
       .selectAll()

@@ -14,26 +14,26 @@ const MIGRATIONS = [
     sql: `
       -- Enable required extensions
       CREATE EXTENSION IF NOT EXISTS postgis;
-      CREATE EXTENSION IF NOT EXISTS timescaledb;
+      -- Note: TimescaleDB extension would be added here when available
 
       -- Main earthquakes table
       CREATE TABLE IF NOT EXISTS earthquakes (
-        id BIGSERIAL,
+        id BIGSERIAL PRIMARY KEY,
         time TIMESTAMPTZ NOT NULL,
-        
+
         -- Source tracking
         source TEXT NOT NULL DEFAULT 'USGS',
         source_event_id TEXT NOT NULL,
-        
+
         -- Location (store lat/lng separately for convenience)
         latitude DOUBLE PRECISION NOT NULL,
         longitude DOUBLE PRECISION NOT NULL,
         depth_km REAL,
-        
+
         -- Magnitude
         magnitude REAL NOT NULL,
         magnitude_type TEXT,
-        
+
         -- Metadata
         place TEXT,
         status TEXT,
@@ -42,40 +42,37 @@ const MIGRATIONS = [
         cdi REAL,
         mmi REAL,
         alert TEXT,
-        
+
         -- Multi-source deduplication (future)
         canonical_event_id BIGINT,
         is_canonical BOOLEAN DEFAULT TRUE,
-        
+
         -- Audit
         created_at TIMESTAMPTZ DEFAULT NOW(),
-        updated_at TIMESTAMPTZ DEFAULT NOW(),
-        
-        -- TimescaleDB requires time in primary key
-        PRIMARY KEY (id, time)
+        updated_at TIMESTAMPTZ DEFAULT NOW()
       );
 
       -- Add geography column (computed from lat/lng)
       SELECT AddGeometryColumn('earthquakes', 'location', 4326, 'POINT', 2);
 
-      -- Convert to hypertable (TimescaleDB)
-      SELECT create_hypertable('earthquakes', 'time', 
-        chunk_time_interval => INTERVAL '1 month',
-        if_not_exists => TRUE
-      );
+      -- NOTE: TimescaleDB hypertable conversion commented out for now
+      -- SELECT create_hypertable('earthquakes', 'time',
+      --   chunk_time_interval => INTERVAL '1 month',
+      --   if_not_exists => TRUE
+      -- );
 
       -- Indexes
-      CREATE INDEX IF NOT EXISTS idx_earthquakes_source 
+      CREATE INDEX IF NOT EXISTS idx_earthquakes_source
         ON earthquakes (source, source_event_id);
-      CREATE INDEX IF NOT EXISTS idx_earthquakes_magnitude 
+      CREATE INDEX IF NOT EXISTS idx_earthquakes_magnitude
         ON earthquakes (magnitude);
-      CREATE INDEX IF NOT EXISTS idx_earthquakes_location 
+      CREATE INDEX IF NOT EXISTS idx_earthquakes_location
         ON earthquakes USING GIST (location);
-      CREATE INDEX IF NOT EXISTS idx_earthquakes_time_mag 
+      CREATE INDEX IF NOT EXISTS idx_earthquakes_time_mag
         ON earthquakes (time DESC, magnitude DESC);
 
       -- Unique constraint to prevent duplicates from same source
-      CREATE UNIQUE INDEX IF NOT EXISTS idx_earthquakes_source_unique 
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_earthquakes_source_unique
         ON earthquakes (source, source_event_id);
 
       -- Sync status tracking table
@@ -108,6 +105,8 @@ const MIGRATIONS = [
         EXECUTE FUNCTION update_earthquake_location();
     `,
   },
+  // NOTE: TimescaleDB features disabled for now - enable when TimescaleDB is available
+  /*
   {
     name: '002_compression_policy',
     sql: `
@@ -148,11 +147,12 @@ const MIGRATIONS = [
       );
     `,
   },
+  */
 ];
 
 async function migrate() {
   const pool = new Pool({ connectionString: config.databaseUrl });
-  
+
   console.log('🗄️  Running database migrations...\n');
 
   try {
@@ -177,7 +177,7 @@ async function migrate() {
       }
 
       console.log(`🔄 Running ${migration.name}...`);
-      
+
       try {
         await pool.query(migration.sql);
         await pool.query('INSERT INTO _migrations (name) VALUES ($1)', [migration.name]);

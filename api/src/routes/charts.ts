@@ -44,9 +44,9 @@ export async function chartRoutes(app: FastifyInstance): Promise<void> {
     };
 
     const db = getDb();
-    
+
     // Determine time bucket based on aggregation
-    const bucket = aggregation === 'yearly' ? '1 year' 
+    const bucket = aggregation === 'yearly' ? '1 year'
       : aggregation === 'monthly' ? '1 month'
       : aggregation === 'weekly' ? '1 week'
       : '1 day';
@@ -100,8 +100,8 @@ export async function chartRoutes(app: FastifyInstance): Promise<void> {
     };
 
     const db = getDb();
-    
-    const bucket = aggregation === 'yearly' ? '1 year' 
+
+    const bucket = aggregation === 'yearly' ? '1 year'
       : aggregation === 'monthly' ? '1 month'
       : aggregation === 'weekly' ? '1 week'
       : '1 day';
@@ -167,8 +167,8 @@ export async function chartRoutes(app: FastifyInstance): Promise<void> {
     };
 
     const db = getDb();
-    
-    const bucket = aggregation === 'yearly' ? '1 year' 
+
+    const bucket = aggregation === 'yearly' ? '1 year'
       : aggregation === 'monthly' ? '1 month'
       : aggregation === 'weekly' ? '1 week'
       : '1 day';

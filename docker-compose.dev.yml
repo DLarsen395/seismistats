@@ -1,11 +1,10 @@
-# SeismiStats API Development Setup
-
-version: "3.8"
+# SeismiStats Development Stack
+# All services with hot-reload for development
 
 services:
-  # TimescaleDB with PostGIS
+  # PostgreSQL with PostGIS
   db:
-    image: timescale/timescaledb-ha:pg16-ts2.14-postgis
+    image: postgis/postgis:16-3.4
     container_name: seismistats-db
     environment:
       - POSTGRES_USER=seismistats
@@ -14,17 +13,79 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - seismistats_pgdata:/home/postgres/pgdata
+      - seismistats_pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U seismistats -d seismistats"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - seismistats-dev
+
+  # API Server with hot-reload
+  api:
+    image: node:20-alpine
+    container_name: seismistats-api
+    working_dir: /app
+    command: sh -c "npm install && npm run dev"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - DATABASE_URL=postgresql://seismistats:seismistats_dev@db:5432/seismistats
+      - CORS_ORIGIN=http://localhost:5173
+      - USGS_SYNC_ENABLED=true
+      - USGS_SYNC_CRON=*/5 * * * *
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./api:/app
+      - /app/node_modules
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3000/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))\""]
+      interval: 30s
+      timeout: 3s
+      start_period: 30s
+      retries: 3
+    networks:
+      - seismistats-dev
+
+  # Frontend with Vite hot-reload
+  frontend:
+    image: node:20-alpine
+    container_name: seismistats-frontend
+    working_dir: /app
+    command: sh -c "npm install && npx vite --host 0.0.0.0 --port 5173"
+    environment:
+      - CI=true
+      - VITE_API_URL=http://localhost:3000
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./:/app
+      - /app/node_modules
+      - /app/api
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:5173/', (r) => process.exit(r.statusCode === 200 ? 0 : 1))\""]
+      interval: 30s
+      timeout: 3s
+      start_period: 30s
+      retries: 3
+    networks:
+      - seismistats-dev
+
+networks:
+  seismistats-dev:
+    driver: bridge
 
 volumes:
   seismistats_pgdata:
 
 # Usage:
-# 1. Start database: docker compose -f docker-compose.dev.yml up -d
-# 2. Run migrations: cd api && npm run db:migrate
-# 3. Start API: cd api && npm run dev
+# Start all services:     docker compose -f docker-compose.dev.yml up
+# Start in background:    docker compose -f docker-compose.dev.yml up -d
+# View logs:              docker compose -f docker-compose.dev.yml logs -f
+# Stop all:               docker compose -f docker-compose.dev.yml down
+# Reset database:         docker compose -f docker-compose.dev.yml down -v

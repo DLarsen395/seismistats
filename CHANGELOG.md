@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🚀 V2 API Server (In Progress)
 
-Adding server-side backend with TimescaleDB + PostGIS for centralized earthquake data storage.
+Adding server-side backend with PostGIS for centralized earthquake data storage.
 
 ### Added
 - **API Server** (`/api`) - Fastify 5.x + TypeScript backend
@@ -17,17 +17,23 @@ Adding server-side backend with TimescaleDB + PostGIS for centralized earthquake
   - `/api/earthquakes` - Filtered earthquake queries
   - `/api/sync/*` - USGS sync status and manual trigger
   - `/health` - Health check endpoints
-- **Database** - TimescaleDB + PostGIS schema
-  - Hypertable partitioned by time (monthly chunks)
+- **Database** - PostgreSQL 16 + PostGIS schema
   - PostGIS geospatial indexes
-  - Continuous aggregates for chart performance
-  - 30-day compression policy
+  - Optimized for time-series queries
 - **USGS Sync Service** - Background data synchronization
   - Scheduled sync (every 5 minutes)
   - Manual sync trigger endpoint
   - Chunked batch processing
 - **Shared Types** (`/shared`) - TypeScript interfaces for API contract
-- **Dev Infrastructure** - `docker-compose.dev.yml` for local TimescaleDB
+- **Docker Dev Stack** - Full `docker-compose.dev.yml` with:
+  - PostgreSQL + PostGIS database container
+  - API server with hot-reload (tsx watch)
+  - Frontend with Vite hot-reload
+  - All services with health checks
+- **Vite CI Mode** - `cross-env CI=true` disables interactive prompts permanently
+
+### Changed
+- Dev script now uses `cross-env CI=true vite --host` to prevent terminal blocking
 
 ---
 

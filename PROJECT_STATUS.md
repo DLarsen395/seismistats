@@ -3,17 +3,51 @@
 **Last Updated**: January 4, 2026
 **Version**: 2.0.0-alpha.1
 
-## 📊 Current Status: V2.0.0-alpha.1 - SeismiStats Rebrand ✅
+## 📊 Current Status: V2.0.0-alpha.1 - Backend Development In Progress
 
-Rebranded from "ETS Events" to "SeismiStats". All core features implemented. Earthquake Charts view with enhanced visualizations, intelligent caching, and auto-refresh. This is a stable release version.
+V2 backend skeleton complete. Docker dev stack operational with PostgreSQL + PostGIS, API server, and frontend all running with hot-reload.
 
-### ✅ All Phases Complete (100%)
+### ✅ V1 Phases Complete (100%)
 - Phase 1: Core Visualization ✅
 - Phase 2: Playback Engine ✅
 - Phase 3: UI Components ✅
 - Phase 4: Mobile Support ✅
 - Phase 5: Docker Deployment ✅
 - Phase 6: Earthquake Charts ✅
+
+### 🚀 V2 Backend Progress
+- Phase 1: API Skeleton ✅ (Fastify + TypeScript)
+- Phase 2: Database Schema ✅ (PostgreSQL + PostGIS)
+- Phase 3: Docker Dev Stack ✅ (Full hot-reload environment)
+- Phase 4: USGS Sync Service ✅ (Scheduled + manual)
+- Phase 5: Chart Endpoints 🔄 (Stubs implemented, need real queries)
+- Phase 6: Frontend Integration ⏳ (Connect frontend to API)
+
+---
+
+## V2 Development Environment
+
+### Quick Start
+```bash
+# Start all services (database, API, frontend)
+docker compose -f docker-compose.dev.yml up -d
+
+# View logs
+docker compose -f docker-compose.dev.yml logs -f
+
+# Run migrations (first time only)
+docker exec seismistats-api npm run db:migrate
+
+# Stop all
+docker compose -f docker-compose.dev.yml down
+```
+
+### Services
+| Service | URL | Container |
+|---------|-----|-----------|
+| Frontend | http://localhost:5173 | seismistats-frontend |
+| API | http://localhost:3000 | seismistats-api |
+| Database | localhost:5432 | seismistats-db |
 
 ---
 

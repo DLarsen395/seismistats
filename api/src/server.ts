@@ -1,4 +1,4 @@
-  /**
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    /**
  * SeismiStats API Server
  * Main entry point for the Fastify application
  */
@@ -14,9 +14,6 @@ import { startSyncScheduler } from './jobs/sync-scheduler.js';
 const app = Fastify({
   logger: {
     level: config.nodeEnv === 'development' ? 'debug' : 'info',
-    transport: config.nodeEnv === 'development' 
-      ? { target: 'pino-pretty', options: { colorize: true } }
-      : undefined,
   },
 });
 
@@ -24,7 +21,7 @@ async function main() {
   try {
     // Register plugins
     await app.register(cors, {
-      origin: config.nodeEnv === 'development' 
+      origin: config.nodeEnv === 'development'
         ? ['http://localhost:5173', 'http://localhost:3000']
         : true,
     });
