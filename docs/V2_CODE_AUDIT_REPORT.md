@@ -1,7 +1,7 @@
 # SeismiStats V2 Code Audit Report
 
-**Audit Date:** January 4, 2026  
-**Version:** 2.0.0-alpha.2  
+**Audit Date:** January 4, 2026
+**Version:** 2.0.0-alpha.2
 **Audited By:** GitHub Copilot Automated Analysis
 
 ---
