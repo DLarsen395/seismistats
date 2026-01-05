@@ -1,11 +1,11 @@
 # SeismiStats Visualization - Project Status
 
 **Last Updated**: January 5, 2026
-**Version**: 2.0.0-alpha.4
+**Version**: 2.0.0-alpha.5
 
-## 📊 Current Status: V2.0.0-alpha.4 - Security Hardening & Seeding
+## 📊 Current Status: V2.0.0-alpha.5 - Admin UI & Seeding Controls
 
-V2 backend with security hardening, rate limiting, and controlled database seeding. Production-ready security measures.
+V2 backend complete with user-facing Admin page for database seeding. Database ships empty; users control data population.
 
 ### ✅ V1 Phases Complete (100%)
 - Phase 1: Core Visualization ✅
@@ -24,6 +24,7 @@ V2 backend with security hardening, rate limiting, and controlled database seedi
 - Phase 6: Frontend Integration ✅ (Charts fully support V2 mode)
 - Phase 7: Security Hardening ✅ (Helmet, rate limiting, env validation)
 - Phase 8: Database Seeding ✅ (Controlled historical data population)
+- Phase 9: Admin UI ✅ (User-controlled seeding with bandwidth settings)
 
 ---
 

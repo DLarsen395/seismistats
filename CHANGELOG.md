@@ -5,7 +5,42 @@ All notable changes to the SeismiStats Visualization project will be documented 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] - V2 Security Hardening & Seeding
+## [Unreleased] - V2 Admin UI & Database Seeding Controls
+
+### 🗄️ User-Controlled Database Seeding
+
+New Admin page with full control over database seeding for users deploying SeismiStats.
+
+### Added
+- **Admin Page** (`/admin` view in navigation):
+  - Database coverage display (date range, event counts by magnitude)
+  - Seeding progress tracker with real-time updates
+  - Cancel button for in-progress seeding
+- **Seeding Controls**:
+  - Date range presets (Last Month, 3 Months, 6 Months, 1 Year, 2 Years, 5 Years)
+  - Custom date range inputs
+  - Minimum magnitude slider (M-2 to M6)
+  - Connection speed presets (Slow/Medium/Fast/Turbo)
+- **Speed Presets** for different bandwidth scenarios:
+  - Slow: 5s delay, 15-day chunks
+  - Medium: 2s delay, 30-day chunks (default)
+  - Fast: 1s delay, 45-day chunks
+  - Turbo: 500ms delay, 60-day chunks
+- **API Client Functions**:
+  - `fetchDatabaseCoverage()` - Get current database state
+  - `fetchSeedingProgress()` - Poll seeding progress
+  - `startSeeding(options)` - Start seeding with custom options
+  - `cancelSeeding()` - Cancel in-progress seeding
+
+### Design Philosophy
+- Database ships empty (repository stays small)
+- Users control when/how much data to seed
+- Bandwidth-aware speed settings
+- Progress saved on cancel - no data lost
+
+---
+
+## [2.0.0-alpha.4] - 2026-01-05
 
 ### 🔒 Security Hardening
 

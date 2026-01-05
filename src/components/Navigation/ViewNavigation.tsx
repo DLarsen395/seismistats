@@ -14,6 +14,7 @@ export function ViewNavigation({ currentView, onViewChange }: ViewNavigationProp
   const views: { id: AppView; label: string; icon: string }[] = [
     { id: 'ets-events', label: 'ETS Events', icon: '🌊' },
     { id: 'earthquake-charts', label: 'Earthquake Charts', icon: '📊' },
+    { id: 'admin', label: 'Admin', icon: '⚙️' },
   ];
 
   return (

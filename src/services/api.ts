@@ -292,3 +292,131 @@ export function apiEarthquakeToFeature(eq: ApiEarthquake): import('./usgs-earthq
 export function apiEarthquakesToFeatures(earthquakes: ApiEarthquake[]): import('./usgs-earthquake-api').EarthquakeFeature[] {
   return earthquakes.map(apiEarthquakeToFeature);
 }
+
+// =============================================================================
+// Sync & Seeding Types
+// =============================================================================
+
+/**
+ * Database coverage info
+ */
+export interface DatabaseCoverage {
+  totalEvents: number;
+  oldestEvent: string | null;
+  newestEvent: string | null;
+  countsByMagnitude: Array<{
+    range: string;
+    count: number;
+  }>;
+}
+
+/**
+ * Seeding progress info
+ */
+export interface SeedingProgress {
+  isSeeding: boolean;
+  totalChunks: number;
+  completedChunks: number;
+  totalEventsFetched: number;
+  startTime: string | null;
+  currentChunk: {
+    startDate: string;
+    endDate: string;
+    index: number;
+  } | null;
+  cancelled: boolean;
+  error: string | null;
+}
+
+/**
+ * Seeding options (for starting a seed job)
+ */
+export interface SeedingOptions {
+  startDate?: string;
+  endDate?: string;
+  minMagnitude?: number;
+  chunkDays?: number;
+  delayMs?: number;
+}
+
+/**
+ * Sync status info
+ */
+export interface SyncStatus {
+  totalEvents: number;
+  oldestEvent: string | null;
+  newestEvent: string | null;
+  lastSync: {
+    time: string;
+    status: string;
+    eventsSynced: number;
+    error: string | null;
+  } | null;
+  sources: Array<{
+    source: string;
+    count: number;
+  }>;
+}
+
+// =============================================================================
+// Sync & Seeding API Functions
+// =============================================================================
+
+/**
+ * Get database coverage (what date ranges are seeded)
+ */
+export async function fetchDatabaseCoverage(): Promise<ApiResponse<DatabaseCoverage>> {
+  return apiFetch('/api/sync/coverage');
+}
+
+/**
+ * Get seeding progress
+ */
+export async function fetchSeedingProgress(): Promise<ApiResponse<SeedingProgress>> {
+  return apiFetch('/api/sync/seed/progress');
+}
+
+/**
+ * Get sync status
+ */
+export async function fetchSyncStatus(): Promise<ApiResponse<SyncStatus>> {
+  return apiFetch('/api/sync/status');
+}
+
+/**
+ * Start database seeding
+ */
+export async function startSeeding(options: SeedingOptions): Promise<ApiResponse<{ message: string }>> {
+  const url = new URL('/api/sync/seed', API_BASE_URL);
+
+  const response = await fetch(url.toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(options),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || `API error: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Cancel ongoing seeding
+ */
+export async function cancelSeeding(): Promise<ApiResponse<SeedingProgress>> {
+  const url = new URL('/api/sync/seed/cancel', API_BASE_URL);
+
+  const response = await fetch(url.toString(), {
+    method: 'POST',
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || `API error: ${response.status}`);
+  }
+
+  return response.json();
+}

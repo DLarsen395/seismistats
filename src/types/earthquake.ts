@@ -43,7 +43,7 @@ export type {
 /**
  * App view/page options
  */
-export type AppView = 'ets-events' | 'earthquake-charts';
+export type AppView = 'ets-events' | 'earthquake-charts' | 'admin';
 
 /**
  * Magnitude filter option for min/max selectors

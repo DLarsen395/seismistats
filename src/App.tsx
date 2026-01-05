@@ -8,6 +8,7 @@ import { Legend } from './components/Controls/Legend';
 import { MobileInfoPanel } from './components/Controls/MobileInfoPanel';
 import { ViewNavigation } from './components/Navigation/ViewNavigation';
 import { EarthquakeChartsPage } from './components/Charts/EarthquakeChartsPage';
+import { AdminPage } from './components/Admin';
 import { useEventData } from './hooks/useEventData';
 import { usePlayback, type ETSEventWithOpacity } from './hooks/usePlayback';
 import { useIsMobileDevice } from './hooks/useIsMobile';
@@ -223,6 +224,11 @@ function App() {
         {/* Earthquake Charts View */}
         {currentView === 'earthquake-charts' && (
           <EarthquakeChartsPage />
+        )}
+
+        {/* Admin View */}
+        {currentView === 'admin' && (
+          <AdminPage />
         )}
       </main>
     </div>
