@@ -119,7 +119,8 @@ export function EarthquakeChartsPage() {
       return fillMissingDays(dailyAggregates, dateRange.startDate, dateRange.endDate);
     }
     // Aggregate by the selected time period (use filtered data)
-    return aggregateByTimePeriod(filteredEarthquakes, chartGrouping);
+    // Pass dateRange to fill in ALL periods including those with 0 earthquakes
+    return aggregateByTimePeriod(filteredEarthquakes, chartGrouping, dateRange);
   }, [isApiMode, chartData.dailyCounts, filteredEarthquakes, dailyAggregates, chartGrouping, dateRange]);
 
   // Build chart title

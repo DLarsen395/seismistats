@@ -222,6 +222,65 @@ export function getDateFromPeriodKey(key: string, grouping: TimeGrouping): Date 
 }
 
 /**
+ * Generate all period keys for a date range and grouping type
+ * Ensures charts show ALL time periods, including those with 0 events
+ * 
+ * @param startDate - Start of date range
+ * @param endDate - End of date range
+ * @param grouping - Time grouping (day, week, month, year)
+ * @returns Array of period keys covering the entire date range
+ */
+export function generateAllPeriodKeys(
+  startDate: Date,
+  endDate: Date,
+  grouping: TimeGrouping
+): string[] {
+  const keys: string[] = [];
+  const current = new Date(startDate);
+  current.setHours(0, 0, 0, 0);
+  const end = new Date(endDate);
+  end.setHours(23, 59, 59, 999);
+
+  switch (grouping) {
+    case 'day':
+      while (current <= end) {
+        keys.push(getPeriodKey(current, 'day'));
+        current.setDate(current.getDate() + 1);
+      }
+      break;
+
+    case 'week': {
+      // Start from beginning of the week containing startDate
+      const firstDayOfWeek = current.getDay(); // 0 = Sunday
+      current.setDate(current.getDate() - firstDayOfWeek); // Move to Sunday
+      while (current <= end) {
+        keys.push(getPeriodKey(current, 'week'));
+        current.setDate(current.getDate() + 7);
+      }
+      break;
+    }
+
+    case 'month':
+      current.setDate(1); // Start at first of month
+      while (current <= end) {
+        keys.push(getPeriodKey(current, 'month'));
+        current.setMonth(current.getMonth() + 1);
+      }
+      break;
+
+    case 'year':
+      current.setMonth(0, 1); // Start at Jan 1
+      while (current <= end) {
+        keys.push(getPeriodKey(current, 'year'));
+        current.setFullYear(current.getFullYear() + 1);
+      }
+      break;
+  }
+
+  return keys;
+}
+
+/**
  * Aggregate earthquakes by time period and magnitude range
  *
  * @param earthquakes - Array of earthquake features from USGS API
@@ -255,24 +314,18 @@ export function aggregateByTimePeriodAndMagnitude(
     periodCounts.set(rangeKey, (periodCounts.get(rangeKey) || 0) + 1);
   }
 
-  // If dateRange provided and grouping is 'day', fill in missing days
-  if (dateRange && grouping === 'day') {
-    const { startDate, endDate } = dateRange;
-    const current = new Date(startDate);
-    current.setHours(0, 0, 0, 0);
-    const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999);
-
-    while (current <= end) {
-      // Use local date for the key
-      const year = current.getFullYear();
-      const month = String(current.getMonth() + 1).padStart(2, '0');
-      const day = String(current.getDate()).padStart(2, '0');
-      const periodKey = `${year}-${month}-${day}`;
+  // Fill in ALL missing periods based on date range and grouping
+  // This ensures charts show 0 values for periods with no earthquakes
+  if (dateRange) {
+    const allPeriodKeys = generateAllPeriodKeys(
+      dateRange.startDate,
+      dateRange.endDate,
+      grouping
+    );
+    for (const periodKey of allPeriodKeys) {
       if (!aggregations.has(periodKey)) {
-        aggregations.set(periodKey, new Map());
+        aggregations.set(periodKey, new Map()); // Empty map = 0 for all ranges
       }
-      current.setDate(current.getDate() + 1);
     }
   }
 
@@ -344,11 +397,13 @@ export function getMagnitudeDistributionStats(
  *
  * @param earthquakes - Array of earthquake features from USGS API
  * @param grouping - How to group time periods (day, week, month, or year)
+ * @param dateRange - Optional date range to fill in missing periods with zeros
  * @returns Aggregated data points matching DailyEarthquakeAggregate format
  */
 export function aggregateByTimePeriod(
   earthquakes: EarthquakeFeature[],
-  grouping: TimeGrouping
+  grouping: TimeGrouping,
+  dateRange?: { startDate: Date; endDate: Date }
 ): DailyEarthquakeAggregate[] {
   // Optimized stats tracking - no intermediate arrays
   interface PeriodStats {
@@ -387,6 +442,27 @@ export function aggregateByTimePeriod(
     }
   }
 
+  // Fill in ALL missing periods based on date range and grouping
+  // This ensures charts show 0 values for periods with no earthquakes
+  if (dateRange) {
+    const allPeriodKeys = generateAllPeriodKeys(
+      dateRange.startDate,
+      dateRange.endDate,
+      grouping
+    );
+    for (const periodKey of allPeriodKeys) {
+      if (!aggregations.has(periodKey)) {
+        aggregations.set(periodKey, {
+          count: 0,
+          sumMag: 0,
+          maxMag: 0,
+          minMag: 0,
+          totalEnergy: 0,
+        });
+      }
+    }
+  }
+
   // Convert to DailyEarthquakeAggregate format
   // Sort keys first, then build result in order
   const sortedKeys = Array.from(aggregations.keys()).sort();
@@ -399,7 +475,7 @@ export function aggregateByTimePeriod(
     return {
       date: dateLabel,
       count: stats.count,
-      avgMagnitude: stats.sumMag / stats.count,
+      avgMagnitude: stats.count > 0 ? stats.sumMag / stats.count : 0,
       maxMagnitude: stats.maxMag,
       minMagnitude: stats.minMag,
       totalEnergy: stats.totalEnergy,
@@ -472,20 +548,15 @@ export function aggregateEnergyByTimePeriod(
     }
   }
 
-  // If dateRange provided and grouping is 'day', fill in missing days
-  if (dateRange && grouping === 'day') {
-    const { startDate, endDate } = dateRange;
-    const current = new Date(startDate);
-    current.setHours(0, 0, 0, 0);
-    const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999);
-
-    while (current <= end) {
-      // Use local date for the key
-      const year = current.getFullYear();
-      const month = String(current.getMonth() + 1).padStart(2, '0');
-      const day = String(current.getDate()).padStart(2, '0');
-      const periodKey = `${year}-${month}-${day}`;
+  // Fill in ALL missing periods based on date range and grouping
+  // This ensures charts show 0 values for periods with no earthquakes
+  if (dateRange) {
+    const allPeriodKeys = generateAllPeriodKeys(
+      dateRange.startDate,
+      dateRange.endDate,
+      grouping
+    );
+    for (const periodKey of allPeriodKeys) {
       if (!aggregations.has(periodKey)) {
         aggregations.set(periodKey, {
           count: 0,
@@ -493,7 +564,6 @@ export function aggregateEnergyByTimePeriod(
           totalEnergy: 0,
         });
       }
-      current.setDate(current.getDate() + 1);
     }
   }
 

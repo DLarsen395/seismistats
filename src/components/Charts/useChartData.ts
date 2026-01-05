@@ -248,25 +248,28 @@ export function useChartData(options: UseChartDataOptions): ChartData {
   }, [fetchFromApi]);
 
   // Compute local data for V1 mode
+  // Always pass dateRange to ensure ALL periods are shown (including zero-earthquake periods)
+  const dateRange = { startDate, endDate };
+  
   const localDailyCounts = useMemo(() => {
     if (USE_API) return [];
     if (timeGrouping === 'day') {
       return fillMissingDays(dailyAggregates, startDate, endDate);
     }
-    return aggregateByTimePeriod(filteredEarthquakes, timeGrouping);
+    return aggregateByTimePeriod(filteredEarthquakes, timeGrouping, dateRange);
   }, [dailyAggregates, filteredEarthquakes, timeGrouping, startDate, endDate]);
 
   const localMagDist = useMemo(() => {
     if (USE_API) return [];
-    return aggregateByTimePeriodAndMagnitude(filteredEarthquakes, timeGrouping);
-  }, [filteredEarthquakes, timeGrouping]);
+    return aggregateByTimePeriodAndMagnitude(filteredEarthquakes, timeGrouping, dateRange);
+  }, [filteredEarthquakes, timeGrouping, startDate, endDate]);
 
   const localEnergy = useMemo(() => {
     if (USE_API) return [];
     // Filter to M2.5+ for energy chart (smaller quakes add noise)
     const energyFiltered = filteredEarthquakes.filter(eq => (eq.properties.mag ?? 0) >= 2.5);
-    return aggregateEnergyByTimePeriod(energyFiltered, timeGrouping);
-  }, [filteredEarthquakes, timeGrouping]);
+    return aggregateEnergyByTimePeriod(energyFiltered, timeGrouping, dateRange);
+  }, [filteredEarthquakes, timeGrouping, startDate, endDate]);
 
   // Return appropriate data based on mode
   if (USE_API) {

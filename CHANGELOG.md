@@ -32,6 +32,14 @@ New Admin page with full control over database seeding for users deploying Seism
   - `startSeeding(options)` - Start seeding with custom options
   - `cancelSeeding()` - Cancel in-progress seeding
 
+### Fixed
+- **Charts showing ALL time periods** including those with zero earthquakes:
+  - Added `generateAllPeriodKeys()` helper function that generates all period keys (day/week/month/year) in a date range
+  - Updated `aggregateByTimePeriodAndMagnitude()` to fill all periods (was day-only)
+  - Updated `aggregateByTimePeriod()` to accept optional `dateRange` parameter and fill all periods
+  - Updated `aggregateEnergyByTimePeriod()` to fill all periods (was day-only)
+  - M7+ earthquakes over 5 years by week now correctly shows ~260 weeks, not just weeks with data
+
 ### Design Philosophy
 - Database ships empty (repository stays small)
 - Users control when/how much data to seed
