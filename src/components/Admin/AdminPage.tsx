@@ -11,7 +11,7 @@ export function AdminPage() {
   const isApiMode = useIsApiMode();
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white">
+    <div className="absolute inset-0 overflow-y-auto bg-slate-900 text-white">
       {/* Header */}
       <header className="bg-slate-800/50 backdrop-blur-sm border-b border-slate-700 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-4">
