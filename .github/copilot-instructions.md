@@ -176,11 +176,39 @@ git push origin v2.0.0
 
 ## Environment Safety
 
-### Local Development
-- Use Docker Desktop for local container testing
-- Frontend: `npm run dev` (Vite dev server)
-- API: `npm run dev` in `/api` directory
-- Database: Local Docker container or Docker Desktop
+### Local Development with Docker Compose
+**Always use `docker-compose.dev.yml` for local development:**
+
+```bash
+# Start all services (DB, API, Frontend with hot-reload)
+docker compose -f docker-compose.dev.yml up -d
+
+# Check status
+docker ps
+
+# View logs
+docker compose -f docker-compose.dev.yml logs -f
+
+# Stop all services
+docker compose -f docker-compose.dev.yml down
+
+# Stop and remove volumes (clean slate)
+docker compose -f docker-compose.dev.yml down -v
+```
+
+**Development Ports:**
+- **Frontend**: http://localhost:5173 (Vite with hot-reload)
+- **API**: http://localhost:3000 (Fastify with hot-reload)
+- **Database**: localhost:5432 (PostgreSQL + PostGIS)
+
+**Compose Files:**
+- `docker-compose.dev.yml` - Local development with hot-reload (USE THIS)
+- `docker-compose.seismistats.yml` - Production Docker Swarm deployment
+
+### Alternative: Running Without Docker
+- Frontend: `npm run dev` (Vite dev server on :5173)
+- API: `cd api && npm run dev` (Fastify on :3000)
+- Database: Requires separate PostgreSQL + PostGIS setup
 
 ### Docker Image Building
 - Build locally with `docker build`
