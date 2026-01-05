@@ -6,9 +6,10 @@
  * - Speed/bandwidth presets
  * - Progress tracking
  * - Coverage visualization
+ * - Error logging
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   fetchDatabaseCoverage,
   fetchSeedingProgress,
@@ -142,6 +143,17 @@ const DATE_PRESETS: DateRangePreset[] = [
 ];
 
 // =============================================================================
+// Error Log Entry
+// =============================================================================
+
+interface ErrorLogEntry {
+  id: number;
+  timestamp: Date;
+  message: string;
+  details?: string;
+}
+
+// =============================================================================
 // Component
 // =============================================================================
 
@@ -150,7 +162,9 @@ export function DatabaseSeedingPanel() {
   const [coverage, setCoverage] = useState<DatabaseCoverage | null>(null);
   const [progress, setProgress] = useState<SeedingProgress | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [errorLog, setErrorLog] = useState<ErrorLogEntry[]>([]);
+  const [showErrorLog, setShowErrorLog] = useState(false);
+  const errorIdCounter = useRef(0);
 
   // Form state
   const [startDate, setStartDate] = useState('');
@@ -158,6 +172,24 @@ export function DatabaseSeedingPanel() {
   const [minMagnitude, setMinMagnitude] = useState(2.5);
   const [selectedSpeed, setSelectedSpeed] = useState<SpeedPreset>(SPEED_PRESETS[1]); // Medium
   const [isStarting, setIsStarting] = useState(false);
+
+  // Add error to log
+  const addError = useCallback((message: string, details?: string) => {
+    const entry: ErrorLogEntry = {
+      id: ++errorIdCounter.current,
+      timestamp: new Date(),
+      message,
+      details,
+    };
+    setErrorLog((prev) => [entry, ...prev].slice(0, 50)); // Keep last 50 errors
+    setShowErrorLog(true);
+  }, []);
+
+  // Clear error log
+  const clearErrorLog = () => {
+    setErrorLog([]);
+    setShowErrorLog(false);
+  };
 
   // Fetch coverage and progress
   const fetchData = useCallback(async () => {
@@ -172,28 +204,26 @@ export function DatabaseSeedingPanel() {
       }
       if (progressRes.success && progressRes.data) {
         setProgress(progressRes.data);
+        // Check for seeding errors from the server
+        if (progressRes.data.error) {
+          addError('Seeding error from server', progressRes.data.error);
+        }
       }
-      setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch data');
+      // Don't spam errors for network issues during polling
+      console.error('Failed to fetch seeding data:', err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [addError]);
 
-  // Initial fetch and polling during seeding
+  // Continuous polling - always poll every 3 seconds
   useEffect(() => {
     fetchData();
 
-    // Poll every 2 seconds during seeding
-    const interval = setInterval(() => {
-      if (progress?.isSeeding) {
-        fetchData();
-      }
-    }, 2000);
-
+    const interval = setInterval(fetchData, 3000);
     return () => clearInterval(interval);
-  }, [fetchData, progress?.isSeeding]);
+  }, [fetchData]);
 
   // Handle date preset selection
   const handleDatePreset = (preset: DateRangePreset) => {
@@ -205,12 +235,11 @@ export function DatabaseSeedingPanel() {
   // Start seeding
   const handleStartSeeding = async () => {
     if (!startDate || !endDate) {
-      setError('Please select a date range');
+      addError('Validation Error', 'Please select a date range before starting');
       return;
     }
 
     setIsStarting(true);
-    setError(null);
 
     try {
       const options: SeedingOptions = {
@@ -221,10 +250,15 @@ export function DatabaseSeedingPanel() {
         delayMs: selectedSpeed.delayMs,
       };
 
-      await startSeeding(options);
-      await fetchData(); // Refresh to get progress
+      console.log('Starting seeding with options:', options);
+      const result = await startSeeding(options);
+      console.log('Seeding start result:', result);
+
+      // Force immediate refresh to get progress
+      await fetchData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to start seeding');
+      const message = err instanceof Error ? err.message : 'Failed to start seeding';
+      addError('Failed to Start Seeding', message);
     } finally {
       setIsStarting(false);
     }
@@ -236,7 +270,8 @@ export function DatabaseSeedingPanel() {
       await cancelSeeding();
       await fetchData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to cancel seeding');
+      const message = err instanceof Error ? err.message : 'Failed to cancel seeding';
+      addError('Failed to Cancel', message);
     }
   };
 
@@ -262,8 +297,22 @@ export function DatabaseSeedingPanel() {
     if (hours > 0) {
       return `~${hours}h ${minutes % 60}m remaining`;
     }
-    return `~${minutes}m remaining`;
+    if (minutes > 0) {
+      return `~${minutes}m remaining`;
+    }
+    return '< 1 minute remaining';
   };
+
+  // Determine current status
+  const getStatus = () => {
+    if (loading) return { text: 'Loading...', color: 'text-slate-400', bg: 'bg-slate-500' };
+    if (isStarting) return { text: 'Starting...', color: 'text-yellow-400', bg: 'bg-yellow-500' };
+    if (progress?.isSeeding) return { text: 'Seeding Active', color: 'text-green-400', bg: 'bg-green-500' };
+    if (progress?.cancelled) return { text: 'Cancelled', color: 'text-orange-400', bg: 'bg-orange-500' };
+    return { text: 'Idle', color: 'text-slate-400', bg: 'bg-slate-500' };
+  };
+
+  const status = getStatus();
 
   if (loading) {
     return (
@@ -279,21 +328,68 @@ export function DatabaseSeedingPanel() {
 
   return (
     <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-6 border border-slate-700 space-y-6">
-      {/* Header */}
-      <div>
-        <h2 className="text-xl font-semibold text-white flex items-center gap-2">
-          <span className="text-2xl">🗄️</span>
-          Database Seeding
-        </h2>
-        <p className="text-slate-400 text-sm mt-1">
-          Populate the database with historical earthquake data from USGS
-        </p>
+      {/* Header with Status */}
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+            <span className="text-2xl">🗄️</span>
+            Database Seeding
+          </h2>
+          <p className="text-slate-400 text-sm mt-1">
+            Populate the database with historical earthquake data from USGS
+          </p>
+        </div>
+
+        {/* Status Indicator */}
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-900/50 rounded-lg border border-slate-700">
+          <span className={`w-2 h-2 rounded-full ${status.bg} ${progress?.isSeeding ? 'animate-pulse' : ''}`}></span>
+          <span className={`text-sm font-medium ${status.color}`}>{status.text}</span>
+        </div>
       </div>
 
-      {/* Error Message */}
-      {error && (
-        <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 text-red-300 text-sm">
-          {error}
+      {/* Error Log Panel */}
+      {errorLog.length > 0 && (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-lg overflow-hidden">
+          <button
+            onClick={() => setShowErrorLog(!showErrorLog)}
+            className="w-full flex items-center justify-between p-3 text-left hover:bg-red-500/5 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-red-400">⚠️</span>
+              <span className="text-red-300 text-sm font-medium">
+                {errorLog.length} Error{errorLog.length !== 1 ? 's' : ''} Logged
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={(e) => { e.stopPropagation(); clearErrorLog(); }}
+                className="text-xs px-2 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded"
+              >
+                Clear
+              </button>
+              <span className="text-slate-500 text-sm">{showErrorLog ? '▼' : '▶'}</span>
+            </div>
+          </button>
+
+          {showErrorLog && (
+            <div className="border-t border-red-500/20 max-h-48 overflow-y-auto">
+              {errorLog.map((entry) => (
+                <div key={entry.id} className="p-3 border-b border-red-500/10 last:border-b-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="text-red-300 text-sm font-medium">{entry.message}</span>
+                    <span className="text-slate-500 text-xs whitespace-nowrap">
+                      {entry.timestamp.toLocaleTimeString()}
+                    </span>
+                  </div>
+                  {entry.details && (
+                    <pre className="text-red-400/70 text-xs mt-1 whitespace-pre-wrap font-mono bg-red-500/5 p-2 rounded">
+                      {entry.details}
+                    </pre>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -334,48 +430,57 @@ export function DatabaseSeedingPanel() {
         </div>
       )}
 
-      {/* Seeding Progress (when active) */}
-      {progress?.isSeeding && (
+      {/* Seeding Progress (when active or starting) */}
+      {(progress?.isSeeding || isStarting) && (
         <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium text-blue-300">Seeding in Progress...</h3>
-            <button
-              onClick={handleCancelSeeding}
-              className="text-xs px-2 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded"
-            >
-              Cancel
-            </button>
+            <h3 className="text-sm font-medium text-blue-300 flex items-center gap-2">
+              <span className="animate-spin">⏳</span>
+              {isStarting ? 'Starting seeding...' : 'Seeding in Progress'}
+            </h3>
+            {progress?.isSeeding && (
+              <button
+                onClick={handleCancelSeeding}
+                className="text-xs px-2 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded"
+              >
+                Cancel
+              </button>
+            )}
           </div>
 
-          {/* Progress bar */}
-          <div className="w-full bg-slate-700 rounded-full h-2 mb-2">
-            <div
-              className="bg-blue-500 h-2 rounded-full transition-all duration-500"
-              style={{ width: `${progressPercent}%` }}
-            />
-          </div>
+          {progress?.isSeeding && (
+            <>
+              {/* Progress bar */}
+              <div className="w-full bg-slate-700 rounded-full h-2 mb-2">
+                <div
+                  className="bg-blue-500 h-2 rounded-full transition-all duration-500"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
 
-          <div className="flex justify-between text-xs text-slate-400">
-            <span>
-              Chunk {progress.completedChunks} of {progress.totalChunks} ({progressPercent}%)
-            </span>
-            <span>{progress.totalEventsFetched.toLocaleString()} events fetched</span>
-          </div>
+              <div className="flex justify-between text-xs text-slate-400">
+                <span>
+                  Chunk {progress.completedChunks} of {progress.totalChunks} ({progressPercent}%)
+                </span>
+                <span>{progress.totalEventsFetched.toLocaleString()} events fetched</span>
+              </div>
 
-          {progress.currentChunk && (
-            <div className="text-xs text-slate-500 mt-1">
-              Current: {progress.currentChunk.startDate} → {progress.currentChunk.endDate}
-            </div>
-          )}
+              {progress.currentChunk && (
+                <div className="text-xs text-slate-500 mt-1">
+                  Current: {progress.currentChunk.startDate} → {progress.currentChunk.endDate}
+                </div>
+              )}
 
-          {estimateTimeRemaining() && (
-            <div className="text-xs text-blue-400 mt-1">{estimateTimeRemaining()}</div>
+              {estimateTimeRemaining() && (
+                <div className="text-xs text-blue-400 mt-1">{estimateTimeRemaining()}</div>
+              )}
+            </>
           )}
         </div>
       )}
 
       {/* Seeding Form (when not active) */}
-      {!progress?.isSeeding && (
+      {!progress?.isSeeding && !isStarting && (
         <div className="space-y-4">
           {/* Date Range */}
           <div>
@@ -470,17 +575,8 @@ export function DatabaseSeedingPanel() {
             disabled={isStarting || !startDate || !endDate}
             className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 disabled:text-slate-500 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
           >
-            {isStarting ? (
-              <>
-                <span className="animate-spin">⏳</span>
-                Starting...
-              </>
-            ) : (
-              <>
-                <span>🚀</span>
-                Start Seeding
-              </>
-            )}
+            <span>🚀</span>
+            Start Seeding
           </button>
 
           <p className="text-xs text-slate-500 text-center">
