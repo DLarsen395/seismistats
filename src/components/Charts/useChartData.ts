@@ -250,7 +250,7 @@ export function useChartData(options: UseChartDataOptions): ChartData {
   // Compute local data for V1 mode
   // Always pass dateRange to ensure ALL periods are shown (including zero-earthquake periods)
   const dateRange = { startDate, endDate };
-  
+
   const localDailyCounts = useMemo(() => {
     if (USE_API) return [];
     if (timeGrouping === 'day') {

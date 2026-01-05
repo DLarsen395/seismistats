@@ -224,7 +224,7 @@ export function getDateFromPeriodKey(key: string, grouping: TimeGrouping): Date 
 /**
  * Generate all period keys for a date range and grouping type
  * Ensures charts show ALL time periods, including those with 0 events
- * 
+ *
  * @param startDate - Start of date range
  * @param endDate - End of date range
  * @param grouping - Time grouping (day, week, month, year)
