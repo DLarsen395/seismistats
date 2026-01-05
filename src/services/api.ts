@@ -420,3 +420,79 @@ export async function cancelSeeding(): Promise<ApiResponse<SeedingProgress>> {
 
   return response.json();
 }
+
+/**
+ * Verification result from comparing DB vs USGS
+ */
+export interface VerificationResult {
+  startDate: string;
+  endDate: string;
+  minMagnitude: number;
+  dbCount: number;
+  usgsCount: number;
+  difference: number;
+  percentCoverage: number;
+  status: 'complete' | 'missing' | 'extra' | 'error';
+  error?: string;
+}
+
+/**
+ * Coverage gaps result
+ */
+export interface CoverageGapsResult {
+  gaps: Array<{
+    startDate: string;
+    endDate: string;
+    missing: number;
+  }>;
+  totalMissing: number;
+}
+
+/**
+ * Verify database coverage against USGS
+ */
+export async function verifyCoverage(options: {
+  startDate: string;
+  endDate: string;
+  minMagnitude?: number;
+}): Promise<ApiResponse<VerificationResult>> {
+  const url = new URL('/api/sync/verify', API_BASE_URL);
+
+  const response = await fetch(url.toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(options),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || `API error: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Find gaps in coverage
+ */
+export async function findCoverageGaps(options: {
+  startDate: string;
+  endDate: string;
+  minMagnitude?: number;
+  chunkDays?: number;
+}): Promise<ApiResponse<CoverageGapsResult>> {
+  const url = new URL('/api/sync/find-gaps', API_BASE_URL);
+
+  const response = await fetch(url.toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(options),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || `API error: ${response.status}`);
+  }
+
+  return response.json();
+}

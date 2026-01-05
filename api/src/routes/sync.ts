@@ -13,6 +13,8 @@ import {
   isSeedingInProgress,
   getDatabaseCoverage,
   cancelSeeding,
+  verifyCoverage,
+  findCoverageGaps,
 } from '../services/seeding.js';
 
 export async function syncRoutes(app: FastifyInstance): Promise<void> {
@@ -243,6 +245,71 @@ export async function syncRoutes(app: FastifyInstance): Promise<void> {
       success: true,
       message: 'Seeding cancellation requested. Current chunk will complete.',
       data: getSeedingProgress(),
+    };
+  });
+
+  /**
+   * POST /api/sync/verify
+   * Verify database coverage against USGS count API
+   */
+  app.post('/verify', {
+    schema: {
+      body: Type.Object({
+        startDate: Type.String({ format: 'date' }),
+        endDate: Type.String({ format: 'date' }),
+        minMagnitude: Type.Optional(Type.Number({ minimum: -2, maximum: 10, default: 2.5 })),
+      }),
+    },
+  }, async (request) => {
+    const { startDate, endDate, minMagnitude = 2.5 } = request.body as {
+      startDate: string;
+      endDate: string;
+      minMagnitude?: number;
+    };
+
+    const result = await verifyCoverage({
+      startDate: new Date(startDate),
+      endDate: new Date(endDate),
+      minMagnitude,
+    });
+
+    return {
+      success: true,
+      data: result,
+    };
+  });
+
+  /**
+   * POST /api/sync/find-gaps
+   * Find gaps in database coverage
+   */
+  app.post('/find-gaps', {
+    schema: {
+      body: Type.Object({
+        startDate: Type.String({ format: 'date' }),
+        endDate: Type.String({ format: 'date' }),
+        minMagnitude: Type.Optional(Type.Number({ minimum: -2, maximum: 10, default: 2.5 })),
+        chunkDays: Type.Optional(Type.Number({ minimum: 1, maximum: 365, default: 30 })),
+      }),
+    },
+  }, async (request) => {
+    const { startDate, endDate, minMagnitude = 2.5, chunkDays = 30 } = request.body as {
+      startDate: string;
+      endDate: string;
+      minMagnitude?: number;
+      chunkDays?: number;
+    };
+
+    const result = await findCoverageGaps({
+      startDate: new Date(startDate),
+      endDate: new Date(endDate),
+      minMagnitude,
+      chunkDays,
+    });
+
+    return {
+      success: true,
+      data: result,
     };
   });
 }

@@ -2,10 +2,12 @@
  * Database Seeding Panel
  *
  * Admin UI for controlling database seeding with:
- * - Date range selection
+ * - Date range selection (recent, years, decades, historical)
  * - Speed/bandwidth presets
  * - Progress tracking
  * - Coverage visualization
+ * - Verification against USGS
+ * - Gap detection and filling
  * - Error logging
  */
 
@@ -15,9 +17,11 @@ import {
   fetchSeedingProgress,
   startSeeding,
   cancelSeeding,
+  verifyCoverage,
   type DatabaseCoverage,
   type SeedingProgress,
   type SeedingOptions,
+  type VerificationResult,
 } from '../../services/api';
 
 // =============================================================================
@@ -59,17 +63,20 @@ const SPEED_PRESETS: SpeedPreset[] = [
 ];
 
 // =============================================================================
-// Date Range Presets
+// Date Range Presets - Organized by category
 // =============================================================================
 
 interface DateRangePreset {
   name: string;
+  category: 'recent' | 'years' | 'decades' | 'historical';
   getRange: () => { startDate: string; endDate: string };
 }
 
 const DATE_PRESETS: DateRangePreset[] = [
+  // Recent periods
   {
     name: 'Last Month',
+    category: 'recent',
     getRange: () => {
       const end = new Date();
       const start = new Date();
@@ -81,7 +88,8 @@ const DATE_PRESETS: DateRangePreset[] = [
     },
   },
   {
-    name: 'Last 3 Months',
+    name: '3 Months',
+    category: 'recent',
     getRange: () => {
       const end = new Date();
       const start = new Date();
@@ -93,7 +101,8 @@ const DATE_PRESETS: DateRangePreset[] = [
     },
   },
   {
-    name: 'Last 6 Months',
+    name: '6 Months',
+    category: 'recent',
     getRange: () => {
       const end = new Date();
       const start = new Date();
@@ -104,8 +113,10 @@ const DATE_PRESETS: DateRangePreset[] = [
       };
     },
   },
+  // Year-based
   {
-    name: 'Last Year',
+    name: '1 Year',
+    category: 'years',
     getRange: () => {
       const end = new Date();
       const start = new Date();
@@ -117,7 +128,8 @@ const DATE_PRESETS: DateRangePreset[] = [
     },
   },
   {
-    name: 'Last 2 Years',
+    name: '2 Years',
+    category: 'years',
     getRange: () => {
       const end = new Date();
       const start = new Date();
@@ -129,7 +141,8 @@ const DATE_PRESETS: DateRangePreset[] = [
     },
   },
   {
-    name: 'Last 5 Years',
+    name: '5 Years',
+    category: 'years',
     getRange: () => {
       const end = new Date();
       const start = new Date();
@@ -139,6 +152,93 @@ const DATE_PRESETS: DateRangePreset[] = [
         endDate: end.toISOString().split('T')[0],
       };
     },
+  },
+  {
+    name: '10 Years',
+    category: 'years',
+    getRange: () => {
+      const end = new Date();
+      const start = new Date();
+      start.setFullYear(start.getFullYear() - 10);
+      return {
+        startDate: start.toISOString().split('T')[0],
+        endDate: end.toISOString().split('T')[0],
+      };
+    },
+  },
+  // Decades (calendar decades)
+  {
+    name: '2020s',
+    category: 'decades',
+    getRange: () => ({
+      startDate: '2020-01-01',
+      endDate: new Date().toISOString().split('T')[0], // Up to now
+    }),
+  },
+  {
+    name: '2010s',
+    category: 'decades',
+    getRange: () => ({
+      startDate: '2010-01-01',
+      endDate: '2019-12-31',
+    }),
+  },
+  {
+    name: '2000s',
+    category: 'decades',
+    getRange: () => ({
+      startDate: '2000-01-01',
+      endDate: '2009-12-31',
+    }),
+  },
+  {
+    name: '1990s',
+    category: 'decades',
+    getRange: () => ({
+      startDate: '1990-01-01',
+      endDate: '1999-12-31',
+    }),
+  },
+  {
+    name: '1980s',
+    category: 'decades',
+    getRange: () => ({
+      startDate: '1980-01-01',
+      endDate: '1989-12-31',
+    }),
+  },
+  {
+    name: '1970s',
+    category: 'decades',
+    getRange: () => ({
+      startDate: '1970-01-01',
+      endDate: '1979-12-31',
+    }),
+  },
+  // Historical (older data - less events, larger chunks OK)
+  {
+    name: '1950-1969',
+    category: 'historical',
+    getRange: () => ({
+      startDate: '1950-01-01',
+      endDate: '1969-12-31',
+    }),
+  },
+  {
+    name: '1900-1949',
+    category: 'historical',
+    getRange: () => ({
+      startDate: '1900-01-01',
+      endDate: '1949-12-31',
+    }),
+  },
+  {
+    name: 'Pre-1900',
+    category: 'historical',
+    getRange: () => ({
+      startDate: '1500-01-01',
+      endDate: '1899-12-31',
+    }),
   },
 ];
 
@@ -165,6 +265,16 @@ export function DatabaseSeedingPanel() {
   const [errorLog, setErrorLog] = useState<ErrorLogEntry[]>([]);
   const [showErrorLog, setShowErrorLog] = useState(false);
   const errorIdCounter = useRef(0);
+
+  // Verification state
+  const [verification, setVerification] = useState<VerificationResult | null>(null);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [showDateCategories, setShowDateCategories] = useState<Record<string, boolean>>({
+    recent: true,
+    years: false,
+    decades: false,
+    historical: false,
+  });
 
   // Form state
   const [startDate, setStartDate] = useState('');
@@ -230,6 +340,43 @@ export function DatabaseSeedingPanel() {
     const range = preset.getRange();
     setStartDate(range.startDate);
     setEndDate(range.endDate);
+    setVerification(null); // Clear previous verification
+  };
+
+  // Toggle date category visibility
+  const toggleCategory = (category: string) => {
+    setShowDateCategories((prev) => ({
+      ...prev,
+      [category]: !prev[category],
+    }));
+  };
+
+  // Verify coverage against USGS
+  const handleVerify = async () => {
+    if (!startDate || !endDate) {
+      addError('Validation Error', 'Please select a date range to verify');
+      return;
+    }
+
+    setIsVerifying(true);
+    setVerification(null);
+
+    try {
+      const result = await verifyCoverage({
+        startDate,
+        endDate,
+        minMagnitude,
+      });
+
+      if (result.data) {
+        setVerification(result.data);
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to verify coverage';
+      addError('Verification Failed', message);
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
   // Start seeding
@@ -362,6 +509,21 @@ export function DatabaseSeedingPanel() {
             </div>
             <div className="flex items-center gap-2">
               <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const allErrors = errorLog
+                    .map((entry) =>
+                      `[${entry.timestamp.toLocaleTimeString()}] ${entry.message}${entry.details ? `\n${entry.details}` : ''}`
+                    )
+                    .join('\n\n---\n\n');
+                  navigator.clipboard.writeText(allErrors);
+                }}
+                className="text-xs px-2 py-1 bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 rounded"
+                title="Copy all errors"
+              >
+                📋 Copy All
+              </button>
+              <button
                 onClick={(e) => { e.stopPropagation(); clearErrorLog(); }}
                 className="text-xs px-2 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded"
               >
@@ -377,9 +539,23 @@ export function DatabaseSeedingPanel() {
                 <div key={entry.id} className="p-3 border-b border-red-500/10 last:border-b-0">
                   <div className="flex items-start justify-between gap-2">
                     <span className="text-red-300 text-sm font-medium">{entry.message}</span>
-                    <span className="text-slate-500 text-xs whitespace-nowrap">
-                      {entry.timestamp.toLocaleTimeString()}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          const text = entry.details
+                            ? `${entry.message}\n\n${entry.details}`
+                            : entry.message;
+                          navigator.clipboard.writeText(text);
+                        }}
+                        className="text-slate-500 hover:text-slate-300 text-xs px-1.5 py-0.5 rounded hover:bg-slate-700/50"
+                        title="Copy error details"
+                      >
+                        📋
+                      </button>
+                      <span className="text-slate-500 text-xs whitespace-nowrap">
+                        {entry.timestamp.toLocaleTimeString()}
+                      </span>
+                    </div>
                   </div>
                   {entry.details && (
                     <pre className="text-red-400/70 text-xs mt-1 whitespace-pre-wrap font-mono bg-red-500/5 p-2 rounded">
@@ -486,9 +662,31 @@ export function DatabaseSeedingPanel() {
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-2">Date Range</label>
 
-            {/* Quick presets */}
+            {/* Category tabs */}
+            <div className="flex gap-1 mb-3 border-b border-slate-700 pb-2">
+              {[
+                { key: 'recent', label: 'Recent' },
+                { key: 'years', label: 'Years' },
+                { key: 'decades', label: 'Decades' },
+                { key: 'historical', label: 'Historical' },
+              ].map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => toggleCategory(key)}
+                  className={`text-xs px-3 py-1 rounded-t transition-colors ${
+                    showDateCategories[key]
+                      ? 'bg-slate-700 text-white'
+                      : 'bg-slate-800 text-slate-500 hover:text-slate-300'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {/* Preset buttons by category */}
             <div className="flex flex-wrap gap-2 mb-3">
-              {DATE_PRESETS.map((preset) => (
+              {DATE_PRESETS.filter((preset) => showDateCategories[preset.category]).map((preset) => (
                 <button
                   key={preset.name}
                   onClick={() => handleDatePreset(preset)}
@@ -497,6 +695,9 @@ export function DatabaseSeedingPanel() {
                   {preset.name}
                 </button>
               ))}
+              {Object.values(showDateCategories).every((v) => !v) && (
+                <span className="text-xs text-slate-500 italic">Select a category above</span>
+              )}
             </div>
 
             {/* Custom date inputs */}
@@ -569,19 +770,91 @@ export function DatabaseSeedingPanel() {
             </div>
           </div>
 
-          {/* Start Button */}
-          <button
-            onClick={handleStartSeeding}
-            disabled={isStarting || !startDate || !endDate}
-            className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 disabled:text-slate-500 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
-          >
-            <span>🚀</span>
-            Start Seeding
-          </button>
+          {/* Verification Panel */}
+          {verification && (
+            <div
+              className={`rounded-lg p-4 border ${
+                verification.status === 'complete'
+                  ? 'bg-green-500/10 border-green-500/30'
+                  : verification.status === 'missing'
+                    ? 'bg-yellow-500/10 border-yellow-500/30'
+                    : verification.status === 'extra'
+                      ? 'bg-blue-500/10 border-blue-500/30'
+                      : 'bg-red-500/10 border-red-500/30'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-sm font-medium flex items-center gap-2">
+                  {verification.status === 'complete' && <span className="text-green-400">✅ Coverage Complete</span>}
+                  {verification.status === 'missing' && <span className="text-yellow-400">⚠️ Missing Events</span>}
+                  {verification.status === 'extra' && <span className="text-blue-400">ℹ️ Extra Events</span>}
+                  {verification.status === 'error' && <span className="text-red-400">❌ Verification Error</span>}
+                </h4>
+                <span className="text-xs text-slate-400">{verification.percentCoverage}% coverage</span>
+              </div>
+              <div className="grid grid-cols-3 gap-4 text-xs">
+                <div>
+                  <span className="text-slate-500">Database:</span>
+                  <span className="text-white ml-2 font-mono">{verification.dbCount.toLocaleString()}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500">USGS:</span>
+                  <span className="text-white ml-2 font-mono">{verification.usgsCount.toLocaleString()}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500">Difference:</span>
+                  <span
+                    className={`ml-2 font-mono ${
+                      verification.difference > 0
+                        ? 'text-blue-400'
+                        : verification.difference < 0
+                          ? 'text-yellow-400'
+                          : 'text-green-400'
+                    }`}
+                  >
+                    {verification.difference > 0 ? '+' : ''}
+                    {verification.difference.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+              {verification.error && (
+                <p className="text-xs text-red-400 mt-2">{verification.error}</p>
+              )}
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex gap-3">
+            <button
+              onClick={handleVerify}
+              disabled={isVerifying || !startDate || !endDate}
+              className="flex-1 py-3 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-500 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+            >
+              {isVerifying ? (
+                <>
+                  <span className="animate-spin">⏳</span>
+                  Verifying...
+                </>
+              ) : (
+                <>
+                  <span>🔍</span>
+                  Verify
+                </>
+              )}
+            </button>
+            <button
+              onClick={handleStartSeeding}
+              disabled={isStarting || !startDate || !endDate}
+              className="flex-[2] py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 disabled:text-slate-500 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+            >
+              <span>🚀</span>
+              {verification?.status === 'missing' ? 'Fill Missing Data' : 'Start Seeding'}
+            </button>
+          </div>
 
           <p className="text-xs text-slate-500 text-center">
+            Use <strong>Verify</strong> to compare your database against USGS before seeding.
             Seeding fetches data in chunks with delays to avoid overloading USGS servers.
-            You can cancel at any time - progress is saved.
           </p>
         </div>
       )}
