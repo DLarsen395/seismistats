@@ -25,6 +25,10 @@ import {
   aggregateByTimePeriod,
   aggregateByTimePeriodAndMagnitude,
   aggregateEnergyByTimePeriod,
+  generateAllPeriodKeys,
+  getPeriodKey,
+  getDateFromPeriodKey,
+  formatPeriodLabel,
   MAGNITUDE_RANGES,
 } from './magnitudeDistributionUtils';
 import type { DailyEarthquakeAggregate } from '../../services/usgs-earthquake-api';
@@ -57,6 +61,129 @@ function timeGroupingToAggregation(grouping: TimeGrouping): 'daily' | 'weekly' |
     case 'month': return 'monthly';
     case 'year': return 'yearly';
   }
+}
+
+/**
+ * Fill in missing periods for daily counts data from API
+ * Ensures ALL periods in the date range have entries, even if count is 0
+ */
+function fillMissingPeriodsForDailyCounts(
+  data: DailyEarthquakeAggregate[],
+  startDate: Date,
+  endDate: Date,
+  grouping: TimeGrouping
+): DailyEarthquakeAggregate[] {
+  // Build a map of existing data by period key
+  const existingByKey = new Map<string, DailyEarthquakeAggregate>();
+  for (const item of data) {
+    // Parse the date from the item and get its period key
+    const itemDate = new Date(item.date);
+    const key = getPeriodKey(itemDate, grouping);
+    existingByKey.set(key, item);
+  }
+
+  // Generate all period keys for the range
+  const allKeys = generateAllPeriodKeys(startDate, endDate, grouping);
+  
+  // Build result with all periods
+  return allKeys.map(key => {
+    const existing = existingByKey.get(key);
+    if (existing) {
+      return existing;
+    }
+    // Create empty entry for missing period
+    const periodDate = getDateFromPeriodKey(key, grouping);
+    return {
+      date: formatPeriodLabel(periodDate, grouping),
+      count: 0,
+      avgMagnitude: 0,
+      maxMagnitude: 0,
+      minMagnitude: 0,
+      totalEnergy: 0,
+    };
+  });
+}
+
+/**
+ * Fill in missing periods for magnitude distribution data from API
+ */
+function fillMissingPeriodsForMagDist(
+  data: MagnitudeTimeDataPoint[],
+  startDate: Date,
+  endDate: Date,
+  grouping: TimeGrouping
+): MagnitudeTimeDataPoint[] {
+  // Build a map of existing data by period key
+  const existingByKey = new Map<string, MagnitudeTimeDataPoint>();
+  for (const item of data) {
+    if (item.date) {
+      const key = getPeriodKey(item.date, grouping);
+      existingByKey.set(key, item);
+    }
+  }
+
+  // Generate all period keys for the range
+  const allKeys = generateAllPeriodKeys(startDate, endDate, grouping);
+  
+  // Build result with all periods
+  return allKeys.map(key => {
+    const existing = existingByKey.get(key);
+    if (existing) {
+      return existing;
+    }
+    // Create empty entry for missing period
+    const periodDate = getDateFromPeriodKey(key, grouping);
+    const emptyPoint: MagnitudeTimeDataPoint = {
+      period: formatPeriodLabel(periodDate, grouping),
+      date: periodDate,
+    };
+    // Initialize all magnitude ranges to 0
+    for (const range of MAGNITUDE_RANGES) {
+      emptyPoint[range.key] = 0;
+    }
+    return emptyPoint;
+  });
+}
+
+/**
+ * Fill in missing periods for energy release data from API
+ */
+function fillMissingPeriodsForEnergy(
+  data: EnergyDataPoint[],
+  startDate: Date,
+  endDate: Date,
+  grouping: TimeGrouping
+): EnergyDataPoint[] {
+  // Build a map of existing data by period key
+  const existingByKey = new Map<string, EnergyDataPoint>();
+  for (const item of data) {
+    // Parse date from period label or use date property if available
+    const itemDate = (item as { date?: Date }).date || new Date(item.period);
+    if (!isNaN(itemDate.getTime())) {
+      const key = getPeriodKey(itemDate, grouping);
+      existingByKey.set(key, item);
+    }
+  }
+
+  // Generate all period keys for the range
+  const allKeys = generateAllPeriodKeys(startDate, endDate, grouping);
+  
+  // Build result with all periods
+  return allKeys.map(key => {
+    const existing = existingByKey.get(key);
+    if (existing) {
+      return existing;
+    }
+    // Create empty entry for missing period
+    const periodDate = getDateFromPeriodKey(key, grouping);
+    return {
+      period: formatPeriodLabel(periodDate, grouping),
+      totalEnergy: 0,
+      avgEnergy: 0,
+      count: 0,
+      avgMagnitude: null,
+    };
+  });
 }
 
 /**
@@ -218,15 +345,24 @@ export function useChartData(options: UseChartDataOptions): ChartData {
       ]);
 
       if (dailyRes.success && dailyRes.data) {
-        setApiDailyCounts(apiDailyCountsToAggregates(dailyRes.data));
+        // Convert API data and fill in ALL missing periods
+        const converted = apiDailyCountsToAggregates(dailyRes.data);
+        const filled = fillMissingPeriodsForDailyCounts(converted, startDate, endDate, timeGrouping);
+        setApiDailyCounts(filled);
       }
 
       if (magRes.success && magRes.data) {
-        setApiMagDist(apiMagDistToChartData(magRes.data, timeGrouping));
+        // Convert API data and fill in ALL missing periods
+        const converted = apiMagDistToChartData(magRes.data, timeGrouping);
+        const filled = fillMissingPeriodsForMagDist(converted, startDate, endDate, timeGrouping);
+        setApiMagDist(filled);
       }
 
       if (energyRes.success && energyRes.data) {
-        setApiEnergy(apiEnergyToChartData(energyRes.data, timeGrouping));
+        // Convert API data and fill in ALL missing periods
+        const converted = apiEnergyToChartData(energyRes.data, timeGrouping);
+        const filled = fillMissingPeriodsForEnergy(converted, startDate, endDate, timeGrouping);
+        setApiEnergy(filled);
       }
 
       if (summaryRes.success && summaryRes.data) {
