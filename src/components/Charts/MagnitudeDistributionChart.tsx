@@ -15,7 +15,6 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
-  ReferenceDot,
 } from 'recharts';
 import type { EarthquakeFeature } from '../../services/usgs-earthquake-api';
 import {
@@ -386,35 +385,6 @@ export function MagnitudeDistributionChart({
     return totals;
   }, [chartData, activeRanges]);
 
-  // Find significant events (M5+) to show as markers on top of chart
-  const significantMarkers = useMemo(() => {
-    const markers: Array<{ period: string; magnitude: string; count: number; color: string; yPosition: number }> = [];
-    const significantRanges = activeRanges.filter(r => r.min >= 5);
-
-    for (const point of chartData) {
-      // Calculate cumulative height up to this range for positioning
-      let cumulativeHeight = 0;
-      for (const range of activeRanges) {
-        const count = (point[range.key] as number) || 0;
-        cumulativeHeight += count;
-      }
-
-      for (const range of significantRanges) {
-        const count = (point[range.key] as number) || 0;
-        if (count > 0) {
-          markers.push({
-            period: point.period as string,
-            magnitude: range.label,
-            count,
-            color: range.color,
-            yPosition: cumulativeHeight, // Position at top of stack
-          });
-        }
-      }
-    }
-    return markers;
-  }, [chartData, activeRanges]);
-
   // Only show "no data" if we have no chart data (no days in range)
   // When chartData exists (filled by dateRange), show the chart even with 0 earthquakes
   if (chartData.length === 0) {
@@ -565,18 +535,6 @@ export function MagnitudeDistributionChart({
               stroke={range.color}
               fill={range.color}
               fillOpacity={0.6}
-            />
-          ))}
-          {/* Add markers for significant events (M5+) so they're visible even when small */}
-          {significantMarkers.map((marker, idx) => (
-            <ReferenceDot
-              key={`${marker.period}-${marker.magnitude}-${idx}`}
-              x={marker.period}
-              y={marker.yPosition}
-              r={Math.min(8, 4 + marker.count)}
-              fill={marker.color}
-              stroke="#ffffff"
-              strokeWidth={2}
             />
           ))}
         </AreaChart>
