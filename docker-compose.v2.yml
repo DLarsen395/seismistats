@@ -1,0 +1,111 @@
+# SeismiStats V2 Production Stack
+# Public frontend + API with server-side database
+#
+# This stack is for public deployment (read-only, no admin access)
+# For admin/seeding operations, deploy docker-compose.v2.admin.yml separately
+#
+# Deploy via Docker Swarm:
+#   docker stack deploy -c docker-compose.v2.yml seismistats
+
+services:
+  # PostgreSQL with PostGIS and TimescaleDB
+  db:
+    image: timescale/timescaledb-ha:pg16
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+    environment:
+      - POSTGRES_USER=${DB_USER:-seismistats}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:?Database password required}
+      - POSTGRES_DB=${DB_NAME:-seismistats}
+    volumes:
+      - seismistats_pgdata:/var/lib/postgresql/data
+    networks:
+      - seismistats-internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-seismistats} -d ${DB_NAME:-seismistats}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # API Server (PUBLIC - read-only mode)
+  api:
+    image: ghcr.io/dlarsen395/seismistats-api:latest
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=postgresql://${DB_USER:-seismistats}:${DB_PASSWORD}@db:5432/${DB_NAME:-seismistats}
+      - CORS_ORIGIN=${CORS_ORIGIN:-*}
+      - ADMIN_MODE=false  # Public instance - no write operations
+      - USGS_SYNC_ENABLED=false  # Sync handled by admin container
+    depends_on:
+      - db
+    networks:
+      - seismistats-internal
+      - npm-proxy
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3000/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))\""]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 30s
+
+  # Frontend (PUBLIC - no admin UI)
+  frontend:
+    image: ghcr.io/dlarsen395/seismistats:v2
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+    environment:
+      - VITE_API_URL=${API_URL:-http://localhost:3000}
+      - VITE_USE_API=true
+      - VITE_PUBLIC_MODE=true  # Hide admin UI
+    networks:
+      - npm-proxy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+networks:
+  seismistats-internal:
+    driver: overlay
+  npm-proxy:
+    external: true
+
+volumes:
+  seismistats_pgdata:
+
+# DEPLOYMENT NOTES:
+#
+# Required environment variables:
+#   DB_PASSWORD - PostgreSQL password
+#   API_URL - Public URL of the API (for frontend to call)
+#   CORS_ORIGIN - Allowed origins for API CORS
+#
+# Example .env file:
+#   DB_PASSWORD=your_secure_password
+#   API_URL=https://api.seismistats.example.com
+#   CORS_ORIGIN=https://seismistats.example.com
+#
+# Deploy:
+#   docker stack deploy -c docker-compose.v2.yml --env-file .env seismistats
+#
+# For admin access (seeding, sync), deploy the admin stack separately:
+#   docker stack deploy -c docker-compose.v2.admin.yml seismistats-admin

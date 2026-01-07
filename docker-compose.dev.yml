@@ -33,6 +33,7 @@ services:
       - PORT=3000
       - DATABASE_URL=postgresql://seismistats:seismistats_dev@db:5432/seismistats
       - CORS_ORIGIN=http://localhost:5173
+      - ADMIN_MODE=true  # Development has full admin access
       - USGS_SYNC_ENABLED=true
       - USGS_SYNC_CRON=*/5 * * * *
     ports:

@@ -406,8 +406,8 @@ async function fetchInChunks(
 }
 
 export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
-  // Initial state
-  currentView: 'ets-events',
+  // Initial state - Charts is the default view
+  currentView: 'earthquake-charts',
   earthquakes: [],
   dailyAggregates: [],
   summary: null,

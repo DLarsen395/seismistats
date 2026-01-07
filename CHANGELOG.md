@@ -5,7 +5,48 @@ All notable changes to the SeismiStats Visualization project will be documented 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] - V2 Admin UI & Database Seeding Controls
+## [Unreleased] - V2 Public/Admin Separation
+
+### 🔐 Secure Public Deployment
+
+Separation of public (read-only) and admin (write-enabled) instances for secure deployment.
+
+### Added
+- **Public Mode** (frontend):
+  - `VITE_PUBLIC_MODE=true` environment variable hides Admin tab
+  - Redirect to Charts view if navigating to admin in public mode
+  - Navigation order changed: Charts → Seismic Map → Admin
+- **Admin Mode** (API):
+  - `ADMIN_MODE=true` environment variable enables write operations
+  - `requireAdminMode` middleware protects all sync/seed endpoints
+  - Returns 403 with helpful message when admin ops attempted on public instance
+- **Production Docker Compose**:
+  - `docker-compose.v2.yml` - Public stack (read-only)
+  - `docker-compose.v2.admin.yml` - Admin stack (internal only)
+  - Separate networks for security isolation
+
+### Changed
+- **Default view** is now Earthquake Charts (was ETS Events)
+- **"ETS Events"** renamed to **"Seismic Map"** with 🗺️ icon
+- **Navigation order** reversed: Charts first, Map second
+- Development compose now includes `ADMIN_MODE=true` by default
+
+### Fixed
+- **API chart queries** now properly fill missing periods with zeros (like V1 mode)
+- **Timezone bug** in date parsing - `parseLocalDate()` parses YYYY-MM-DD as local midnight
+- **End date inclusive** - API queries for "Jan 6 to Jan 6" now include all of Jan 6
+
+### Security
+- Protected endpoints (require `ADMIN_MODE=true`):
+  - `POST /api/sync/trigger`
+  - `POST /api/sync/seed`
+  - `POST /api/sync/seed/cancel`
+  - `POST /api/sync/verify`
+  - `POST /api/sync/find-gaps`
+
+---
+
+## [2.0.0-alpha.5] - 2026-01-05
 
 ### 🗄️ User-Controlled Database Seeding
 

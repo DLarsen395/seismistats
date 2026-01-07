@@ -1,11 +1,11 @@
 # SeismiStats Visualization - Project Status
 
 **Last Updated**: January 5, 2026
-**Version**: 2.0.0-alpha.5
+**Version**: 2.0.0-alpha.6
 
-## 📊 Current Status: V2.0.0-alpha.5 - Admin UI & Seeding Controls
+## 📊 Current Status: V2.0.0-alpha.6 - Public/Admin Separation
 
-V2 backend complete with user-facing Admin page for database seeding. Database ships empty; users control data population.
+V2 backend with public/admin separation for secure deployment. Public instances are read-only; admin instances enable seeding and management.
 
 ### ✅ V1 Phases Complete (100%)
 - Phase 1: Core Visualization ✅
@@ -25,6 +25,28 @@ V2 backend complete with user-facing Admin page for database seeding. Database s
 - Phase 7: Security Hardening ✅ (Helmet, rate limiting, env validation)
 - Phase 8: Database Seeding ✅ (Controlled historical data population)
 - Phase 9: Admin UI ✅ (User-controlled seeding with bandwidth settings)
+- Phase 10: Public/Admin Separation ✅ (Secure deployment architecture)
+
+---
+
+## V2 Deployment Architecture
+
+### Public Instance (Read-Only)
+- `VITE_PUBLIC_MODE=true` - Hides admin UI in frontend
+- `ADMIN_MODE=false` - API returns 403 for write operations
+- Use `docker-compose.v2.yml` for production deployment
+
+### Admin Instance (Full Access)
+- `VITE_PUBLIC_MODE=false` - Shows admin UI
+- `ADMIN_MODE=true` - Enables seeding and sync operations
+- Use `docker-compose.v2.admin.yml` for internal deployment
+- Should NOT be exposed to public internet
+
+### UI Changes in v2.0.0-alpha.6
+- Default view is now **Earthquake Charts** (was ETS Events)
+- Navigation order: **Charts → Seismic Map → Admin**
+- "ETS Events" renamed to **Seismic Map** 🗺️
+- Admin tab hidden when `VITE_PUBLIC_MODE=true`
 
 ---
 

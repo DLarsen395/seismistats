@@ -1,0 +1,99 @@
+# SeismiStats V2 Admin Stack
+# Admin-only deployment for database seeding and management
+#
+# This connects to the same database as the public stack but enables write operations.
+# Should be deployed on internal network only - not exposed publicly.
+#
+# Prerequisites:
+#   - docker-compose.v2.yml must be deployed first (creates database)
+#   - Admin should be on internal network only
+#
+# Deploy via Docker Swarm:
+#   docker stack deploy -c docker-compose.v2.admin.yml seismistats-admin
+
+services:
+  # API Server (ADMIN - full write access)
+  api-admin:
+    image: ghcr.io/dlarsen395/seismistats-api:latest
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+      placement:
+        constraints:
+          - node.role == manager  # Run on manager node for security
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=postgresql://${DB_USER:-seismistats}:${DB_PASSWORD}@seismistats_db:5432/${DB_NAME:-seismistats}
+      - CORS_ORIGIN=${ADMIN_CORS_ORIGIN:-http://localhost:5174}
+      - ADMIN_MODE=true  # Enable write operations
+      - USGS_SYNC_ENABLED=true  # Enable automatic sync
+      - USGS_SYNC_CRON=${SYNC_CRON:-0 */6 * * *}  # Every 6 hours
+    networks:
+      - seismistats_seismistats-internal  # Connect to public stack's internal network
+      - seismistats-admin
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3000/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))\""]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 30s
+
+  # Frontend (ADMIN - full admin UI)
+  frontend-admin:
+    image: ghcr.io/dlarsen395/seismistats:v2
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+      placement:
+        constraints:
+          - node.role == manager  # Run on manager node for security
+    environment:
+      - VITE_API_URL=${ADMIN_API_URL:-http://localhost:3001}
+      - VITE_USE_API=true
+      - VITE_PUBLIC_MODE=false  # Show admin UI
+    ports:
+      - "5174:80"  # Different port from public frontend
+    networks:
+      - seismistats-admin
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+networks:
+  seismistats_seismistats-internal:
+    external: true  # Created by public stack
+  seismistats-admin:
+    driver: overlay
+    # Not connected to npm-proxy - internal only
+
+# DEPLOYMENT NOTES:
+#
+# Required environment variables:
+#   DB_PASSWORD - Same password as public stack
+#   ADMIN_API_URL - URL of admin API (typically internal)
+#   ADMIN_CORS_ORIGIN - Origin for admin frontend
+#
+# Security considerations:
+#   1. Do NOT expose admin stack to public internet
+#   2. Use VPN or internal network access only
+#   3. The admin frontend runs on port 5174 (not proxied by NPM)
+#   4. Consider adding basic auth at network level
+#
+# Deploy after public stack:
+#   docker stack deploy -c docker-compose.v2.admin.yml --env-file .env.admin seismistats-admin
+#
+# Access admin:
+#   - Via SSH tunnel: ssh -L 5174:localhost:5174 your-server
+#   - Via VPN: http://server-ip:5174
+#   - Via Portainer: Add to Portainer's internal access
+#
+# Sync Schedule (USGS_SYNC_CRON):
+#   Default: "0 */6 * * *" (every 6 hours)
+#   More frequent: "0 * * * *" (hourly)
+#   Less frequent: "0 0 * * *" (daily)

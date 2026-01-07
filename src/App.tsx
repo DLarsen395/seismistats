@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { MapContainer } from './components/Map/MapContainer';
 import { DEFAULT_STYLE, type MapStyleKey } from './config/mapStyles';
 import { PlaybackControls } from './components/Controls/PlaybackControls';
@@ -14,6 +14,9 @@ import { usePlayback, type ETSEventWithOpacity } from './hooks/usePlayback';
 import { useIsMobileDevice } from './hooks/useIsMobile';
 import { useEarthquakeStore } from './stores/earthquakeStore';
 
+// Public mode hides admin completely - set via VITE_PUBLIC_MODE=true
+const isPublicMode = import.meta.env.VITE_PUBLIC_MODE === 'true';
+
 function App() {
   const { events, isLoading, error } = useEventData();
   const [filteredEvents, setFilteredEvents] = useState<ETSEventWithOpacity[]>([]);
@@ -21,6 +24,13 @@ function App() {
 
   // View navigation from earthquake store
   const { currentView, setCurrentView } = useEarthquakeStore();
+
+  // Redirect away from admin in public mode
+  useEffect(() => {
+    if (isPublicMode && currentView === 'admin') {
+      setCurrentView('earthquake-charts');
+    }
+  }, [currentView, setCurrentView]);
 
   // Map state (lifted up for RightPanelLayout Tools panel)
   const [currentStyle, setCurrentStyle] = useState<MapStyleKey>(DEFAULT_STYLE);
@@ -226,8 +236,8 @@ function App() {
           <EarthquakeChartsPage />
         )}
 
-        {/* Admin View */}
-        {currentView === 'admin' && (
+        {/* Admin View - only in non-public mode */}
+        {currentView === 'admin' && !isPublicMode && (
           <AdminPage />
         )}
       </main>

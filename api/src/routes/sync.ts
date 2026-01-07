@@ -2,7 +2,7 @@
  * Sync status, trigger, and seeding endpoints
  */
 
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { Type } from '@sinclair/typebox';
 import { getDb } from '../db/index.js';
 import { config } from '../config/index.js';
@@ -16,6 +16,20 @@ import {
   verifyCoverage,
   findCoverageGaps,
 } from '../services/seeding.js';
+
+/**
+ * Middleware to require admin mode for write operations
+ * Returns 403 if ADMIN_MODE is not enabled
+ */
+async function requireAdminMode(request: FastifyRequest, reply: FastifyReply) {
+  if (!config.adminMode) {
+    return reply.status(403).send({
+      success: false,
+      error: 'Admin operations are disabled on this instance',
+      message: 'This is a read-only public instance. Use the admin container for write operations.',
+    });
+  }
+}
 
 export async function syncRoutes(app: FastifyInstance): Promise<void> {
   /**
@@ -75,8 +89,10 @@ export async function syncRoutes(app: FastifyInstance): Promise<void> {
    * POST /api/sync/trigger
    * Manually trigger a sync for a specific date range
    * Rate limited more aggressively to prevent abuse
+   * ADMIN ONLY
    */
   app.post('/trigger', {
+    preHandler: [requireAdminMode],
     config: {
       rateLimit: {
         max: config.rateLimit.syncMax,
@@ -163,8 +179,10 @@ export async function syncRoutes(app: FastifyInstance): Promise<void> {
    * POST /api/sync/seed
    * Start controlled database seeding with rate limiting
    * This will fetch historical data in chunks with delays to avoid hammering USGS
+   * ADMIN ONLY
    */
   app.post('/seed', {
+    preHandler: [requireAdminMode],
     config: {
       rateLimit: {
         max: 1, // Only 1 seeding request at a time
@@ -238,8 +256,11 @@ export async function syncRoutes(app: FastifyInstance): Promise<void> {
   /**
    * POST /api/sync/seed/cancel
    * Cancel ongoing seeding (will finish current chunk)
+   * ADMIN ONLY
    */
-  app.post('/seed/cancel', async () => {
+  app.post('/seed/cancel', {
+    preHandler: [requireAdminMode],
+  }, async () => {
     cancelSeeding();
     return {
       success: true,
@@ -251,8 +272,10 @@ export async function syncRoutes(app: FastifyInstance): Promise<void> {
   /**
    * POST /api/sync/verify
    * Verify database coverage against USGS count API
+   * ADMIN ONLY
    */
   app.post('/verify', {
+    preHandler: [requireAdminMode],
     schema: {
       body: Type.Object({
         startDate: Type.String({ format: 'date' }),
@@ -282,8 +305,10 @@ export async function syncRoutes(app: FastifyInstance): Promise<void> {
   /**
    * POST /api/sync/find-gaps
    * Find gaps in database coverage
+   * ADMIN ONLY
    */
   app.post('/find-gaps', {
+    preHandler: [requireAdminMode],
     schema: {
       body: Type.Object({
         startDate: Type.String({ format: 'date' }),

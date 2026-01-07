@@ -5,17 +5,25 @@
 
 import type { AppView } from '../../types/earthquake';
 
+// Public mode hides admin - set via VITE_PUBLIC_MODE=true
+const isPublicMode = import.meta.env.VITE_PUBLIC_MODE === 'true';
+
 interface ViewNavigationProps {
   currentView: AppView;
   onViewChange: (view: AppView) => void;
 }
 
 export function ViewNavigation({ currentView, onViewChange }: ViewNavigationProps) {
-  const views: { id: AppView; label: string; icon: string }[] = [
-    { id: 'ets-events', label: 'ETS Events', icon: '🌊' },
+  const allViews: { id: AppView; label: string; icon: string }[] = [
     { id: 'earthquake-charts', label: 'Earthquake Charts', icon: '📊' },
+    { id: 'ets-events', label: 'Seismic Map', icon: '🗺️' },
     { id: 'admin', label: 'Admin', icon: '⚙️' },
   ];
+
+  // Filter out admin in public mode
+  const views = isPublicMode
+    ? allViews.filter(v => v.id !== 'admin')
+    : allViews;
 
   return (
     <nav
