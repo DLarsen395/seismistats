@@ -411,6 +411,50 @@ export function DatabaseSeedingPanel() {
     }
   };
 
+  // Sync to Present - fetch from newest event to now
+  const handleSyncToPresent = async () => {
+    if (!coverage?.newestEvent) {
+      addError('No Data to Sync From', 'Database is empty. Use regular seeding to populate initial data.');
+      return;
+    }
+
+    // Start from the day after the newest event
+    const newestDate = new Date(coverage.newestEvent);
+    newestDate.setDate(newestDate.getDate() + 1);
+    const syncStartDate = newestDate.toISOString().split('T')[0];
+    const syncEndDate = new Date().toISOString().split('T')[0];
+
+    // Check if we're already up to date
+    if (syncStartDate >= syncEndDate) {
+      addError('Already Up to Date', 'Database already contains data up to the current date.');
+      return;
+    }
+
+    setIsStarting(true);
+
+    try {
+      const options: SeedingOptions = {
+        startDate: syncStartDate,
+        endDate: syncEndDate,
+        minMagnitude,
+        chunkDays: selectedSpeed.chunkDays,
+        delayMs: selectedSpeed.delayMs,
+      };
+
+      console.log('Syncing to present with options:', options);
+      const result = await startSeeding(options);
+      console.log('Sync start result:', result);
+
+      // Force immediate refresh to get progress
+      await fetchData();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to start sync';
+      addError('Failed to Sync', message);
+    } finally {
+      setIsStarting(false);
+    }
+  };
+
   // Cancel seeding
   const handleCancelSeeding = async () => {
     try {
@@ -572,7 +616,35 @@ export function DatabaseSeedingPanel() {
       {/* Current Coverage */}
       {coverage && (
         <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-600">
-          <h3 className="text-sm font-medium text-slate-300 mb-3">Current Database Coverage</h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-medium text-slate-300">Current Database Coverage</h3>
+            {coverage.newestEvent && (() => {
+              const newestDate = new Date(coverage.newestEvent);
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              newestDate.setHours(0, 0, 0, 0);
+              const daysBehind = Math.floor((today.getTime() - newestDate.getTime()) / (1000 * 60 * 60 * 24));
+              
+              if (daysBehind > 0) {
+                return (
+                  <button
+                    onClick={handleSyncToPresent}
+                    disabled={isStarting || progress?.isSeeding}
+                    className="text-xs px-3 py-1.5 bg-green-600 hover:bg-green-700 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-lg transition-colors flex items-center gap-1.5"
+                    title={`Sync ${daysBehind} day${daysBehind !== 1 ? 's' : ''} of data`}
+                  >
+                    <span>🔄</span>
+                    Sync to Present ({daysBehind}d behind)
+                  </button>
+                );
+              }
+              return (
+                <span className="text-xs text-green-400 flex items-center gap-1">
+                  <span>✓</span> Up to date
+                </span>
+              );
+            })()}
+          </div>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <span className="text-slate-500">Total Events:</span>
