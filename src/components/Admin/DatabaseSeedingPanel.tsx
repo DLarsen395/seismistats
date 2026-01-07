@@ -624,7 +624,7 @@ export function DatabaseSeedingPanel() {
               today.setHours(0, 0, 0, 0);
               newestDate.setHours(0, 0, 0, 0);
               const daysBehind = Math.floor((today.getTime() - newestDate.getTime()) / (1000 * 60 * 60 * 24));
-              
+
               if (daysBehind > 0) {
                 return (
                   <button

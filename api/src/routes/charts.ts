@@ -26,6 +26,17 @@ const ChartQuerySchema = Type.Object({
   ])),
 });
 
+/**
+ * Make end date inclusive by setting to end of day (23:59:59.999)
+ * This ensures queries like "Jan 6 to Jan 6" include all events on Jan 6
+ */
+function makeEndDateInclusive(dateStr: string): Date {
+  const date = new Date(dateStr);
+  // Set to end of day in UTC (23:59:59.999)
+  date.setUTCHours(23, 59, 59, 999);
+  return date;
+}
+
 export async function chartRoutes(app: FastifyInstance): Promise<void> {
   /**
    * GET /api/charts/daily-counts
@@ -60,7 +71,7 @@ export async function chartRoutes(app: FastifyInstance): Promise<void> {
         sql<number>`MAX(magnitude)`.as('maxMagnitude'),
       ])
       .where('time', '>=', new Date(startDate))
-      .where('time', '<=', new Date(endDate))
+      .where('time', '<=', makeEndDateInclusive(endDate))
       .where('magnitude', '>=', minMagnitude)
       .groupBy(sql`date_trunc(${sql.lit(truncUnit)}, time)`)
       .orderBy('bucket', 'asc')
@@ -121,7 +132,7 @@ export async function chartRoutes(app: FastifyInstance): Promise<void> {
         sql<number>`COUNT(*) FILTER (WHERE magnitude >= 6)`.as('mag_6_plus'),
       ])
       .where('time', '>=', new Date(startDate))
-      .where('time', '<=', new Date(endDate))
+      .where('time', '<=', makeEndDateInclusive(endDate))
       .groupBy(sql`date_trunc(${sql.lit(truncUnit)}, time)`)
       .orderBy('bucket', 'asc')
       .execute();
@@ -183,7 +194,7 @@ export async function chartRoutes(app: FastifyInstance): Promise<void> {
         sql<number>`COUNT(*)`.as('count'),
       ])
       .where('time', '>=', new Date(startDate))
-      .where('time', '<=', new Date(endDate))
+      .where('time', '<=', makeEndDateInclusive(endDate))
       .where('magnitude', '>=', minMagnitude)
       .groupBy(sql`date_trunc(${sql.lit(truncUnit)}, time)`)
       .orderBy('bucket', 'asc')
@@ -229,7 +240,7 @@ export async function chartRoutes(app: FastifyInstance): Promise<void> {
     let query = db
       .selectFrom('earthquakes')
       .where('time', '>=', new Date(startDate))
-      .where('time', '<=', new Date(endDate))
+      .where('time', '<=', makeEndDateInclusive(endDate))
       .where('magnitude', '>=', minMagnitude);
 
     if (maxMagnitude !== undefined) {
