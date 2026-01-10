@@ -27,13 +27,24 @@ const ChartQuerySchema = Type.Object({
 });
 
 /**
+ * Make start date inclusive by setting to start of day in UTC (00:00:00.000)
+ * This ensures "Jan 6" means Jan 6 00:00:00.000 UTC
+ *
+ * @param dateStr - YYYY-MM-DD format string, interpreted as UTC
+ */
+function makeStartDateInclusive(dateStr: string): Date {
+  const date = new Date(dateStr + 'T00:00:00.000Z');
+  return date;
+}
+
+/**
  * Make end date inclusive by setting to end of day (23:59:59.999)
  * This ensures queries like "Jan 6 to Jan 6" include all events on Jan 6
+ *
+ * @param dateStr - YYYY-MM-DD format string, interpreted as UTC
  */
 function makeEndDateInclusive(dateStr: string): Date {
-  const date = new Date(dateStr);
-  // Set to end of day in UTC (23:59:59.999)
-  date.setUTCHours(23, 59, 59, 999);
+  const date = new Date(dateStr + 'T23:59:59.999Z');
   return date;
 }
 
@@ -70,7 +81,7 @@ export async function chartRoutes(app: FastifyInstance): Promise<void> {
         sql<number>`AVG(magnitude)`.as('avgMagnitude'),
         sql<number>`MAX(magnitude)`.as('maxMagnitude'),
       ])
-      .where('time', '>=', new Date(startDate))
+      .where('time', '>=', makeStartDateInclusive(startDate))
       .where('time', '<=', makeEndDateInclusive(endDate))
       .where('magnitude', '>=', minMagnitude)
       .groupBy(sql`date_trunc(${sql.lit(truncUnit)}, time)`)
@@ -131,7 +142,7 @@ export async function chartRoutes(app: FastifyInstance): Promise<void> {
         sql<number>`COUNT(*) FILTER (WHERE magnitude >= 5 AND magnitude < 6)`.as('mag_5_6'),
         sql<number>`COUNT(*) FILTER (WHERE magnitude >= 6)`.as('mag_6_plus'),
       ])
-      .where('time', '>=', new Date(startDate))
+      .where('time', '>=', makeStartDateInclusive(startDate))
       .where('time', '<=', makeEndDateInclusive(endDate))
       .groupBy(sql`date_trunc(${sql.lit(truncUnit)}, time)`)
       .orderBy('bucket', 'asc')
@@ -193,7 +204,7 @@ export async function chartRoutes(app: FastifyInstance): Promise<void> {
         sql<number>`AVG(magnitude)`.as('avgMagnitude'),
         sql<number>`COUNT(*)`.as('count'),
       ])
-      .where('time', '>=', new Date(startDate))
+      .where('time', '>=', makeStartDateInclusive(startDate))
       .where('time', '<=', makeEndDateInclusive(endDate))
       .where('magnitude', '>=', minMagnitude)
       .groupBy(sql`date_trunc(${sql.lit(truncUnit)}, time)`)
@@ -239,7 +250,7 @@ export async function chartRoutes(app: FastifyInstance): Promise<void> {
     // Build base query with filters
     let query = db
       .selectFrom('earthquakes')
-      .where('time', '>=', new Date(startDate))
+      .where('time', '>=', makeStartDateInclusive(startDate))
       .where('time', '<=', makeEndDateInclusive(endDate))
       .where('magnitude', '>=', minMagnitude);
 

@@ -1,9 +1,11 @@
 /**
  * Main container page for Earthquake Charts view
+ *
+ * IMPORTANT: Date ranges for API queries are calculated in UTC to match
+ * USGS data storage. Display formatting respects user timezone preference.
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { subDays } from 'date-fns';
 import { useEarthquakeStore } from '../../stores/earthquakeStore';
 import { useAutoRefresh } from '../../hooks/useAutoRefresh';
 import { fillMissingDays } from '../../services/usgs-earthquake-api';
@@ -72,18 +74,30 @@ export function EarthquakeChartsPage() {
     return option?.days || 30;
   }, [timeRange, customStartDate, customEndDate]);
 
-  // Calculate the actual date range for filling in missing days
-  // Memoized to prevent unnecessary re-fetches
+  // Calculate the actual date range for chart queries
+  // Uses UTC for consistency with USGS API data
   const dateRange = useMemo(() => {
-    const endDate = new Date();
-    endDate.setHours(23, 59, 59, 999); // End of today
+    // End date: end of today in UTC (23:59:59.999)
+    const now = new Date();
+    const endDate = new Date(Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate(),
+      23, 59, 59, 999
+    ));
 
     if (timeRange === 'custom' && customStartDate && customEndDate) {
       return { startDate: customStartDate, endDate: customEndDate };
     }
 
-    const startDate = subDays(new Date(), daysInRange);
-    startDate.setHours(0, 0, 0, 0); // Start of that day
+    // Start date: beginning of day N days ago in UTC (00:00:00)
+    const startDate = new Date(Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate() - daysInRange,
+      0, 0, 0, 0
+    ));
+
     return { startDate, endDate };
   }, [timeRange, customStartDate, customEndDate, daysInRange]);
 

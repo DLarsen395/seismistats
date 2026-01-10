@@ -1,6 +1,6 @@
 {
   "name": "seismistats-api",
-  "version": "2.0.0-alpha.1",
+  "version": "2.0.2",
   "description": "SeismiStats API Server - Earthquake data aggregation and chart endpoints",
   "type": "module",
   "scripts": {

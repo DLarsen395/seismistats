@@ -113,10 +113,14 @@ export async function syncRoutes(app: FastifyInstance): Promise<void> {
       minMagnitude?: number;
     };
 
+    // Convert to proper UTC date range
+    const syncStartDate = new Date(startDate + 'T00:00:00.000Z');
+    const syncEndDate = new Date(endDate + 'T23:59:59.999Z');
+
     // Trigger async sync (don't wait for completion)
     const jobId = await triggerManualSync({
-      startDate: new Date(startDate),
-      endDate: new Date(endDate),
+      startDate: syncStartDate,
+      endDate: syncEndDate,
       minMagnitude,
     });
 
@@ -217,10 +221,26 @@ export async function syncRoutes(app: FastifyInstance): Promise<void> {
       delayMs?: number;
     };
 
+    // Convert date strings to Date objects with proper UTC handling
+    // startDate: beginning of day UTC (00:00:00)
+    // endDate: end of day UTC (23:59:59.999) to include the full day
+    let seedStartDate: Date | undefined;
+    let seedEndDate: Date | undefined;
+
+    if (startDate) {
+      // Parse as UTC midnight
+      seedStartDate = new Date(startDate + 'T00:00:00.000Z');
+    }
+
+    if (endDate) {
+      // Parse as UTC end of day to include all events on that day
+      seedEndDate = new Date(endDate + 'T23:59:59.999Z');
+    }
+
     // Start seeding in background (don't await)
     seedDatabase({
-      startDate: startDate ? new Date(startDate) : undefined,
-      endDate: endDate ? new Date(endDate) : undefined,
+      startDate: seedStartDate,
+      endDate: seedEndDate,
       minMagnitude,
       chunkDays,
       delayMs,
@@ -290,9 +310,13 @@ export async function syncRoutes(app: FastifyInstance): Promise<void> {
       minMagnitude?: number;
     };
 
+    // Convert to proper UTC date range
+    const verifyStartDate = new Date(startDate + 'T00:00:00.000Z');
+    const verifyEndDate = new Date(endDate + 'T23:59:59.999Z');
+
     const result = await verifyCoverage({
-      startDate: new Date(startDate),
-      endDate: new Date(endDate),
+      startDate: verifyStartDate,
+      endDate: verifyEndDate,
       minMagnitude,
     });
 
@@ -325,9 +349,13 @@ export async function syncRoutes(app: FastifyInstance): Promise<void> {
       chunkDays?: number;
     };
 
+    // Convert to proper UTC date range
+    const gapStartDate = new Date(startDate + 'T00:00:00.000Z');
+    const gapEndDate = new Date(endDate + 'T23:59:59.999Z');
+
     const result = await findCoverageGaps({
-      startDate: new Date(startDate),
-      endDate: new Date(endDate),
+      startDate: gapStartDate,
+      endDate: gapEndDate,
       minMagnitude,
       chunkDays,
     });

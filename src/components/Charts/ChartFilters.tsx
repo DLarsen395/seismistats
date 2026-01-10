@@ -7,6 +7,7 @@ import { format, subYears } from 'date-fns';
 import { useEarthquakeStore } from '../../stores/earthquakeStore';
 import { useCacheStore } from '../../stores/cacheStore';
 import { AutoRefreshIndicator } from './AutoRefreshIndicator';
+import { TimezoneToggle } from '../Controls/TimezoneToggle';
 import { useIsApiMode } from './useChartData';
 import {
   MIN_MAGNITUDE_OPTIONS,
@@ -283,6 +284,12 @@ export function ChartFilters({
           </select>
         </div>
       )}
+
+      {/* Timezone Toggle - allows switching between UTC and local time display */}
+      <div>
+        <label style={labelStyle}>Display Time</label>
+        <TimezoneToggle />
+      </div>
 
       {/* Spacer to push auto-refresh indicator to the right */}
       <div style={{ flex: 1 }} />

@@ -5,6 +5,64 @@ All notable changes to the SeismiStats Visualization project will be documented 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.2] - 2026-01-10
+
+### 🕐 UTC Date Handling Overhaul
+
+Comprehensive fix for date/time handling to ensure consistency with USGS data (which uses UTC).
+
+### Added
+- **Date Utilities Module** (`src/utils/dateUtils.ts`):
+  - `formatDateUTC()` - Format date to YYYY-MM-DD in UTC
+  - `startOfDayUTC()`, `endOfDayUTC()` - Create proper UTC boundaries
+  - `getTodayUTC()`, `daysAgoUTC()`, `monthsAgoUTC()`, `yearsAgoUTC()` - UTC date math
+  - `formatForDisplay()` - Format timestamps based on user preference
+  - `getLocalTimezoneOffset()` - Get user's timezone offset string
+- **Timezone Store** (`src/stores/timezoneStore.ts`):
+  - Zustand store with localStorage persistence
+  - Toggle between 'utc' and 'local' display modes
+- **Timezone Toggle UI** (`src/components/Controls/TimezoneToggle.tsx`):
+  - Added to chart filters bar
+  - Shows "UTC / UTC-8" (or user's offset) with highlight on active mode
+  - Persists preference across sessions
+- **UTC Notes in Admin UI**:
+  - Date labels now show "(UTC)" suffix
+  - Info text: "All dates are in UTC. End date includes the full day (23:59:59 UTC)"
+
+### Changed
+- **Database Seeding Panel** - Date presets now use UTC utilities instead of buggy `toISOString().split('T')[0]`
+- **Backend Date Parsing** (`sync.ts`, `charts.ts`):
+  - All YYYY-MM-DD strings now parsed with explicit UTC: `new Date(dateStr + 'T00:00:00.000Z')`
+  - End dates extended to `23:59:59.999Z` to include full day's events
+  - Added `makeStartDateInclusive()` function for consistency
+- **Frontend Date Ranges** (`EarthquakeChartsPage.tsx`, `useChartData.ts`):
+  - Date ranges now calculated using UTC (`Date.UTC()`)
+  - API query params formatted with `formatDateUTC()` instead of `date-fns` format
+- **Verification Queries** (`seeding.ts`):
+  - Uses full ISO timestamps instead of date-only strings
+  - Fixed `WHERE time <` to `WHERE time <=` for inclusive end dates
+
+### Fixed
+- **Off-by-one day errors** - Fixed bug where "Last Month ending Jan 10" would not include Jan 10's earthquakes due to timezone conversion
+- **Seeding not getting current day** - End date now correctly extended to end of day UTC
+- **Frontend/Backend date mismatch** - Both now use consistent UTC handling
+
+### Technical Details
+
+**The Root Cause:**
+When a user in PST selected "Last Month" ending Jan 10, 2026:
+1. `new Date().toISOString().split('T')[0]` would produce "2026-01-10" based on UTC date
+2. If it was 8 AM PST (16:00 UTC), the UTC date was still Jan 10
+3. BUT: When sent to API, "2026-01-10" was interpreted as midnight UTC
+4. Result: Missing ~8+ hours of earthquakes from the current day
+
+**The Fix:**
+1. All date calculations now use explicit UTC methods (`Date.UTC()`, `setUTCHours()`)
+2. End dates always extended to 23:59:59.999 UTC
+3. Users can view in local time but queries use UTC internally
+
+---
+
 ## [2.0.1] - 2026-01-09
 
 ### 🔐 Production-Ready V2 Release

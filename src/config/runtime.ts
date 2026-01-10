@@ -1,6 +1,6 @@
 /**
  * Runtime configuration helper
- * 
+ *
  * In development, uses Vite's import.meta.env
  * In production Docker, uses window.__RUNTIME_CONFIG__ (injected at container start)
  */
@@ -25,7 +25,7 @@ function getConfig(): RuntimeConfig {
   if (typeof window !== 'undefined' && window.__RUNTIME_CONFIG__) {
     return window.__RUNTIME_CONFIG__;
   }
-  
+
   // Fall back to Vite environment variables (development)
   return {
     VITE_API_URL: import.meta.env.VITE_API_URL || 'http://localhost:3000',

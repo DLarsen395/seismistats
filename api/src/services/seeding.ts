@@ -351,18 +351,18 @@ export async function verifyCoverage(options: {
     .selectFrom('earthquakes')
     .select(({ fn }) => fn.count('id').as('count'))
     .where('time', '>=', startDate)
-    .where('time', '<', endDate)
+    .where('time', '<=', endDate)
     .where('magnitude', '>=', minMagnitude)
     .executeTakeFirst();
 
   const dbCount = Number(dbResult?.count || 0);
 
-  // Get USGS expected count
+  // Get USGS expected count - use full ISO timestamps for precise queries
   try {
     const params = new URLSearchParams({
       format: 'geojson',
-      starttime: startDate.toISOString().split('T')[0],
-      endtime: endDate.toISOString().split('T')[0],
+      starttime: startDate.toISOString(),
+      endtime: endDate.toISOString(),
       minmagnitude: minMagnitude.toString(),
     });
 

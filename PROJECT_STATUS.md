@@ -1,11 +1,11 @@
 # SeismiStats Visualization - Project Status
 
-**Last Updated**: January 9, 2026
-**Version**: 2.0.1
+**Last Updated**: January 10, 2026
+**Version**: 2.0.2
 
-## 📊 Current Status: V2.0.1 - Production Ready
+## 📊 Current Status: V2.0.2 - UTC Date Handling Fix
 
-V2 is now production-ready with public/admin separation, proper environment files, and comprehensive documentation.
+V2 is now production-ready with proper UTC date handling for USGS data consistency.
 
 ### ✅ V1 Phases Complete (100%)
 - Phase 1: Core Visualization ✅
@@ -27,6 +27,30 @@ V2 is now production-ready with public/admin separation, proper environment file
 - Phase 9: Admin UI ✅ (User-controlled seeding with bandwidth settings)
 - Phase 10: Public/Admin Separation ✅ (Secure deployment architecture)
 - Phase 11: Environment & Documentation ✅ (Production-ready env files)
+- Phase 12: UTC Date Handling ✅ (Consistent timezone handling)
+
+---
+
+## Date/Time Handling
+
+**Important**: All internal operations use UTC for consistency with USGS data.
+
+### UTC Strategy
+- **USGS API**: Expects and returns dates in UTC (ISO8601)
+- **Database**: Stores all timestamps in UTC (TIMESTAMPTZ)
+- **API Queries**: All date strings sent to API are UTC (YYYY-MM-DD)
+- **End Dates**: Extended to 23:59:59.999 UTC to include full day
+- **Display**: Users can toggle between UTC and local time
+
+### Key Files
+- `src/utils/dateUtils.ts` - Centralized date utilities
+- `src/stores/timezoneStore.ts` - User timezone preference
+- `src/components/Controls/TimezoneToggle.tsx` - UI toggle component
+
+### Admin Seeding
+- All seeding dates shown in UTC
+- End date includes full day (23:59:59 UTC)
+- Note displayed: "All dates are in UTC"
 
 ---
 

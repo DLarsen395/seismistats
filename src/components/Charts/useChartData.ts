@@ -3,11 +3,15 @@
  *
  * Uses the V2 API when VITE_USE_API=true, otherwise uses local store data.
  * This provides a seamless transition between V1 and V2 architectures.
+ *
+ * IMPORTANT: All API queries use UTC dates for consistency with USGS data.
+ * Display formatting is handled separately based on user timezone preference.
  */
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { format } from 'date-fns';
 import { useEarthquakeStore } from '../../stores/earthquakeStore';
+import { formatDateUTC } from '../../utils/dateUtils';
 import {
   USE_API,
   fetchDailyCounts,
@@ -306,9 +310,10 @@ function apiEnergyToChartData(data: ApiEnergyRelease[], grouping: TimeGrouping):
 export function useChartData(options: UseChartDataOptions): ChartData {
   const { startDate, endDate, minMagnitude, maxMagnitude, timeGrouping } = options;
 
-  // Convert dates to strings for stable dependency comparison
-  const startDateStr = format(startDate, 'yyyy-MM-dd');
-  const endDateStr = format(endDate, 'yyyy-MM-dd');
+  // Convert dates to UTC strings for API queries
+  // This ensures consistency with USGS data (all stored in UTC)
+  const startDateStr = formatDateUTC(startDate);
+  const endDateStr = formatDateUTC(endDate);
 
   // Local state for API data
   const [apiDailyCounts, setApiDailyCounts] = useState<DailyEarthquakeAggregate[]>([]);

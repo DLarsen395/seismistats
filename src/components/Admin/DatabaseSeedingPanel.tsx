@@ -9,9 +9,17 @@
  * - Verification against USGS
  * - Gap detection and filling
  * - Error logging
+ *
+ * IMPORTANT: All date ranges use UTC for consistency with USGS API.
+ * See src/utils/dateUtils.ts for date handling conventions.
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import {
+  getTodayUTC,
+  monthsAgoUTC,
+  yearsAgoUTC,
+} from '../../utils/dateUtils';
 import {
   fetchDatabaseCoverage,
   fetchSeedingProgress,
@@ -72,107 +80,76 @@ interface DateRangePreset {
   getRange: () => { startDate: string; endDate: string };
 }
 
+/**
+ * Date range presets for seeding.
+ * All dates are in UTC (YYYY-MM-DD format) for USGS API compatibility.
+ */
 const DATE_PRESETS: DateRangePreset[] = [
-  // Recent periods
+  // Recent periods - use UTC utilities
   {
     name: 'Last Month',
     category: 'recent',
-    getRange: () => {
-      const end = new Date();
-      const start = new Date();
-      start.setMonth(start.getMonth() - 1);
-      return {
-        startDate: start.toISOString().split('T')[0],
-        endDate: end.toISOString().split('T')[0],
-      };
-    },
+    getRange: () => ({
+      startDate: monthsAgoUTC(1),
+      endDate: getTodayUTC(),
+    }),
   },
   {
     name: '3 Months',
     category: 'recent',
-    getRange: () => {
-      const end = new Date();
-      const start = new Date();
-      start.setMonth(start.getMonth() - 3);
-      return {
-        startDate: start.toISOString().split('T')[0],
-        endDate: end.toISOString().split('T')[0],
-      };
-    },
+    getRange: () => ({
+      startDate: monthsAgoUTC(3),
+      endDate: getTodayUTC(),
+    }),
   },
   {
     name: '6 Months',
     category: 'recent',
-    getRange: () => {
-      const end = new Date();
-      const start = new Date();
-      start.setMonth(start.getMonth() - 6);
-      return {
-        startDate: start.toISOString().split('T')[0],
-        endDate: end.toISOString().split('T')[0],
-      };
-    },
+    getRange: () => ({
+      startDate: monthsAgoUTC(6),
+      endDate: getTodayUTC(),
+    }),
   },
-  // Year-based
+  // Year-based - use UTC utilities
   {
     name: '1 Year',
     category: 'years',
-    getRange: () => {
-      const end = new Date();
-      const start = new Date();
-      start.setFullYear(start.getFullYear() - 1);
-      return {
-        startDate: start.toISOString().split('T')[0],
-        endDate: end.toISOString().split('T')[0],
-      };
-    },
+    getRange: () => ({
+      startDate: yearsAgoUTC(1),
+      endDate: getTodayUTC(),
+    }),
   },
   {
     name: '2 Years',
     category: 'years',
-    getRange: () => {
-      const end = new Date();
-      const start = new Date();
-      start.setFullYear(start.getFullYear() - 2);
-      return {
-        startDate: start.toISOString().split('T')[0],
-        endDate: end.toISOString().split('T')[0],
-      };
-    },
+    getRange: () => ({
+      startDate: yearsAgoUTC(2),
+      endDate: getTodayUTC(),
+    }),
   },
   {
     name: '5 Years',
     category: 'years',
-    getRange: () => {
-      const end = new Date();
-      const start = new Date();
-      start.setFullYear(start.getFullYear() - 5);
-      return {
-        startDate: start.toISOString().split('T')[0],
-        endDate: end.toISOString().split('T')[0],
-      };
-    },
+    getRange: () => ({
+      startDate: yearsAgoUTC(5),
+      endDate: getTodayUTC(),
+    }),
   },
   {
     name: '10 Years',
     category: 'years',
-    getRange: () => {
-      const end = new Date();
-      const start = new Date();
-      start.setFullYear(start.getFullYear() - 10);
-      return {
-        startDate: start.toISOString().split('T')[0],
-        endDate: end.toISOString().split('T')[0],
-      };
-    },
+    getRange: () => ({
+      startDate: yearsAgoUTC(10),
+      endDate: getTodayUTC(),
+    }),
   },
-  // Decades (calendar decades)
+  // Decades (calendar decades) - fixed dates are already UTC
   {
     name: '2020s',
     category: 'decades',
     getRange: () => ({
       startDate: '2020-01-01',
-      endDate: new Date().toISOString().split('T')[0], // Up to now
+      endDate: getTodayUTC(), // Up to now
     }),
   },
   {
@@ -775,7 +752,7 @@ export function DatabaseSeedingPanel() {
             {/* Custom date inputs */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs text-slate-500 mb-1">Start Date</label>
+                <label className="block text-xs text-slate-500 mb-1">Start Date (UTC)</label>
                 <input
                   type="date"
                   value={startDate}
@@ -784,7 +761,7 @@ export function DatabaseSeedingPanel() {
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-500 mb-1">End Date</label>
+                <label className="block text-xs text-slate-500 mb-1">End Date (UTC)</label>
                 <input
                   type="date"
                   value={endDate}
@@ -793,6 +770,9 @@ export function DatabaseSeedingPanel() {
                 />
               </div>
             </div>
+            <p className="text-xs text-slate-500 mt-2">
+              ⓘ All dates are in UTC. End date includes the full day (23:59:59 UTC).
+            </p>
           </div>
 
           {/* Minimum Magnitude */}

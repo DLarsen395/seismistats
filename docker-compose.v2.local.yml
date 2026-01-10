@@ -40,7 +40,7 @@ services:
 
   # API Server (PUBLIC - read-only mode)
   api-public:
-    image: ghcr.io/dlarsen395/seismistats-api:v2
+    image: seismistats-api:v2-local-test
     container_name: seismistats-v2-api-public
     environment:
       - NODE_ENV=production
@@ -65,7 +65,7 @@ services:
 
   # API Server (ADMIN - full write access)
   api-admin:
-    image: ghcr.io/dlarsen395/seismistats-api:v2
+    image: seismistats-api:v2-local-test
     container_name: seismistats-v2-api-admin
     environment:
       - NODE_ENV=production
@@ -91,7 +91,7 @@ services:
 
   # Frontend (PUBLIC - no admin UI)
   frontend-public:
-    image: ghcr.io/dlarsen395/seismistats:v2
+    image: seismistats:v2-local-test
     container_name: seismistats-v2-frontend-public
     environment:
       - VITE_API_URL=http://localhost:3000
@@ -110,7 +110,7 @@ services:
 
   # Frontend (ADMIN - full admin UI)
   frontend-admin:
-    image: ghcr.io/dlarsen395/seismistats:v2
+    image: seismistats:v2-local-test
     container_name: seismistats-v2-frontend-admin
     environment:
       - VITE_API_URL=http://localhost:3001
