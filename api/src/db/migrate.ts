@@ -179,11 +179,11 @@ async function runMigrationsWithPool(pool: pg.Pool): Promise<void> {
   // Use advisory lock to prevent multiple instances from running migrations simultaneously
   const lockId = 12345; // Arbitrary lock ID for migrations
   const client = await pool.connect();
-  
+
   try {
     // Acquire lock (will wait if another process has it)
     await client.query('SELECT pg_advisory_lock($1)', [lockId]);
-    
+
     // Create migrations tracking table (using simple CREATE TABLE IF NOT EXISTS)
     await client.query(`
       CREATE TABLE IF NOT EXISTS _migrations (

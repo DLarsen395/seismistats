@@ -213,6 +213,29 @@ docker compose -f <compose-file>.yml up -d --build
 2. Identify the correct compose file for those containers
 3. Use that compose file for down/up operations
 
+#### Database Volume Management
+**All compose files share the same database volume: `seismistats-db-data`**
+
+This ensures:
+- Data persists across stack restarts
+- Dev and local-test can share the same seeded data
+- No duplicate volumes filling up disk space
+
+```bash
+# View database volume
+docker volume inspect seismistats-db-data
+
+# Reset database (delete all data)
+docker volume rm seismistats-db-data
+docker volume create seismistats-db-data
+
+# Clean up ALL unused volumes (careful!)
+docker volume prune
+
+# Clean up dangling/anonymous volumes only
+docker volume ls -qf dangling=true | xargs -r docker volume rm
+```
+
 ### Local Development with Docker Compose
 **Always use `docker-compose.dev.yml` for local development:**
 

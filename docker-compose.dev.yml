@@ -84,6 +84,7 @@ networks:
 
 volumes:
   seismistats_pgdata:
+    name: seismistats-db-data  # Explicit name prevents project prefix
 
 # Usage:
 # Start all services:     docker compose -f docker-compose.dev.yml up

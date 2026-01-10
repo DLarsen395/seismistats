@@ -139,6 +139,7 @@ networks:
 
 volumes:
   seismistats_v2_pgdata:
+    name: seismistats-db-data  # Same volume as dev - shared database
 
 # TESTING WORKFLOW:
 #
