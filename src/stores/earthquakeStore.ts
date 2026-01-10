@@ -186,8 +186,11 @@ async function fetchStaleDays(
   let rangeDayCount = 1;
 
   for (let i = 1; i < sortedDays.length; i++) {
-    const prevDate = new Date(rangeEnd);
-    const currDate = new Date(sortedDays[i]);
+    // Parse dates as UTC for consistent day comparison
+    const [prevYear, prevMonth, prevDay] = rangeEnd.split('-').map(Number);
+    const prevDate = new Date(Date.UTC(prevYear, prevMonth - 1, prevDay));
+    const [currYear, currMonth, currDay] = sortedDays[i].split('-').map(Number);
+    const currDate = new Date(Date.UTC(currYear, currMonth - 1, currDay));
     const dayDiff = (currDate.getTime() - prevDate.getTime()) / (24 * 60 * 60 * 1000);
 
     if (dayDiff === 1 && rangeDayCount < maxRangeDays) {
@@ -211,10 +214,13 @@ async function fetchStaleDays(
   let rangesFetched = 0;
 
   for (const range of ranges) {
-    const startDate = new Date(range.start);
+    // Parse dates as UTC to ensure consistency with USGS API
+    const [startYear, startMonth, startDay] = range.start.split('-').map(Number);
+    const startDate = new Date(Date.UTC(startYear, startMonth - 1, startDay));
     // Add 1 day to end to make it inclusive
-    const endDate = new Date(range.end);
-    endDate.setDate(endDate.getDate() + 1);
+    const [endYear, endMonth, endDay] = range.end.split('-').map(Number);
+    const endDate = new Date(Date.UTC(endYear, endMonth - 1, endDay));
+    endDate.setUTCDate(endDate.getUTCDate() + 1);
 
     const rangeDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000));
 

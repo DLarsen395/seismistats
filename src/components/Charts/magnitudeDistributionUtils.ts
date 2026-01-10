@@ -124,9 +124,11 @@ export function getMagnitudeRangeKey(magnitude: number | null): string | null {
 
 /**
  * Get week number and year from a date
+ * Uses UTC methods for consistency with date range calculations
  */
 export function getWeekKey(date: Date): { year: number; week: number } {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  // Use UTC methods on the input date to get correct week calculation
+  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
   d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
   const week = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
@@ -155,28 +157,29 @@ export function formatPeriodLabel(date: Date, grouping: TimeGrouping): string {
 
 /**
  * Get period key for grouping (used for aggregation)
+ * Uses UTC to match API data storage
  */
 export function getPeriodKey(date: Date, grouping: TimeGrouping): string {
   switch (grouping) {
     case 'year':
-      return date.getFullYear().toString();
+      return date.getUTCFullYear().toString();
     case 'month':
-      return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+      return `${date.getUTCFullYear()}-${(date.getUTCMonth() + 1).toString().padStart(2, '0')}`;
     case 'week': {
       const { year, week } = getWeekKey(date);
       return `${year}-W${week.toString().padStart(2, '0')}`;
     }
     case 'day': {
-      // Use LOCAL date components, not UTC (toISOString uses UTC which can be wrong timezone)
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
+      // Use UTC date components to match API data
+      const year = date.getUTCFullYear();
+      const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(date.getUTCDate()).padStart(2, '0');
       return `${year}-${month}-${day}`;
     }
     default: {
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
+      const year = date.getUTCFullYear();
+      const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(date.getUTCDate()).padStart(2, '0');
       return `${year}-${month}-${day}`;
     }
   }
@@ -184,14 +187,15 @@ export function getPeriodKey(date: Date, grouping: TimeGrouping): string {
 
 /**
  * Get start date for a period key (for sorting)
+ * Returns UTC midnight for the period
  */
 export function getDateFromPeriodKey(key: string, grouping: TimeGrouping): Date {
   switch (grouping) {
     case 'year':
-      return new Date(parseInt(key), 0, 1);
+      return new Date(Date.UTC(parseInt(key), 0, 1));
     case 'month': {
       const [year, month] = key.split('-').map(Number);
-      return new Date(year, month - 1, 1);
+      return new Date(Date.UTC(year, month - 1, 1));
     }
     case 'week': {
       // Parse "YYYY-Wnn" format
@@ -199,24 +203,23 @@ export function getDateFromPeriodKey(key: string, grouping: TimeGrouping): Date 
       if (match) {
         const year = parseInt(match[1]);
         const week = parseInt(match[2]);
-        // Get first day of the year, then add weeks
-        const jan4 = new Date(year, 0, 4);
-        const dayOfWeek = jan4.getDay() || 7;
+        // Get first day of the year in UTC, then add weeks
+        const jan4 = new Date(Date.UTC(year, 0, 4));
+        const dayOfWeek = jan4.getUTCDay() || 7;
         const firstMonday = new Date(jan4.getTime() - (dayOfWeek - 1) * 86400000);
         return new Date(firstMonday.getTime() + (week - 1) * 7 * 86400000);
       }
       return new Date();
     }
     case 'day': {
-      // Parse YYYY-MM-DD as LOCAL time, not UTC
-      // new Date("2026-01-03") parses as UTC midnight which is wrong timezone
+      // Parse YYYY-MM-DD as UTC midnight
       const [year, month, day] = key.split('-').map(Number);
-      return new Date(year, month - 1, day);  // Local midnight
+      return new Date(Date.UTC(year, month - 1, day));
     }
     default: {
-      // Parse YYYY-MM-DD as LOCAL time
+      // Parse YYYY-MM-DD as UTC midnight
       const [year, month, day] = key.split('-').map(Number);
-      return new Date(year, month - 1, day);
+      return new Date(Date.UTC(year, month - 1, day));
     }
   }
 }
@@ -225,8 +228,10 @@ export function getDateFromPeriodKey(key: string, grouping: TimeGrouping): Date 
  * Generate all period keys for a date range and grouping type
  * Ensures charts show ALL time periods, including those with 0 events
  *
- * @param startDate - Start of date range
- * @param endDate - End of date range
+ * IMPORTANT: Uses UTC throughout to match API data which is stored in UTC
+ *
+ * @param startDate - Start of date range (UTC)
+ * @param endDate - End of date range (UTC)
  * @param grouping - Time grouping (day, week, month, year)
  * @returns Array of period keys covering the entire date range
  */
@@ -236,43 +241,63 @@ export function generateAllPeriodKeys(
   grouping: TimeGrouping
 ): string[] {
   const keys: string[] = [];
-  const current = new Date(startDate);
-  current.setHours(0, 0, 0, 0);
-  const end = new Date(endDate);
-  end.setHours(23, 59, 59, 999);
+
+  // Create UTC-based current date to avoid timezone issues
+  // Start at UTC midnight of the start date
+  const current = new Date(Date.UTC(
+    startDate.getUTCFullYear(),
+    startDate.getUTCMonth(),
+    startDate.getUTCDate(),
+    0, 0, 0, 0
+  ));
+
+  // End at UTC end of day for the end date
+  const end = new Date(Date.UTC(
+    endDate.getUTCFullYear(),
+    endDate.getUTCMonth(),
+    endDate.getUTCDate(),
+    23, 59, 59, 999
+  ));
 
   switch (grouping) {
     case 'day':
       while (current <= end) {
-        keys.push(getPeriodKey(current, 'day'));
-        current.setDate(current.getDate() + 1);
+        // Use UTC date components for the key
+        const year = current.getUTCFullYear();
+        const month = String(current.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(current.getUTCDate()).padStart(2, '0');
+        keys.push(`${year}-${month}-${day}`);
+        // Advance by one day in UTC
+        current.setUTCDate(current.getUTCDate() + 1);
       }
       break;
 
     case 'week': {
-      // Start from beginning of the week containing startDate
-      const firstDayOfWeek = current.getDay(); // 0 = Sunday
-      current.setDate(current.getDate() - firstDayOfWeek); // Move to Sunday
+      // Start from beginning of the week containing startDate (Sunday)
+      const dayOfWeek = current.getUTCDay(); // 0 = Sunday
+      current.setUTCDate(current.getUTCDate() - dayOfWeek); // Move to Sunday
       while (current <= end) {
         keys.push(getPeriodKey(current, 'week'));
-        current.setDate(current.getDate() + 7);
+        current.setUTCDate(current.getUTCDate() + 7);
       }
       break;
     }
 
     case 'month':
-      current.setDate(1); // Start at first of month
+      current.setUTCDate(1); // Start at first of month
       while (current <= end) {
-        keys.push(getPeriodKey(current, 'month'));
-        current.setMonth(current.getMonth() + 1);
+        const year = current.getUTCFullYear();
+        const month = String(current.getUTCMonth() + 1).padStart(2, '0');
+        keys.push(`${year}-${month}`);
+        current.setUTCMonth(current.getUTCMonth() + 1);
       }
       break;
 
     case 'year':
-      current.setMonth(0, 1); // Start at Jan 1
+      current.setUTCMonth(0, 1); // Start at Jan 1
       while (current <= end) {
-        keys.push(getPeriodKey(current, 'year'));
-        current.setFullYear(current.getFullYear() + 1);
+        keys.push(current.getUTCFullYear().toString());
+        current.setUTCFullYear(current.getUTCFullYear() + 1);
       }
       break;
   }

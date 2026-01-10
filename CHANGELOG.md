@@ -5,6 +5,45 @@ All notable changes to the SeismiStats Visualization project will be documented 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.3] - 2026-01-10
+
+### 🗓️ Chart Column Count Fix
+
+Fixed bug where "Last 7 Days" showed 9 chart columns instead of 7.
+
+### Root Causes
+Two compounding bugs caused extra chart columns:
+1. **Off-by-one in date subtraction**: Subtracting N days gave N+1 days total (e.g., Jan 10 minus 7 = Jan 3, but range Jan 3-10 = 8 days inclusive)
+2. **UTC/local timezone mismatch**: UTC dates passed to functions using local time methods caused additional day shift for non-UTC timezones
+
+### Fixed
+- **Date Range Calculation** (`EarthquakeChartsPage.tsx`):
+  - Changed `now.getUTCDate() - daysInRange` to `now.getUTCDate() - (daysInRange - 1)`
+  - Example: "Last 7 Days" with today=Jan 10 now correctly calculates Jan 4-10 (7 days)
+- **generateAllPeriodKeys** (`magnitudeDistributionUtils.ts`):
+  - Rewrote to use UTC methods throughout (`Date.UTC()`, `setUTCDate()`, `getUTCFullYear()`, etc.)
+- **getPeriodKey** (`magnitudeDistributionUtils.ts`):
+  - Changed from `getFullYear()`, `getMonth()`, `getDate()` to UTC equivalents
+- **getDateFromPeriodKey** (`magnitudeDistributionUtils.ts`):
+  - Now returns `new Date(Date.UTC(...))` instead of local dates
+- **getWeekKey** (`magnitudeDistributionUtils.ts`):
+  - Fixed input date extraction to use UTC methods
+- **fillMissingDays** (`usgs-earthquake-api.ts`):
+  - Changed from local time methods to UTC methods
+- **aggregateEarthquakesByDay** (`usgs-earthquake-api.ts`):
+  - Changed earthquake timestamp grouping from local to UTC
+- **parseLocalDate → parseUTCDate** (`useChartData.ts`):
+  - Renamed function and changed to use `Date.UTC()` for consistent API date parsing
+- **Stale Day Range Calculation** (`earthquakeStore.ts`):
+  - Fixed date parsing and consecutive day checking to use UTC
+
+### Impact
+- All time range selections (7, 30, 90, 365 days, etc.) now show correct column counts
+- Chart data grouping consistent across all timezones
+- No more phantom extra days at start of date ranges
+
+---
+
 ## [2.0.2] - 2026-01-10
 
 ### 🕐 UTC Date Handling Overhaul

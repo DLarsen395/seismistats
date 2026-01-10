@@ -90,11 +90,13 @@ export function EarthquakeChartsPage() {
       return { startDate: customStartDate, endDate: customEndDate };
     }
 
-    // Start date: beginning of day N days ago in UTC (00:00:00)
+    // Start date: beginning of day (daysInRange - 1) days ago in UTC
+    // Example: "Last 7 Days" with today=Jan 10 means Jan 4-10 (7 days)
+    // So we subtract (7-1)=6 to get Jan 4 as start
     const startDate = new Date(Date.UTC(
       now.getUTCFullYear(),
       now.getUTCMonth(),
-      now.getUTCDate() - daysInRange,
+      now.getUTCDate() - (daysInRange - 1),
       0, 0, 0, 0
     ));
 

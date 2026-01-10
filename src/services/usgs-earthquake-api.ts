@@ -654,12 +654,12 @@ export function aggregateEarthquakesByDay(
   const dailyMap = new Map<string, DayStats>();
 
   for (const eq of earthquakes) {
-    // Extract LOCAL date from timestamp
-    // This ensures users see earthquakes grouped by their local date
+    // Extract UTC date from timestamp
+    // Use UTC for consistency with date range calculations and API queries
     const d = new Date(eq.properties.time);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
+    const year = d.getUTCFullYear();
+    const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(d.getUTCDate()).padStart(2, '0');
     const dateKey = `${year}-${month}-${day}`;
 
     const magnitude = eq.properties.mag ?? 0;
@@ -735,17 +735,25 @@ export function fillMissingDays(
 
   const result: DailyEarthquakeAggregate[] = [];
 
-  // Work in LOCAL time - user should see their local dates
-  const current = new Date(startDate);
-  current.setHours(0, 0, 0, 0);
+  // Work in UTC to match API data
+  const current = new Date(Date.UTC(
+    startDate.getUTCFullYear(),
+    startDate.getUTCMonth(),
+    startDate.getUTCDate(),
+    0, 0, 0, 0
+  ));
 
-  const end = new Date(endDate);
-  end.setHours(23, 59, 59, 999);
+  const end = new Date(Date.UTC(
+    endDate.getUTCFullYear(),
+    endDate.getUTCMonth(),
+    endDate.getUTCDate(),
+    23, 59, 59, 999
+  ));
 
   while (current <= end) {
-    const year = current.getFullYear();
-    const month = String(current.getMonth() + 1).padStart(2, '0');
-    const day = String(current.getDate()).padStart(2, '0');
+    const year = current.getUTCFullYear();
+    const month = String(current.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(current.getUTCDate()).padStart(2, '0');
     const dateKey = `${year}-${month}-${day}`;
 
     const existing = aggregateMap.get(dateKey);
@@ -763,8 +771,8 @@ export function fillMissingDays(
       });
     }
 
-    // Move to next day
-    current.setDate(current.getDate() + 1);
+    // Move to next day in UTC
+    current.setUTCDate(current.getUTCDate() + 1);
   }
 
   return result;

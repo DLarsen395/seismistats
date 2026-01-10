@@ -80,8 +80,8 @@ function fillMissingPeriodsForDailyCounts(
   // Build a map of existing data by period key
   const existingByKey = new Map<string, DailyEarthquakeAggregate>();
   for (const item of data) {
-    // Parse the date from the item as LOCAL time and get its period key
-    const itemDate = parseLocalDate(item.date);
+    // Parse the date from the item as UTC and get its period key
+    const itemDate = parseUTCDate(item.date);
     const key = getPeriodKey(itemDate, grouping);
     existingByKey.set(key, item);
   }
@@ -193,13 +193,14 @@ function fillMissingPeriodsForEnergy(
 /**
  * Parse a date string as LOCAL time (not UTC)
  * Handles both "YYYY-MM-DD" and "YYYY-MM-DDTHH:mm:ss.sssZ" formats
+ * Uses UTC for consistency with API date ranges
  */
-function parseLocalDate(dateStr: string): Date {
+function parseUTCDate(dateStr: string): Date {
   // Extract just the date part
   const datePart = dateStr.split('T')[0];
   const [year, month, day] = datePart.split('-').map(Number);
-  // Create date using local timezone (months are 0-indexed)
-  return new Date(year, month - 1, day);
+  // Create date using UTC timezone (months are 0-indexed)
+  return new Date(Date.UTC(year, month - 1, day));
 }
 
 /**
@@ -224,8 +225,8 @@ function apiDailyCountsToAggregates(data: ApiDailyCount[]): DailyEarthquakeAggre
  */
 function apiMagDistToChartData(data: ApiMagnitudeDistribution[], grouping: TimeGrouping): MagnitudeTimeDataPoint[] {
   return data.map(d => {
-    // Parse as local date to avoid timezone issues
-    const date = parseLocalDate(d.date);
+    // Parse as UTC date for consistency with API dates
+    const date = parseUTCDate(d.date);
     let period: string;
 
     switch (grouping) {
@@ -274,8 +275,8 @@ function apiMagDistToChartData(data: ApiMagnitudeDistribution[], grouping: TimeG
  */
 function apiEnergyToChartData(data: ApiEnergyRelease[], grouping: TimeGrouping): EnergyDataPoint[] {
   return data.map(d => {
-    // Parse as local date to avoid timezone issues
-    const date = parseLocalDate(d.date);
+    // Parse as UTC date for consistency with API dates
+    const date = parseUTCDate(d.date);
     let period: string;
 
     switch (grouping) {

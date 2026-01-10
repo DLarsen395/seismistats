@@ -1,11 +1,11 @@
 # SeismiStats Visualization - Project Status
 
 **Last Updated**: January 10, 2026
-**Version**: 2.0.2
+**Version**: 2.0.3
 
-## 📊 Current Status: V2.0.2 - UTC Date Handling Fix
+## 📊 Current Status: V2.0.3 - Chart Column Count Fix
 
-V2 is now production-ready with proper UTC date handling for USGS data consistency.
+Fixed critical bug where "Last 7 Days" showed 9 chart columns instead of 7.
 
 ### ✅ V1 Phases Complete (100%)
 - Phase 1: Core Visualization ✅
@@ -28,6 +28,7 @@ V2 is now production-ready with proper UTC date handling for USGS data consisten
 - Phase 10: Public/Admin Separation ✅ (Secure deployment architecture)
 - Phase 11: Environment & Documentation ✅ (Production-ready env files)
 - Phase 12: UTC Date Handling ✅ (Consistent timezone handling)
+- Phase 13: Chart Column Count Fix ✅ (Correct number of columns in all time ranges)
 
 ---
 
