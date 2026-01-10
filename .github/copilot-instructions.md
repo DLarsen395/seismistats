@@ -176,6 +176,43 @@ git push origin v2.0.0
 
 ## Environment Safety
 
+### Docker Container Management - CRITICAL RULES
+**NEVER create orphan containers. Always use the proper compose file workflow.**
+
+#### ⚠️ FORBIDDEN Docker Commands
+```bash
+# NEVER run these - they create orphan containers:
+docker compose -f docker-compose.dev.yml up -d --build <single-service>
+docker run ...
+docker restart <container>  # Use compose restart instead
+```
+
+#### ✅ REQUIRED Docker Workflow
+**Always bring the ENTIRE stack down and back up when rebuilding:**
+
+```bash
+# Step 1: Identify which compose file the containers belong to
+docker inspect <container-name> --format '{{index .Config.Labels "com.docker.compose.project.config_files"}}'
+
+# Step 2: Bring down the ENTIRE stack
+docker compose -f <compose-file>.yml down
+
+# Step 3: Rebuild and bring back up
+docker compose -f <compose-file>.yml up -d --build
+```
+
+#### Compose Files and Their Purposes
+| File | Purpose | Ports |
+|------|---------|-------|
+| `docker-compose.v2.local.yml` | **Local V2 testing** (DB + API + Frontend) | 5174, 8080, 3000, 3001, 5432 |
+| `docker-compose.dev.yml` | Development with hot-reload | 5173, 3000, 5432 |
+| `docker-compose.seismistats.yml` | Production Docker Swarm | Configured in stack |
+
+#### Before Any Docker Operation
+1. Run `docker ps` to see what's currently running
+2. Identify the correct compose file for those containers
+3. Use that compose file for down/up operations
+
 ### Local Development with Docker Compose
 **Always use `docker-compose.dev.yml` for local development:**
 
