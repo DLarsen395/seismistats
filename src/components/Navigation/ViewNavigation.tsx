@@ -4,9 +4,10 @@
  */
 
 import type { AppView } from '../../types/earthquake';
+import { PUBLIC_MODE } from '../../config/runtime';
 
-// Public mode hides admin - set via VITE_PUBLIC_MODE=true
-const isPublicMode = import.meta.env.VITE_PUBLIC_MODE === 'true';
+// Public mode hides admin - from runtime config (supports Docker env injection)
+const isPublicMode = PUBLIC_MODE;
 
 interface ViewNavigationProps {
   currentView: AppView;

@@ -26,9 +26,7 @@ import {
   type CacheQuery,
 } from '../services/earthquake-cache';
 import { useCacheStore } from './cacheStore';
-
-// Check if V2 API mode is enabled
-const USE_API = import.meta.env.VITE_USE_API === 'true';
+import { USE_API } from '../config/runtime';
 
 interface EarthquakeSummary {
   total: number;

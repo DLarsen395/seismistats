@@ -5,21 +5,22 @@
  * Can be used alongside or instead of direct USGS API calls.
  */
 
+import { API_URL, USE_API as USE_API_CONFIG } from '../config/runtime';
+
 // =============================================================================
 // Configuration
 // =============================================================================
 
 /**
- * API base URL - defaults to localhost:3000 for development
- * In production, this would be the deployed API URL
+ * API base URL - from runtime config (supports Docker env injection)
  */
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE_URL = API_URL;
 
 /**
  * Whether to use the V2 API for data fetching
- * Set VITE_USE_API=true to enable
+ * From runtime config (supports Docker env injection)
  */
-export const USE_API = import.meta.env.VITE_USE_API === 'true';
+export const USE_API = USE_API_CONFIG;
 
 // =============================================================================
 // API Response Types

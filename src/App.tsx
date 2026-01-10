@@ -13,9 +13,10 @@ import { useEventData } from './hooks/useEventData';
 import { usePlayback, type ETSEventWithOpacity } from './hooks/usePlayback';
 import { useIsMobileDevice } from './hooks/useIsMobile';
 import { useEarthquakeStore } from './stores/earthquakeStore';
+import { PUBLIC_MODE } from './config/runtime';
 
-// Public mode hides admin completely - set via VITE_PUBLIC_MODE=true
-const isPublicMode = import.meta.env.VITE_PUBLIC_MODE === 'true';
+// Public mode hides admin completely - from runtime config (supports Docker env injection)
+const isPublicMode = PUBLIC_MODE;
 
 function App() {
   const { events, isLoading, error } = useEventData();

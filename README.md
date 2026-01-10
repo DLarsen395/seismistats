@@ -9,7 +9,7 @@ An interactive web application for visualizing and analyzing worldwide seismic e
 ![Vite](https://img.shields.io/badge/Vite-7.2-purple)
 ![Docker](https://img.shields.io/badge/Docker-Ready-2496ED)
 
-**GitHub Repository**: https://github.com/DLarsen395/seismistats  
+**GitHub Repository**: https://github.com/DLarsen395/seismistats
 **Container Registry**: https://ghcr.io/dlarsen395/seismistats
 
 ## 📦 Versions

@@ -34,6 +34,10 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # Copy custom nginx configuration for SPA routing
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
+# Copy entrypoint script for runtime env injection
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
 # Expose port 80
 EXPOSE 80
 
@@ -41,5 +45,5 @@ EXPOSE 80
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD curl -f http://localhost/health || exit 1
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Use entrypoint script to inject runtime config, then start nginx
+ENTRYPOINT ["/docker-entrypoint.sh"]
