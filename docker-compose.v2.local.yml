@@ -1,0 +1,164 @@
+# SeismiStats V2 Local Testing Stack
+# ==================================
+# For testing the V2 public + admin stacks locally in Docker Desktop
+# This simulates production architecture without Swarm/external networks
+#
+# Usage:
+#   docker compose -f docker-compose.v2.local.yml up -d
+#   
+# Access:
+#   - Public Frontend: http://localhost:8080
+#   - Public API: http://localhost:3000
+#   - Admin Frontend: http://localhost:5174
+#   - Admin API: http://localhost:3001
+#   - Database: localhost:5432
+#
+# After testing, deploy to production using:
+#   - docker-compose.v2.yml (public)
+#   - docker-compose.v2.admin.yml (admin)
+
+services:
+  # PostgreSQL with PostGIS and TimescaleDB
+  db:
+    image: timescale/timescaledb-ha:pg16
+    container_name: seismistats-v2-db
+    environment:
+      - POSTGRES_USER=seismistats
+      - POSTGRES_PASSWORD=seismistats_local_test
+      - POSTGRES_DB=seismistats
+    ports:
+      - "5432:5432"
+    volumes:
+      - seismistats_v2_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U seismistats -d seismistats"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - seismistats-v2
+
+  # API Server (PUBLIC - read-only mode)
+  api-public:
+    image: ghcr.io/dlarsen395/seismistats-api:v2
+    container_name: seismistats-v2-api-public
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=postgresql://seismistats:seismistats_local_test@db:5432/seismistats
+      - CORS_ORIGIN=http://localhost:8080
+      - ADMIN_MODE=false
+      - USGS_SYNC_ENABLED=false
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3000/health || exit 1"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 30s
+    networks:
+      - seismistats-v2
+
+  # API Server (ADMIN - full write access)
+  api-admin:
+    image: ghcr.io/dlarsen395/seismistats-api:v2
+    container_name: seismistats-v2-api-admin
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=postgresql://seismistats:seismistats_local_test@db:5432/seismistats
+      - CORS_ORIGIN=http://localhost:5174
+      - ADMIN_MODE=true
+      - USGS_SYNC_ENABLED=true
+      - USGS_SYNC_CRON=0 */6 * * *
+    ports:
+      - "3001:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3000/health || exit 1"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 30s
+    networks:
+      - seismistats-v2
+
+  # Frontend (PUBLIC - no admin UI)
+  frontend-public:
+    image: ghcr.io/dlarsen395/seismistats:v2
+    container_name: seismistats-v2-frontend-public
+    environment:
+      - VITE_API_URL=http://localhost:3000
+      - VITE_USE_API=true
+      - VITE_PUBLIC_MODE=true
+    ports:
+      - "8080:80"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    networks:
+      - seismistats-v2
+
+  # Frontend (ADMIN - full admin UI)
+  frontend-admin:
+    image: ghcr.io/dlarsen395/seismistats:v2
+    container_name: seismistats-v2-frontend-admin
+    environment:
+      - VITE_API_URL=http://localhost:3001
+      - VITE_USE_API=true
+      - VITE_PUBLIC_MODE=false
+    ports:
+      - "5174:80"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    networks:
+      - seismistats-v2
+
+networks:
+  seismistats-v2:
+    driver: bridge
+
+volumes:
+  seismistats_v2_pgdata:
+
+# TESTING WORKFLOW:
+#
+# 1. Build and push images first (if not already done):
+#    docker build -t ghcr.io/dlarsen395/seismistats:v2 .
+#    docker build -t ghcr.io/dlarsen395/seismistats-api:v2 ./api
+#    docker push ghcr.io/dlarsen395/seismistats:v2
+#    docker push ghcr.io/dlarsen395/seismistats-api:v2
+#
+# 2. Start the stack:
+#    docker compose -f docker-compose.v2.local.yml up -d
+#
+# 3. Test public instance:
+#    - Open http://localhost:8080
+#    - Verify admin tab is HIDDEN
+#    - Charts should work (but empty until seeded)
+#
+# 4. Test admin instance:
+#    - Open http://localhost:5174
+#    - Verify admin tab is VISIBLE
+#    - Seed some data using the Admin page
+#    - Verify charts update on public instance
+#
+# 5. Test API protection:
+#    curl -X POST http://localhost:3000/api/sync/seed  # Should return 403
+#    curl -X POST http://localhost:3001/api/sync/seed  # Should work
+#
+# 6. Clean up:
+#    docker compose -f docker-compose.v2.local.yml down -v

@@ -52,7 +52,7 @@ export const config = {
 
   // API Security
   apiKey: process.env.API_KEY || '',
-  
+
   // Admin mode - when false, write operations are disabled
   // Set ADMIN_MODE=true on admin container, false/unset on public container
   adminMode: process.env.ADMIN_MODE === 'true',

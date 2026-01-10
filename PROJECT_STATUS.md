@@ -1,11 +1,11 @@
 # SeismiStats Visualization - Project Status
 
-**Last Updated**: January 5, 2026
-**Version**: 2.0.0-alpha.6
+**Last Updated**: January 9, 2026
+**Version**: 2.0.1
 
-## 📊 Current Status: V2.0.0-alpha.6 - Public/Admin Separation
+## 📊 Current Status: V2.0.1 - Production Ready
 
-V2 backend with public/admin separation for secure deployment. Public instances are read-only; admin instances enable seeding and management.
+V2 is now production-ready with public/admin separation, proper environment files, and comprehensive documentation.
 
 ### ✅ V1 Phases Complete (100%)
 - Phase 1: Core Visualization ✅
@@ -15,7 +15,7 @@ V2 backend with public/admin separation for secure deployment. Public instances 
 - Phase 5: Docker Deployment ✅
 - Phase 6: Earthquake Charts ✅
 
-### 🚀 V2 Backend Progress
+### ✅ V2 Backend Complete (100%)
 - Phase 1: API Skeleton ✅ (Fastify + TypeScript)
 - Phase 2: Database Schema ✅ (PostgreSQL + PostGIS)
 - Phase 3: Docker Dev Stack ✅ (Full hot-reload environment)
@@ -26,6 +26,19 @@ V2 backend with public/admin separation for secure deployment. Public instances 
 - Phase 8: Database Seeding ✅ (Controlled historical data population)
 - Phase 9: Admin UI ✅ (User-controlled seeding with bandwidth settings)
 - Phase 10: Public/Admin Separation ✅ (Secure deployment architecture)
+- Phase 11: Environment & Documentation ✅ (Production-ready env files)
+
+---
+
+## Environment Files
+
+| File | Purpose | Git Status |
+|------|---------|------------|
+| `.env.v1.example` | Documents V1 needs no env vars | ✅ Committed |
+| `.env.v2.example` | Template for V2 public stack | ✅ Committed |
+| `.env.v2.admin.example` | Template for V2 admin stack | ✅ Committed |
+| `.env.v2.local` | Your V2 public credentials | 🚫 Gitignored |
+| `.env.v2.admin.local` | Your V2 admin credentials | 🚫 Gitignored |
 
 ---
 
@@ -42,7 +55,7 @@ V2 backend with public/admin separation for secure deployment. Public instances 
 - Use `docker-compose.v2.admin.yml` for internal deployment
 - Should NOT be exposed to public internet
 
-### UI Changes in v2.0.0-alpha.6
+### UI Changes in v2.0.1
 - Default view is now **Earthquake Charts** (was ETS Events)
 - Navigation order: **Charts → Seismic Map → Admin**
 - "ETS Events" renamed to **Seismic Map** 🗺️

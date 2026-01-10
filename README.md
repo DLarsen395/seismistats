@@ -3,14 +3,33 @@
 An interactive web application for visualizing and analyzing worldwide seismic events, featuring ETS (Episodic Tremor and Slip) playback, USGS earthquake data integration, and comprehensive charting capabilities.
 
 ![SeismiStats](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
-![Version](https://img.shields.io/badge/Version-2.0.0--alpha.1-blue)
+![Version](https://img.shields.io/badge/Version-2.0.1-blue)
 ![React](https://img.shields.io/badge/React-19-blue)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue)
 ![Vite](https://img.shields.io/badge/Vite-7.2-purple)
 ![Docker](https://img.shields.io/badge/Docker-Ready-2496ED)
 
-**GitHub Repository**: https://github.com/DLarsen395/seismistats
+**GitHub Repository**: https://github.com/DLarsen395/seismistats  
 **Container Registry**: https://ghcr.io/dlarsen395/seismistats
+
+## 📦 Versions
+
+| Version | Description | Compose File | Env File |
+|---------|-------------|--------------|----------|
+| **V1.x** | Frontend-only, direct USGS/PNSN API calls | `docker-compose.seismistats.yml` | None required |
+| **V2.x** | Server-side database with admin UI | `docker-compose.v2.yml` | `.env.v2.example` |
+
+### V1.x (Latest: v1.2.9)
+- Self-contained frontend application
+- Fetches data directly from USGS/PNSN APIs
+- IndexedDB caching in browser
+- **No environment variables needed!**
+
+### V2.x (Latest: v2.0.1)
+- PostgreSQL + PostGIS + TimescaleDB backend
+- Fastify API server with TypeScript
+- Database seeding with admin UI
+- Public/Admin separation for security
 
 ## 🌟 Features
 
@@ -200,74 +219,101 @@ npm run lint
 
 ## 📦 Deployment
 
-### Production Build
+### V1 Deployment (Simple - No Database)
+
+V1 is completely self-contained - no API keys, no database, no environment variables!
 
 ```bash
-npm run build
+# Using Docker Compose
+docker stack deploy -c docker-compose.seismistats.yml seismistats
+
+# Or run directly
+docker run -d -p 8080:80 ghcr.io/dlarsen395/seismistats:v1.2.9
 ```
 
-Outputs optimized static files to `dist/` directory.
+### V2 Deployment (Full Stack with Database)
 
-### Docker Deployment
+V2 uses a PostgreSQL database and requires environment configuration.
 
-The Docker image is completely self-contained - no API keys or environment variables required!
+#### Environment Files
 
-#### Quick Start (Local Testing)
+| File | Purpose | Git Status |
+|------|---------|------------|
+| `.env.v1.example` | Documents V1 needs no env vars | ✅ Committed |
+| `.env.v2.example` | Template for V2 public stack | ✅ Committed |
+| `.env.v2.admin.example` | Template for V2 admin stack | ✅ Committed |
+| `.env.v2.local` | Your V2 public credentials | 🚫 Gitignored |
+| `.env.v2.admin.local` | Your V2 admin credentials | 🚫 Gitignored |
+
+#### Quick Start (Development)
+
 ```bash
-# Build the image
-docker build -t seismistats:latest .
+# Start all services with hot-reload
+docker compose -f docker-compose.dev.yml up -d
 
-# Run locally
-docker run -d -p 8080:80 --name seismistats-test seismistats:latest
+# View logs
+docker compose -f docker-compose.dev.yml logs -f
 
-# Test at http://localhost:8080
+# Access at:
+# - Frontend: http://localhost:5173
+# - API: http://localhost:3000
+# - Database: localhost:5432
 ```
 
-#### Push to GitHub Container Registry
+#### Production Deployment (Portainer/Swarm)
+
+**Step 1: Create environment file**
 ```bash
-# Login to GHCR (use a PAT with write:packages scope)
-echo $PAT | docker login ghcr.io -u YOUR_USERNAME --password-stdin
-
-# Tag with version AND latest
-docker tag seismistats:latest ghcr.io/dlarsen395/seismistats:2.0.0
-docker tag seismistats:latest ghcr.io/dlarsen395/seismistats:latest
-
-# Push both tags
-docker push ghcr.io/dlarsen395/seismistats:2.0.0
-docker push ghcr.io/dlarsen395/seismistats:latest
+cp .env.v2.example .env.v2.local
+# Edit .env.v2.local with your credentials
 ```
 
-#### Deploy to Docker Swarm (Portainer)
-
-1. **Add Registry** in Portainer:
-   - Registries → Add registry → Custom
-   - URL: `ghcr.io`
-   - Username: Your GitHub username
-   - Password: Your PAT
-
-2. **Create Stack** with this compose:
-```yaml
-version: "3.8"
-
-services:
-  seismistats:
-    image: ghcr.io/dlarsen395/seismistats:2.0.0  # Pin to specific version
-    networks:
-      - npm-proxy
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: any
-
-networks:
-  npm-proxy:
-    external: true
+**Step 2: Deploy public stack**
+```bash
+docker stack deploy -c docker-compose.v2.yml --env-file .env.v2.local seismistats
 ```
 
-3. **Configure Nginx Proxy Manager**:
-   - Forward Hostname: `seismistats_seismistats`
-   - Forward Port: `80`
-   - Attach Access List for authentication
+**Step 3: Deploy admin stack** (optional, for database seeding)
+```bash
+cp .env.v2.admin.example .env.v2.admin.local
+# Edit .env.v2.admin.local with your credentials
+docker stack deploy -c docker-compose.v2.admin.yml --env-file .env.v2.admin.local seismistats-admin
+```
+
+#### V2 Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     PUBLIC INTERNET                          │
+└─────────────────────┬───────────────────────────────────────┘
+                      │
+            ┌─────────▼─────────┐
+            │   NPM Proxy       │  (SSL termination)
+            └─────────┬─────────┘
+                      │
+    ┌─────────────────┼─────────────────┐
+    │                 │                 │
+┌───▼───┐       ┌─────▼─────┐     ┌─────▼─────┐
+│Frontend│       │  API      │     │ Admin API │  ← Internal only
+│(Public)│       │(Read-only)│     │(Full R/W) │
+└────────┘       └─────┬─────┘     └─────┬─────┘
+                       │                 │
+                       └────────┬────────┘
+                                │
+                    ┌───────────▼───────────┐
+                    │    PostgreSQL DB       │
+                    │  (PostGIS + TimescaleDB)│
+                    └───────────────────────┘
+```
+
+### Docker Images
+
+| Image | Description |
+|-------|-------------|
+| `ghcr.io/dlarsen395/seismistats:latest` | V1 latest |
+| `ghcr.io/dlarsen395/seismistats:v1.2.9` | V1 specific version |
+| `ghcr.io/dlarsen395/seismistats:v2` | V2 frontend |
+| `ghcr.io/dlarsen395/seismistats-api:v2` | V2 API server |
 
 See [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md) for detailed instructions.
 
@@ -284,15 +330,17 @@ See [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md) for detailed instructions.
 - [x] Docker deployment with GHCR
 - [x] USGS earthquake charts with IndexedDB caching
 
-### 🔄 V2.x - In Development
-- [ ] Server-side TimescaleDB + PostGIS database
-- [ ] Backend API (Fastify + TypeScript)
-- [ ] Full historical earthquake data (1500-present)
-- [ ] Single-source data fetching (server syncs USGS)
-- [ ] Multi-source support (EMSC planned)
-- [ ] Cross-source duplicate detection
+### ✅ V2.x - Complete
+- [x] Server-side TimescaleDB + PostGIS database
+- [x] Backend API (Fastify + TypeScript)
+- [x] Full historical earthquake data support
+- [x] Admin UI for database seeding
+- [x] Public/Admin separation for security
+- [x] Automatic USGS sync (configurable schedule)
 
 ### 🔮 Future
+- [ ] Multi-source support (EMSC planned)
+- [ ] Cross-source duplicate detection
 - [ ] User-selectable event color schemes
 - [ ] Event clustering at low zoom levels
 - [ ] URL state persistence

@@ -5,11 +5,11 @@ All notable changes to the SeismiStats Visualization project will be documented 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] - V2 Public/Admin Separation
+## [2.0.1] - 2026-01-09
 
-### 🔐 Secure Public Deployment
+### 🔐 Production-Ready V2 Release
 
-Separation of public (read-only) and admin (write-enabled) instances for secure deployment.
+First stable V2 release with public/admin separation, proper environment file structure, and comprehensive documentation.
 
 ### Added
 - **Public Mode** (frontend):
@@ -24,17 +24,24 @@ Separation of public (read-only) and admin (write-enabled) instances for secure 
   - `docker-compose.v2.yml` - Public stack (read-only)
   - `docker-compose.v2.admin.yml` - Admin stack (internal only)
   - Separate networks for security isolation
+- **Environment File Structure**:
+  - `.env.v1.example` - Documents V1 needs no env vars
+  - `.env.v2.example` - Template for V2 public stack
+  - `.env.v2.admin.example` - Template for V2 admin stack
+  - Local `.env.*.local` files are gitignored for credentials
 
 ### Changed
 - **Default view** is now Earthquake Charts (was ETS Events)
 - **"ETS Events"** renamed to **"Seismic Map"** with 🗺️ icon
 - **Navigation order** reversed: Charts first, Map second
 - Development compose now includes `ADMIN_MODE=true` by default
+- Cleaned up legacy/unused environment files
 
 ### Fixed
 - **API chart queries** now properly fill missing periods with zeros (like V1 mode)
 - **Timezone bug** in date parsing - `parseLocalDate()` parses YYYY-MM-DD as local midnight
 - **End date inclusive** - API queries for "Jan 6 to Jan 6" now include all of Jan 6
+- **Sync to Present** button auto-detects days behind and fetches from newest event to today
 
 ### Security
 - Protected endpoints (require `ADMIN_MODE=true`):
@@ -43,6 +50,7 @@ Separation of public (read-only) and admin (write-enabled) instances for secure 
   - `POST /api/sync/seed/cancel`
   - `POST /api/sync/verify`
   - `POST /api/sync/find-gaps`
+- Removed legacy `.env` file containing old Mapbox token (unused - app uses MapLibre)
 
 ---
 

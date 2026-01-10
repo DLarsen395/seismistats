@@ -21,7 +21,7 @@ import {
  * Middleware to require admin mode for write operations
  * Returns 403 if ADMIN_MODE is not enabled
  */
-async function requireAdminMode(request: FastifyRequest, reply: FastifyReply) {
+async function requireAdminMode(_request: FastifyRequest, reply: FastifyReply) {
   if (!config.adminMode) {
     return reply.status(403).send({
       success: false,

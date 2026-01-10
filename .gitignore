@@ -10,7 +10,6 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
-*.local
 
 # Editor directories and files
 .vscode/*
@@ -23,11 +22,13 @@ dist-ssr
 *.sln
 *.sw?
 
-# Environment variables
+# Environment files with real credentials (*.local files)
+# Example files (.example) are safe to commit
+*.local
 .env
-.env.local
 .env.production
 
-# Docker deployment scripts (optional - remove if you want to commit them)
-# deploy.sh
-# deploy.ps1
+# API environment files
+api/.env
+api/.env.local
+api/.env.production

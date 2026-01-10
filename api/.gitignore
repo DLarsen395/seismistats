@@ -4,9 +4,10 @@ node_modules/
 # Build output
 dist/
 
-# Environment
+# Environment files with real credentials
+# Note: api/.env files are also ignored in root .gitignore
 .env
-.env.local
+*.local
 .env.production
 
 # Logs
