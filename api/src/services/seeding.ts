@@ -156,7 +156,7 @@ export async function seedDatabase(options: SeedingOptions = {}): Promise<Seedin
 
   while (chunkEnd > startDate) {
     const chunkStart = new Date(chunkEnd);
-    chunkStart.setDate(chunkStart.getDate() - effectiveChunkDays);
+    chunkStart.setUTCDate(chunkStart.getUTCDate() - effectiveChunkDays);
 
     // Don't go before startDate
     if (chunkStart < startDate) {
@@ -443,7 +443,7 @@ export async function findCoverageGaps(options: {
 
   while (chunkStart < endDate) {
     const chunkEnd = new Date(chunkStart);
-    chunkEnd.setDate(chunkEnd.getDate() + chunkDays);
+    chunkEnd.setUTCDate(chunkEnd.getUTCDate() + chunkDays);
     if (chunkEnd > endDate) {
       chunkEnd.setTime(endDate.getTime());
     }

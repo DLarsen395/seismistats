@@ -91,6 +91,7 @@ networks:
 
 volumes:
   seismistats_pgdata:
+    name: seismistats-db-data  # Shared volume name - same across all environments
 
 # DEPLOYMENT NOTES:
 #

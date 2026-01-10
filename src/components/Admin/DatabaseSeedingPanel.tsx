@@ -397,7 +397,7 @@ export function DatabaseSeedingPanel() {
 
     // Start from the day after the newest event
     const newestDate = new Date(coverage.newestEvent);
-    newestDate.setDate(newestDate.getDate() + 1);
+    newestDate.setUTCDate(newestDate.getUTCDate() + 1);
     const syncStartDate = newestDate.toISOString().split('T')[0];
     const syncEndDate = new Date().toISOString().split('T')[0];
 
@@ -598,8 +598,9 @@ export function DatabaseSeedingPanel() {
             {coverage.newestEvent && (() => {
               const newestDate = new Date(coverage.newestEvent);
               const today = new Date();
-              today.setHours(0, 0, 0, 0);
-              newestDate.setHours(0, 0, 0, 0);
+              // Use UTC for consistent comparison with database timestamps
+              today.setUTCHours(0, 0, 0, 0);
+              newestDate.setUTCHours(0, 0, 0, 0);
               const daysBehind = Math.floor((today.getTime() - newestDate.getTime()) / (1000 * 60 * 60 * 24));
 
               if (daysBehind > 0) {
@@ -631,7 +632,7 @@ export function DatabaseSeedingPanel() {
               <span className="text-slate-500">Date Range:</span>
               <span className="text-white ml-2 font-mono text-xs">
                 {coverage.oldestEvent
-                  ? `${new Date(coverage.oldestEvent).toLocaleDateString()} → ${new Date(coverage.newestEvent!).toLocaleDateString()}`
+                  ? `${new Date(coverage.oldestEvent).toLocaleDateString('en-US', { timeZone: 'UTC' })} → ${new Date(coverage.newestEvent!).toLocaleDateString('en-US', { timeZone: 'UTC' })}`
                   : 'No data'}
               </span>
             </div>
