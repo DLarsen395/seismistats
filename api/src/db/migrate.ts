@@ -156,8 +156,36 @@ async function migrate() {
   console.log('🗄️  Running database migrations...\n');
 
   try {
-    // Create migrations tracking table
-    await pool.query(`
+    await runMigrationsWithPool(pool);
+  } finally {
+    await pool.end();
+  }
+}
+
+/**
+ * Run migrations using a new database connection
+ * Called automatically on server startup
+ */
+export async function runMigrations(): Promise<void> {
+  const pool = new Pool({ connectionString: config.databaseUrl });
+  try {
+    await runMigrationsWithPool(pool);
+  } finally {
+    await pool.end();
+  }
+}
+
+async function runMigrationsWithPool(pool: pg.Pool): Promise<void> {
+  // Use advisory lock to prevent multiple instances from running migrations simultaneously
+  const lockId = 12345; // Arbitrary lock ID for migrations
+  const client = await pool.connect();
+  
+  try {
+    // Acquire lock (will wait if another process has it)
+    await client.query('SELECT pg_advisory_lock($1)', [lockId]);
+    
+    // Create migrations tracking table (using simple CREATE TABLE IF NOT EXISTS)
+    await client.query(`
       CREATE TABLE IF NOT EXISTS _migrations (
         id SERIAL PRIMARY KEY,
         name TEXT UNIQUE NOT NULL,
@@ -166,32 +194,38 @@ async function migrate() {
     `);
 
     // Get already applied migrations
-    const { rows: applied } = await pool.query('SELECT name FROM _migrations');
+    const { rows: applied } = await client.query('SELECT name FROM _migrations');
     const appliedNames = new Set(applied.map((r: { name: string }) => r.name));
 
     // Run pending migrations
+    let migrationsRan = 0;
     for (const migration of MIGRATIONS) {
       if (appliedNames.has(migration.name)) {
-        console.log(`⏭️  Skipping ${migration.name} (already applied)`);
         continue;
       }
 
       console.log(`🔄 Running ${migration.name}...`);
 
       try {
-        await pool.query(migration.sql);
-        await pool.query('INSERT INTO _migrations (name) VALUES ($1)', [migration.name]);
+        await client.query(migration.sql);
+        await client.query('INSERT INTO _migrations (name) VALUES ($1)', [migration.name]);
         console.log(`✅ ${migration.name} applied successfully`);
+        migrationsRan++;
       } catch (err) {
         console.error(`❌ ${migration.name} failed:`, err);
         throw err;
       }
     }
 
-    console.log('\n✅ All migrations complete!');
-
+    if (migrationsRan > 0) {
+      console.log(`\n✅ ${migrationsRan} migration(s) applied!`);
+    } else {
+      console.log('✅ Database schema is up to date');
+    }
   } finally {
-    await pool.end();
+    // Release lock
+    await client.query('SELECT pg_advisory_unlock($1)', [lockId]);
+    client.release();
   }
 }
 

@@ -6,6 +6,7 @@ import { Kysely, PostgresDialect } from 'kysely';
 import pg from 'pg';
 import { config } from '../config/index.js';
 import type { Database } from './schema.js';
+import { runMigrations } from './migrate.js';
 
 const { Pool } = pg;
 
@@ -32,10 +33,9 @@ export async function initializeDatabase(): Promise<Kysely<Database>> {
     dialect: new PostgresDialect({ pool }),
   });
 
-  // Test connection
-  await db.selectFrom('earthquakes').select('id').limit(1).execute().catch(() => {
-    // Table may not exist yet, that's okay
-  });
+  // Run migrations on startup to ensure schema is up to date
+  console.log('🗄️  Checking database schema...');
+  await runMigrations();
 
   return db;
 }

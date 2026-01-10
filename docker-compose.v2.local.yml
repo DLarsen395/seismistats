@@ -57,9 +57,9 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://localhost:3000/health || exit 1"]
       interval: 30s
-      timeout: 3s
-      retries: 3
-      start_period: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
     networks:
       - seismistats-v2
 
@@ -83,9 +83,9 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://localhost:3000/health || exit 1"]
       interval: 30s
-      timeout: 3s
-      retries: 3
-      start_period: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
     networks:
       - seismistats-v2
 
@@ -99,6 +99,9 @@ services:
       - VITE_PUBLIC_MODE=true
     ports:
       - "8080:80"
+    depends_on:
+      api-public:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
       interval: 30s
@@ -118,6 +121,9 @@ services:
       - VITE_PUBLIC_MODE=false
     ports:
       - "5174:80"
+    depends_on:
+      api-admin:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
       interval: 30s
