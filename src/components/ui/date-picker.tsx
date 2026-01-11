@@ -50,20 +50,20 @@ export function DatePicker({
   return (
     <div className={cn("flex flex-col gap-1", className)}>
       {label && (
-        <label className="text-xs text-muted-foreground">{label}</label>
+        <label className="text-xs text-slate-400">{label}</label>
       )}
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
             className={cn(
-              "w-full justify-start text-left font-normal",
-              !date && "text-muted-foreground",
+              "w-[140px] justify-start text-left font-normal h-10",
+              !date && "text-slate-500",
               disabled && "opacity-50 cursor-not-allowed"
             )}
             disabled={disabled}
           >
-            <CalendarIcon className="mr-2 h-4 w-4" />
+            <CalendarIcon className="mr-2 h-4 w-4 text-slate-400" />
             {date ? format(date, dateFormat) : <span>{placeholder}</span>}
           </Button>
         </PopoverTrigger>
