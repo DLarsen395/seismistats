@@ -6,6 +6,89 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* React Day Picker dark theme customization */
+.rdp-root {
+  --rdp-accent-color: #3b82f6; /* blue-500 */
+  --rdp-accent-background-color: rgba(59, 130, 246, 0.2); /* blue-500/20 */
+  --rdp-day-height: 36px;
+  --rdp-day-width: 36px;
+  --rdp-day_button-height: 34px;
+  --rdp-day_button-width: 34px;
+  --rdp-day_button-border-radius: 6px;
+  --rdp-today-color: inherit; /* No special today color */
+  --rdp-outside-opacity: 0.4;
+  --rdp-disabled-opacity: 0.3;
+  --rdp-weekday-opacity: 0.6;
+
+  /* Dark theme colors */
+  color: #e2e8f0; /* slate-200 */
+  background-color: transparent;
+}
+
+/* Override today styling - remove the highlight since dates are UTC */
+.rdp-root .rdp-today {
+  color: inherit !important;
+  font-weight: normal !important;
+}
+
+.rdp-root .rdp-today .rdp-day_button {
+  border: none !important;
+}
+
+/* Navigation buttons */
+.rdp-root .rdp-button_previous,
+.rdp-root .rdp-button_next {
+  background-color: #334155; /* slate-700 */
+  border: 1px solid #475569; /* slate-600 */
+  border-radius: 6px;
+  color: #94a3b8; /* slate-400 */
+}
+
+.rdp-root .rdp-button_previous:hover,
+.rdp-root .rdp-button_next:hover {
+  background-color: #475569; /* slate-600 */
+  color: #f1f5f9; /* slate-100 */
+}
+
+/* Weekday headers */
+.rdp-root .rdp-weekday {
+  color: #64748b; /* slate-500 */
+  font-weight: 500;
+}
+
+/* Day cells */
+.rdp-root .rdp-day_button {
+  color: #cbd5e1; /* slate-300 */
+  transition: all 0.15s ease;
+}
+
+.rdp-root .rdp-day_button:hover {
+  background-color: #334155; /* slate-700 */
+  color: #f8fafc; /* slate-50 */
+}
+
+/* Selected day */
+.rdp-root .rdp-selected .rdp-day_button {
+  background-color: #3b82f6; /* blue-500 */
+  color: white;
+}
+
+.rdp-root .rdp-selected .rdp-day_button:hover {
+  background-color: #2563eb; /* blue-600 */
+}
+
+/* Outside days (previous/next month) */
+.rdp-root .rdp-outside .rdp-day_button {
+  color: #475569; /* slate-600 */
+}
+
+/* Caption/header */
+.rdp-root .rdp-month_caption {
+  color: #f1f5f9; /* slate-100 */
+  font-weight: 500;
+  justify-content: center;
+}
+
 /* Base styles */
 html, body {
   margin: 0;

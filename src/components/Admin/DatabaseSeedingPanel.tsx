@@ -245,6 +245,9 @@ export function DatabaseSeedingPanel() {
   const [showErrorLog, setShowErrorLog] = useState(false);
   const errorIdCounter = useRef(0);
 
+  // Track previous seeding state to detect completion
+  const wasSeeding = useRef(false);
+
   // Verification state
   const [verification, setVerification] = useState<VerificationResult | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -323,6 +326,29 @@ export function DatabaseSeedingPanel() {
     const interval = setInterval(fetchData, 3000);
     return () => clearInterval(interval);
   }, [fetchData]);
+
+  // Re-verify when seeding completes (transitions from active to idle)
+  useEffect(() => {
+    const isCurrentlySeeding = progress?.isSeeding ?? false;
+
+    // Detect transition: was seeding, now idle
+    if (wasSeeding.current && !isCurrentlySeeding && startDate && endDate) {
+      console.log('[DatabaseSeedingPanel] Seeding completed, re-running verification...');
+      // Auto re-verify to update the missing data status
+      verifyCoverage({ startDate, endDate, minMagnitude })
+        .then((result) => {
+          if (result.data) {
+            setVerification(result.data);
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to re-verify after seeding:', err);
+        });
+    }
+
+    // Update tracking ref
+    wasSeeding.current = isCurrentlySeeding;
+  }, [progress?.isSeeding, startDate, endDate, minMagnitude]);
 
   // Handle date preset selection
   const handleDatePreset = (preset: DateRangePreset) => {

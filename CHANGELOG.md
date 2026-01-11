@@ -5,6 +5,55 @@ All notable changes to the SeismiStats Visualization project will be documented 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.4] - 2026-01-11
+
+### 📅 Calendar UX & Docker Health Fix
+
+Replaced native date inputs with shadcn/ui Calendar components for better control over UTC date handling, and fixed Docker container health checks.
+
+### Added
+- **shadcn/ui Components**:
+  - `Calendar` - Dark-themed date picker using react-day-picker v9
+  - `DatePicker` - Combines Calendar with Popover for inline date selection
+  - `Button`, `Popover` - Supporting UI primitives
+  - `cn()` utility in `src/lib/utils.ts` for class merging
+- **Path Aliases**: Added `@/*` path alias pointing to `./src/*` for cleaner imports
+- **Dark Mode Class**: Added `class="dark"` to `<html>` element for proper theming
+
+### Changed
+- **Date Pickers in Admin UI** (`DatabaseSeedingPanel.tsx`):
+  - Replaced native `<input type="date">` with shadcn `DatePicker` component
+  - Removed confusing local "today" highlighting (dates are UTC-based)
+  - Calendar now opens to the month of the selected date (`defaultMonth` prop)
+- **Date Pickers in Charts** (`ChartFilters.tsx`):
+  - Also updated to use shadcn `DatePicker` for consistency
+- **Auto Re-verify After Seeding**:
+  - Added `useEffect` to detect seeding completion
+  - Automatically re-runs verification when seeding transitions from active to idle
+  - "Missing Events" panel now shows accurate status after filling data
+
+### Fixed
+- **Docker Health Checks** (`docker-compose.v2.local.yml`):
+  - Changed from `wget` to `curl` - `wget` failed with `localhost` DNS resolution in Alpine
+  - Reduced `start_period` from 60s to 15s
+  - Reduced `interval` from 30s to 10s
+  - All containers now show "healthy" status instead of perpetual "unhealthy"
+  - Stack startup time reduced from ~1.5 minutes to ~20 seconds
+- **Calendar "Today" Highlighting**: Disabled local timezone "today" highlight since all dates are UTC
+
+### Technical Details
+
+**Calendar Styling Approach:**
+- react-day-picker v9 uses CSS custom properties instead of Tailwind classes
+- Added comprehensive CSS variable overrides in `src/index.css` under `.rdp-root`
+- Dark theme colors: slate-700 backgrounds, blue-500 accent, slate-300 text
+
+**Docker Health Check Issue:**
+- BusyBox `wget` in Alpine doesn't resolve `localhost` properly via `/etc/hosts`
+- `curl` works correctly, so switched to `["CMD", "curl", "-f", "http://localhost:3000/health"]`
+
+---
+
 ## [2.0.3] - 2026-01-10
 
 ### 🗓️ Chart Column Count Fix

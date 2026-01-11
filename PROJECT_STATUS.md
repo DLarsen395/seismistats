@@ -1,11 +1,11 @@
 # SeismiStats Visualization - Project Status
 
-**Last Updated**: January 10, 2026
-**Version**: 2.0.3
+**Last Updated**: January 11, 2026
+**Version**: 2.0.4
 
-## 📊 Current Status: V2.0.3 - Chart Column Count Fix
+## 📊 Current Status: V2.0.4 - Calendar UX & Docker Health Fix
 
-Fixed critical bug where "Last 7 Days" showed 9 chart columns instead of 7.
+Replaced native date pickers with shadcn/ui Calendar, fixed Docker health checks, and added auto-verification after seeding.
 
 ### ✅ V1 Phases Complete (100%)
 - Phase 1: Core Visualization ✅
@@ -29,6 +29,7 @@ Fixed critical bug where "Last 7 Days" showed 9 chart columns instead of 7.
 - Phase 11: Environment & Documentation ✅ (Production-ready env files)
 - Phase 12: UTC Date Handling ✅ (Consistent timezone handling)
 - Phase 13: Chart Column Count Fix ✅ (Correct number of columns in all time ranges)
+- Phase 14: Calendar UX & Docker Health ✅ (shadcn/ui calendar, fast healthy containers)
 
 ---
 

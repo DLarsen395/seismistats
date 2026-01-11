@@ -71,6 +71,7 @@ export function DatePicker({
           <Calendar
             mode="single"
             selected={date}
+            defaultMonth={date}
             onSelect={(newDate) => {
               onDateChange(newDate)
               setOpen(false)
