@@ -31,6 +31,8 @@ import {
   type SeedingOptions,
   type VerificationResult,
 } from '../../services/api';
+import { DatePicker } from '@/components/ui/date-picker';
+import { format, parse } from 'date-fns';
 
 // =============================================================================
 // Speed Presets
@@ -253,12 +255,22 @@ export function DatabaseSeedingPanel() {
     historical: false,
   });
 
-  // Form state
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  // Form state - using Date objects for shadcn DatePicker
+  const [startDateValue, setStartDateValue] = useState<Date | undefined>(undefined);
+  const [endDateValue, setEndDateValue] = useState<Date | undefined>(undefined);
   const [minMagnitude, setMinMagnitude] = useState(2.5);
   const [selectedSpeed, setSelectedSpeed] = useState<SpeedPreset>(SPEED_PRESETS[1]); // Medium
   const [isStarting, setIsStarting] = useState(false);
+
+  // Helper functions to convert between Date and string format
+  const startDate = startDateValue ? format(startDateValue, 'yyyy-MM-dd') : '';
+  const endDate = endDateValue ? format(endDateValue, 'yyyy-MM-dd') : '';
+  const setStartDate = (dateStr: string) => {
+    setStartDateValue(dateStr ? parse(dateStr, 'yyyy-MM-dd', new Date()) : undefined);
+  };
+  const setEndDate = (dateStr: string) => {
+    setEndDateValue(dateStr ? parse(dateStr, 'yyyy-MM-dd', new Date()) : undefined);
+  };
 
   // Add error to log
   const addError = useCallback((message: string, details?: string) => {
@@ -752,24 +764,21 @@ export function DatabaseSeedingPanel() {
 
             {/* Custom date inputs */}
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs text-slate-500 mb-1">Start Date (UTC)</label>
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-slate-500 mb-1">End Date (UTC)</label>
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
-                />
-              </div>
+              <DatePicker
+                date={startDateValue}
+                onDateChange={setStartDateValue}
+                label="Start Date (UTC)"
+                placeholder="Pick start date"
+                toDate={endDateValue || new Date()}
+              />
+              <DatePicker
+                date={endDateValue}
+                onDateChange={setEndDateValue}
+                label="End Date (UTC)"
+                placeholder="Pick end date"
+                fromDate={startDateValue}
+                toDate={new Date()}
+              />
             </div>
             <p className="text-xs text-slate-500 mt-2">
               ⓘ All dates are in UTC. End date includes the full day (23:59:59 UTC).

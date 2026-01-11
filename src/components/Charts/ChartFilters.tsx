@@ -2,13 +2,15 @@
  * Filter controls for earthquake charts
  */
 
-import { useState, useEffect, useRef } from 'react';
-import { format, subYears } from 'date-fns';
+import { useState, useRef, useEffect } from 'react';
+import { subYears } from 'date-fns';
 import { useEarthquakeStore } from '../../stores/earthquakeStore';
 import { useCacheStore } from '../../stores/cacheStore';
 import { AutoRefreshIndicator } from './AutoRefreshIndicator';
 import { TimezoneToggle } from '../Controls/TimezoneToggle';
 import { useIsApiMode } from './useChartData';
+import { DatePicker } from '@/components/ui/date-picker';
+import { Button } from '@/components/ui/button';
 import {
   MIN_MAGNITUDE_OPTIONS,
   MAX_MAGNITUDE_OPTIONS,
@@ -27,17 +29,6 @@ const selectStyle: React.CSSProperties = {
   cursor: 'pointer',
   outline: 'none',
   minWidth: '100px',
-};
-
-const inputStyle: React.CSSProperties = {
-  padding: '0.5rem 0.75rem',
-  fontSize: '0.875rem',
-  color: 'white',
-  backgroundColor: 'rgba(55, 65, 81, 0.8)',
-  border: '1px solid rgba(75, 85, 99, 0.5)',
-  borderRadius: '0.375rem',
-  outline: 'none',
-  minWidth: '130px',
 };
 
 const labelStyle: React.CSSProperties = {
@@ -81,18 +72,16 @@ export function ChartFilters({
   } = useEarthquakeStore();
 
   // Local state for custom date inputs
-  const [startInput, setStartInput] = useState(
-    customStartDate ? format(customStartDate, 'yyyy-MM-dd') : format(subYears(new Date(), 1), 'yyyy-MM-dd')
+  const [startDate, setStartDate] = useState<Date | undefined>(
+    customStartDate || subYears(new Date(), 1)
   );
-  const [endInput, setEndInput] = useState(
-    customEndDate ? format(customEndDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd')
+  const [endDate, setEndDate] = useState<Date | undefined>(
+    customEndDate || new Date()
   );
 
   const handleApplyCustomRange = () => {
-    const start = new Date(startInput);
-    const end = new Date(endInput);
-    if (start <= end) {
-      setCustomDateRange(start, end);
+    if (startDate && endDate && startDate <= endDate) {
+      setCustomDateRange(startDate, endDate);
     }
   };
 
@@ -136,58 +125,30 @@ export function ChartFilters({
       {/* Custom Date Range - only shown when 'custom' is selected */}
       {timeRange === 'custom' && (
         <>
-          <div>
-            <label htmlFor="start-date-input" style={labelStyle}>Start Date</label>
-            <input
-              id="start-date-input"
-              name="startDate"
-              title="Start date for custom range"
-              type="date"
-              value={startInput}
-              onChange={(e) => setStartInput(e.target.value)}
-              max={format(new Date(), 'yyyy-MM-dd')}
-              disabled={isLoading}
-              style={{
-                ...inputStyle,
-                opacity: isLoading ? 0.5 : 1,
-                colorScheme: 'dark',
-              }}
-            />
-          </div>
-          <div>
-            <label htmlFor="end-date-input" style={labelStyle}>End Date</label>
-            <input
-              id="end-date-input"
-              name="endDate"
-              title="End date for custom range"
-              type="date"
-              value={endInput}
-              onChange={(e) => setEndInput(e.target.value)}
-              max={format(new Date(), 'yyyy-MM-dd')}
-              disabled={isLoading}
-              style={{
-                ...inputStyle,
-                opacity: isLoading ? 0.5 : 1,
-                colorScheme: 'dark',
-              }}
-            />
-          </div>
-          <button
+          <DatePicker
+            date={startDate}
+            onDateChange={setStartDate}
+            label="Start Date"
+            placeholder="Pick start date"
+            disabled={isLoading}
+            toDate={endDate || new Date()}
+          />
+          <DatePicker
+            date={endDate}
+            onDateChange={setEndDate}
+            label="End Date"
+            placeholder="Pick end date"
+            disabled={isLoading}
+            fromDate={startDate}
+            toDate={new Date()}
+          />
+          <Button
             onClick={handleApplyCustomRange}
             disabled={isLoading}
-            style={{
-              padding: '0.5rem 1rem',
-              fontSize: '0.875rem',
-              color: 'white',
-              backgroundColor: 'rgba(59, 130, 246, 0.8)',
-              border: 'none',
-              borderRadius: '0.375rem',
-              cursor: isLoading ? 'not-allowed' : 'pointer',
-              opacity: isLoading ? 0.5 : 1,
-            }}
+            className="self-end"
           >
             Apply
-          </button>
+          </Button>
         </>
       )}
 
