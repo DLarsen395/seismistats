@@ -5,6 +5,27 @@ All notable changes to the SeismiStats Visualization project will be documented 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.5] - 2026-01-14
+
+### 📚 Production Deployment Documentation
+
+Added comprehensive deployment guide and production-ready Docker Compose template.
+
+### Added
+- **DEPLOY.md**: Complete production deployment guide covering:
+  - Prerequisites and network setup
+  - Nginx Proxy Manager configuration
+  - Environment variable reference (Portainer GUI or .env file)
+  - Step-by-step stack deployment
+  - Initial database seeding instructions
+  - Update/versioning procedures
+  - Troubleshooting and backup/recovery
+- **docker-compose.v2.production.example.yml**: Production stack template
+  - Uses `${VARIABLE}` syntax for all configurable values
+  - Required variables: `DB_PASSWORD`, `API_URL`
+  - Optional variables with defaults: `DB_USER`, `DB_NAME`, `IMAGE_TAG`, etc.
+  - Ready to paste into Portainer with environment variables set in GUI
+
 ## [2.0.4] - 2026-01-11
 
 ### 📅 Calendar UX & Docker Health Fix

@@ -1,11 +1,11 @@
 # SeismiStats Visualization - Project Status
 
-**Last Updated**: January 11, 2026
-**Version**: 2.0.4
+**Last Updated**: January 14, 2026
+**Version**: 2.0.5
 
-## 📊 Current Status: V2.0.4 - Calendar UX & Docker Health Fix
+## 📊 Current Status: V2.0.5 - Production Deployment Documentation
 
-Replaced native date pickers with shadcn/ui Calendar, fixed Docker health checks, and added auto-verification after seeding.
+Added comprehensive deployment guide (DEPLOY.md) and production-ready Docker Compose template.
 
 ### ✅ V1 Phases Complete (100%)
 - Phase 1: Core Visualization ✅
@@ -30,6 +30,7 @@ Replaced native date pickers with shadcn/ui Calendar, fixed Docker health checks
 - Phase 12: UTC Date Handling ✅ (Consistent timezone handling)
 - Phase 13: Chart Column Count Fix ✅ (Correct number of columns in all time ranges)
 - Phase 14: Calendar UX & Docker Health ✅ (shadcn/ui calendar, fast healthy containers)
+- Phase 15: Production Deployment Docs ✅ (DEPLOY.md guide, production compose template)
 
 ---
 

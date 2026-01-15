@@ -1,0 +1,89 @@
+# SeismiStats V2 Production Stack
+# Uses environment variables - set via .env file or Portainer GUI
+#
+# See DEPLOY.md for complete deployment instructions
+
+services:
+  # PostgreSQL with PostGIS and TimescaleDB
+  db:
+    image: timescale/timescaledb-ha:pg16
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+    environment:
+      POSTGRES_USER: ${DB_USER:-seismistats}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      POSTGRES_DB: ${DB_NAME:-seismistats}
+    volumes:
+      - seismistats_pgdata:/var/lib/postgresql/data
+    networks:
+      - seismistats-internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-seismistats} -d ${DB_NAME:-seismistats}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # API Server
+  api:
+    image: ghcr.io/dlarsen395/seismistats-api:${IMAGE_TAG:-latest}
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://${DB_USER:-seismistats}:${DB_PASSWORD}@db:5432/${DB_NAME:-seismistats}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      ADMIN_MODE: ${ADMIN_MODE:-true}
+      USGS_SYNC_ENABLED: ${USGS_SYNC_ENABLED:-false}
+    depends_on:
+      - db
+    networks:
+      - seismistats-internal
+      - npm-proxy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 15s
+
+  # Frontend
+  frontend:
+    image: ghcr.io/dlarsen395/seismistats:${IMAGE_TAG:-latest}
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+    environment:
+      VITE_API_URL: ${API_URL:?API_URL is required}
+      VITE_USE_API: "true"
+      VITE_PUBLIC_MODE: ${PUBLIC_MODE:-false}
+    networks:
+      - npm-proxy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+networks:
+  seismistats-internal:
+    driver: overlay
+  npm-proxy:
+    external: true
+
+volumes:
+  seismistats_pgdata:
