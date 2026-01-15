@@ -40,7 +40,7 @@ services:
       NODE_ENV: production
       PORT: 3000
       DATABASE_URL: postgresql://${DB_USER:-seismistats}:${DB_PASSWORD}@db:5432/${DB_NAME:-seismistats}
-      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      CORS_ORIGIN: ${CORS_ORIGIN:?CORS_ORIGIN is required for security}
       ADMIN_MODE: ${ADMIN_MODE:-true}
       USGS_SYNC_ENABLED: ${USGS_SYNC_ENABLED:-false}
     depends_on:

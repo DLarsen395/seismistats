@@ -67,11 +67,11 @@ When creating/editing the stack in Portainer:
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `DB_PASSWORD` | ✅ Yes | - | PostgreSQL password (use strong password) |
-| `API_URL` | ✅ Yes | - | Public API URL (e.g., `https://seismistats-api.yourdomain.com`) |
+| `API_URL` | ✅ Yes | - | Public API URL (see note below) |
+| `CORS_ORIGIN` | ✅ Yes | - | Frontend URL for CORS (e.g., `https://seismistats.yourdomain.com`) |
 | `DB_USER` | No | `seismistats` | PostgreSQL username |
 | `DB_NAME` | No | `seismistats` | PostgreSQL database name |
-| `IMAGE_TAG` | No | `latest` | Docker image tag (`latest`, `2.0.4`, etc.) |
-| `CORS_ORIGIN` | No | `*` | Allowed CORS origins |
+| `IMAGE_TAG` | No | `latest` | Docker image tag (`latest`, `2.0.5`, etc.) |
 | `ADMIN_MODE` | No | `true` | Enable admin endpoints (`true`/`false`) |
 | `PUBLIC_MODE` | No | `false` | Hide admin UI in frontend (`true`/`false`) |
 | `USGS_SYNC_ENABLED` | No | `false` | Auto-sync from USGS (`true`/`false`) |
@@ -84,16 +84,18 @@ Create a `.env` file with your values:
 # Required
 DB_PASSWORD=your_secure_password_here
 API_URL=https://seismistats-api.yourdomain.com
+CORS_ORIGIN=https://seismistats.yourdomain.com
 
 # Optional (defaults shown)
 DB_USER=seismistats
 DB_NAME=seismistats
 IMAGE_TAG=latest
-CORS_ORIGIN=*
 ADMIN_MODE=true
 PUBLIC_MODE=false
 USGS_SYNC_ENABLED=false
 ```
+
+> **Why is API_URL required?** The frontend runs in the user's browser, not inside Docker. When the React app makes API calls, it needs the public URL that Nginx Proxy Manager exposes - Docker's internal DNS is not accessible from browsers.
 
 ---
 
